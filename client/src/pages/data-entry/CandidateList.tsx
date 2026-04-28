@@ -7,6 +7,7 @@ import {
   Users, ChevronsLeft, ChevronsRight, Briefcase, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
 import Select from '../../components/ui/Select';
+import SearchableMultiSelect from '../../components/ui/SearchableMultiSelect';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import { useGetCandidatesQuery, useCheckPhonesBulkMutation, useBulkImportAllMutation } from '../../store/api/candidatesApi';
@@ -15,6 +16,7 @@ import { useGetCompaniesQuery } from '../../store/api/companiesApi';
 import { useGetJobsQuery } from '../../store/api/jobsApi';
 import { useAddToPipelineMutation } from '../../store/api/pipelineApi';
 import CandidateDetailDrawer from './CandidateDetailDrawer';
+import CandidateCallLogModal from './CandidateCallLogModal';
 import FloatingScrollbar from '../../components/ui/FloatingScrollbar';
 
 // ── Column definitions ────────────────────────────────────────────────────────
@@ -117,7 +119,7 @@ function fmtDate(val: string | null): string {
   return new Date(val).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
 }
 
-function CellValue({ col, row }: { col: string; row: any }) {
+function CellValue({ col, row, onCallLogClick }: { col: string; row: any; onCallLogClick?: (row: any) => void }) {
   switch (col) {
     case 'status': return <StatusBadge value={row.status} />;
     case 'completion_status':
@@ -126,7 +128,18 @@ function CellValue({ col, row }: { col: string; row: any }) {
           {row.completion_status}
         </span>
       );
-    case 'last_call_status': return <CallStatusBadge value={row.last_call_status} />;
+    case 'last_call_status':
+      return (
+        <button
+          type="button"
+          onClick={() => onCallLogClick?.(row)}
+          className="group/cl inline-flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
+          title="View call history"
+        >
+          <CallStatusBadge value={row.last_call_status} />
+          <span className="text-[9px] text-gray-300 group-hover/cl:text-blue-400 transition-colors">▶</span>
+        </button>
+      );
     case 'interview_status': return <InterviewBadge value={row.interview_status} />;
     case 'created_at': return <span className="text-[11px] text-gray-400 whitespace-nowrap tabular-nums">{fmtDate(row.created_at)}</span>;
     case 'updated_at': return <span className="text-[11px] text-gray-400 whitespace-nowrap tabular-nums">{fmtDate(row.updated_at)}</span>;
@@ -963,7 +976,6 @@ export default function CandidateList() {
   const [filterStateId, setFilterStateId] = useState('');
   const [filterCityId, setFilterCityId] = useState('');
   const [filterPositionIds, setFilterPositionIds] = useState<number[]>([]);
-  const [showPositionDropdown, setShowPositionDropdown] = useState(false);
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [filterGulfReturn, setFilterGulfReturn] = useState('');
@@ -985,6 +997,9 @@ export default function CandidateList() {
 
   // Assign to job modal
   const [showAssignModal, setShowAssignModal] = useState(false);
+
+  // Call log modal
+  const [callLogCandidate, setCallLogCandidate] = useState<any | null>(null);
 
   // Table scroll
   const tableScrollRef = useRef<HTMLDivElement>(null);
@@ -1206,48 +1221,13 @@ export default function CandidateList() {
               <option value="blacklisted">Blacklisted</option>
             </Select>
             {/* Position multi-select */}
-            <div className="relative">
-              <label className="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Position / Trade</label>
-              <button
-                type="button"
-                onClick={() => setShowPositionDropdown(v => !v)}
-                className={`w-full text-xs border rounded-lg px-2 py-1.5 text-left flex items-center justify-between transition-colors ${filterPositionIds.length > 0 ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-200 bg-gray-50 text-gray-500'}`}
-              >
-                <span>{filterPositionIds.length > 0 ? `${filterPositionIds.length} selected` : 'All positions'}</span>
-                <ChevronDown size={10} className={`transition-transform ${showPositionDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              {showPositionDropdown && (
-                <div className="absolute top-full left-0 mt-1 z-30 bg-white border border-gray-200 rounded-xl shadow-lg w-52 max-h-52 overflow-y-auto py-1">
-                  {filterPositionIds.length > 0 && (
-                    <button
-                      onClick={() => { setFilterPositionIds([]); setPage(1); }}
-                      className="w-full text-left px-3 py-1.5 text-[10px] text-red-500 hover:bg-red-50 font-semibold"
-                    >
-                      Clear selection
-                    </button>
-                  )}
-                  {(tradesData as any[])?.map((t: any) => {
-                    const checked = filterPositionIds.includes(t.id);
-                    return (
-                      <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => {
-                            setFilterPositionIds(prev =>
-                              checked ? prev.filter(id => id !== t.id) : [...prev, t.id]
-                            );
-                            setPage(1);
-                          }}
-                          className="accent-blue-600"
-                        />
-                        <span className="text-xs text-gray-700">{t.name}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <SearchableMultiSelect
+              label="Position / Trade"
+              options={(tradesData as any[] || []).map((t: any) => ({ id: t.id, name: t.name }))}
+              selected={filterPositionIds}
+              onChange={(ids) => { setFilterPositionIds(ids as number[]); setPage(1); }}
+              placeholder="All positions"
+            />
             {/* State */}
             <Select
               label="State"
@@ -1505,7 +1485,7 @@ export default function CandidateList() {
                             className="px-3 py-2.5 border-b border-r border-gray-100 last:border-r-0 text-gray-700"
                             style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
                           >
-                            <CellValue col={col.key} row={row} />
+                            <CellValue col={col.key} row={row} onCallLogClick={(r) => setCallLogCandidate(r)} />
                           </td>
                         ))}
                       </tr>
@@ -1633,6 +1613,14 @@ export default function CandidateList() {
         <CandidateDetailDrawer
           candidateId={drawerCandidateId}
           onClose={() => setDrawerCandidateId(null)}
+        />
+      )}
+
+      {/* Call log modal */}
+      {callLogCandidate && (
+        <CandidateCallLogModal
+          candidate={callLogCandidate}
+          onClose={() => setCallLogCandidate(null)}
         />
       )}
     </div>
