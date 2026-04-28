@@ -4,6 +4,6 @@ import { defineConfig } from 'prisma/config';
 export default defineConfig({
   schema: path.join(__dirname, 'prisma', 'schema.prisma'),
   datasource: {
-    url: process.env.DATABASE_URL || 'postgresql://alhiraa:alhiraa_dev_2026@localhost:5432/alhiraa_atms',
+    url: process.env.DATABASE_URL,
   },
 });
