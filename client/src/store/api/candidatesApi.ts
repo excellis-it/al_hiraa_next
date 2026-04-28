@@ -93,6 +93,7 @@ export const candidatesApi = apiSlice.injectEndpoints({
 
 export const {
   useGetCandidatesQuery,
+  useLazyGetCandidatesQuery,
   useGetCandidateQuery,
   useCreateCandidateMutation,
   useUpdateCandidateMutation,

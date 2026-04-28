@@ -4,13 +4,13 @@ import toast from 'react-hot-toast';
 import {
   UserPlus, Search, ChevronLeft, ChevronRight, Eye, ChevronDown,
   MessageSquare, Mail, Phone, Download, Upload, Filter, X, CheckSquare, Square,
-  Users, ChevronsLeft, ChevronsRight, Briefcase, CheckCircle2, AlertTriangle,
+  Users, ChevronsLeft, ChevronsRight, Briefcase, CheckCircle2, AlertTriangle, Loader2,
 } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import SearchableMultiSelect from '../../components/ui/SearchableMultiSelect';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
-import { useGetCandidatesQuery, useCheckPhonesBulkMutation, useBulkImportAllMutation } from '../../store/api/candidatesApi';
+import { useGetCandidatesQuery, useLazyGetCandidatesQuery, useCheckPhonesBulkMutation, useBulkImportAllMutation } from '../../store/api/candidatesApi';
 import { useGetTradesQuery, useGetSourcesQuery, useGetStatesQuery, useGetCitiesQuery } from '../../store/api/mastersApi';
 import { useGetCompaniesQuery } from '../../store/api/companiesApi';
 import { useGetJobsQuery } from '../../store/api/jobsApi';
@@ -1063,6 +1063,7 @@ export default function CandidateList() {
   };
 
   const { data, isLoading } = useGetCandidatesQuery(queryParams);
+  const [fetchAllCandidates, { isFetching: isExporting }] = useLazyGetCandidatesQuery();
 
   const rows: any[] = data?.data || [];
   const meta = data?.meta;
@@ -1111,34 +1112,47 @@ export default function CandidateList() {
     setPage(1);
   };
 
-  // CSV export
-  const handleExportCSV = () => {
-    const exportRows = selected.size > 0 ? rows.filter((r) => selected.has(r.id)) : rows;
+  // CSV export helpers
+  const buildCsvRow = (row: any) =>
+    COLUMNS.map((col) => {
+      let val = row[col.key];
+      if (col.key === 'state') val = row.state?.name;
+      else if (col.key === 'city') val = row.city?.name;
+      else if (col.key === 'position_1') val = row.position_1?.name;
+      else if (col.key === 'position_2') val = row.position_2?.name;
+      else if (col.key === 'position_3') val = row.position_3?.name;
+      else if (col.key === 'source') val = row.source?.name;
+      else if (col.key === 'associate') val = row.associate?.full_name;
+      else if (col.key === 'age') val = calcAge(row.dob);
+      else if (['created_at', 'updated_at', 'dob'].includes(col.key)) val = val ? new Date(val).toLocaleDateString('en-IN') : '';
+      if (val === null || val === undefined) val = '';
+      return `"${String(val).replace(/"/g, '""')}"`;
+    }).join(',');
+
+  const triggerDownload = (exportRows: any[]) => {
     if (!exportRows.length) return;
     const headers = COLUMNS.map((c) => c.label).join(',');
-    const csvRows = exportRows.map((row) =>
-      COLUMNS.map((col) => {
-        let val = row[col.key];
-        if (col.key === 'state') val = row.state?.name;
-        else if (col.key === 'city') val = row.city?.name;
-        else if (col.key === 'position_1') val = row.position_1?.name;
-        else if (col.key === 'position_2') val = row.position_2?.name;
-        else if (col.key === 'position_3') val = row.position_3?.name;
-        else if (col.key === 'source') val = row.source?.name;
-        else if (col.key === 'associate') val = row.associate?.full_name;
-        else if (col.key === 'age') val = calcAge(row.dob);
-        else if (col.key === 'created_at' || col.key === 'updated_at' || col.key === 'dob') val = val ? new Date(val).toLocaleDateString('en-IN') : '';
-        if (val === null || val === undefined) val = '';
-        return `"${String(val).replace(/"/g, '""')}"`;
-      }).join(',')
-    );
-    const blob = new Blob([headers + '\n' + csvRows.join('\n')], { type: 'text/csv' });
+    const csv = headers + '\n' + exportRows.map(buildCsvRow).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `candidates-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportCSV = async () => {
+    // Export only the selected rows from the current page
+    if (selected.size > 0) {
+      triggerDownload(rows.filter((r) => selected.has(r.id)));
+      return;
+    }
+    // Fetch ALL candidates matching current filters (all pages at once)
+    const total = meta?.total || 0;
+    if (!total) return;
+    const result = await fetchAllCandidates({ ...queryParams, page: 1, limit: total });
+    triggerDownload(result.data?.data || []);
   };
 
   return (
@@ -1155,10 +1169,17 @@ export default function CandidateList() {
           {isAdmin && (
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-3 py-2 rounded-xl transition-colors"
+              disabled={isExporting}
+              className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-3 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Download size={14} />
-              Export CSV
+              {isExporting
+                ? <Loader2 size={14} className="animate-spin" />
+                : <Download size={14} />}
+              {isExporting
+                ? 'Exporting…'
+                : selected.size > 0
+                  ? `Export ${selected.size} selected`
+                  : `Export All (${meta?.total ?? '…'})`}
             </button>
           )}
           {isAdmin && (
