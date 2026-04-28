@@ -14,6 +14,9 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+// Single-flight refresh: if many requests 401 at once, only one refresh fires.
+let refreshPromise: Promise<Awaited<ReturnType<typeof baseQuery>>> | null = null;
+
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
@@ -21,30 +24,43 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 ) => {
   let result = await baseQuery(args, api, extraOptions);
 
-  if (result.error?.status === 401) {
-    const refreshToken = (api.getState() as RootState).auth.refreshToken;
+  if (result.error?.status !== 401) return result;
 
-    if (refreshToken) {
-      const refreshResult = await baseQuery(
-        { url: '/auth/refresh-token', method: 'POST', body: { refresh_token: refreshToken } },
-        api,
-        extraOptions,
-      );
+  const state = api.getState() as RootState;
+  const refreshToken = state.auth.refreshToken;
+  const user = state.auth.user;
 
-      if (refreshResult.data) {
-        const { access_token, refresh_token } = refreshResult.data as { access_token: string; refresh_token: string };
-        const user = (api.getState() as RootState).auth.user!;
-        api.dispatch(setCredentials({ user, access_token, refresh_token }));
-        result = await baseQuery(args, api, extraOptions);
-      } else {
-        api.dispatch(logout());
-      }
-    } else {
-      api.dispatch(logout());
-    }
+  if (!refreshToken || !user) {
+    api.dispatch(logout());
+    return result;
   }
 
-  return result;
+  if (!refreshPromise) {
+    refreshPromise = baseQuery(
+      { url: '/auth/refresh-token', method: 'POST', body: { refresh_token: refreshToken } },
+      api,
+      extraOptions,
+    );
+  }
+
+  const refreshResult = await refreshPromise;
+  refreshPromise = null;
+
+  const data = refreshResult.data as { access_token: string; refresh_token: string } | undefined;
+  if (!data?.access_token) {
+    api.dispatch(logout());
+    return result;
+  }
+
+  api.dispatch(
+    setCredentials({
+      user,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    }),
+  );
+
+  return baseQuery(args, api, extraOptions);
 };
 
 export const apiSlice = createApi({
