@@ -73,6 +73,7 @@ export class PipelineService {
               id: true,
               full_name: true,
               whatsapp_no: true,
+              passport_no: true,
               created_at: true,
               year_sequence: true,
               position_1: { select: { name: true } },

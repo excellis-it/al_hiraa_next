@@ -16,6 +16,7 @@ import {
   useImportProcessCsvMutation,
 } from '../../store/api/processDetailsApi';
 import { useGetInterviewEventsQuery, useGetInterviewEventQuery } from '../../store/api/interviewEventsApi';
+import { useGetPipelineQuery } from '../../store/api/pipelineApi';
 import * as XLSX from 'xlsx';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -610,6 +611,15 @@ function AddToProcessModal({
 
   const { data: interviewData } = useGetInterviewEventQuery(interview?.id, { skip: !interview?.id });
   const checkins: any[] = interviewData?.checkins || [];
+
+  // Fallback: if no checkins, load pipeline candidates for this job
+  const { data: pipelineData } = useGetPipelineQuery(
+    { job_id: interview?.job?.id, limit: 300 } as any,
+    { skip: !interview?.job?.id || checkins.length > 0 },
+  );
+  const pipelineFallback: any[] = pipelineData?.data || [];
+  const usingPipeline = checkins.length === 0 && pipelineFallback.length > 0;
+
   const [selectedCheckins, setSelectedCheckins] = useState<Set<number>>(new Set());
   const [batchResult, setBatchResult] = useState<string | null>(null);
 
@@ -704,31 +714,74 @@ function AddToProcessModal({
                   <CheckCircle2 size={18} className="text-emerald-600" />
                   <p className="font-semibold text-emerald-700 text-sm">{batchResult}</p>
                 </div>
-              ) : checkins.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">No candidates in this interview.</p>
+              ) : checkins.length === 0 && pipelineFallback.length === 0 ? (
+                <div className="text-center py-8 space-y-2">
+                  <p className="text-sm font-semibold text-gray-500">No candidates lined up yet</p>
+                  <p className="text-xs text-gray-400 max-w-xs mx-auto">
+                    Add candidates to this interview via the Interview Events module, or use <strong>Add Individual</strong> or <strong>Import CSV</strong> above.
+                  </p>
+                </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500">{checkins.length} candidates</p>
-                    <button onClick={() => setSelectedCheckins(new Set(checkins.map((c:any)=>c.candidate_job_id)))} className="text-xs text-blue-600 font-semibold hover:underline">Select all</button>
+                  {usingPipeline && (
+                    <div className="flex items-start gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
+                      <Info size={12} className="flex-shrink-0 mt-0.5" />
+                      <span>No candidates were formally checked in to this interview. Showing all pipeline candidates for this job.</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500">
+                      {usingPipeline ? pipelineFallback.length : checkins.length} candidate{(usingPipeline ? pipelineFallback.length : checkins.length) !== 1 ? 's' : ''}
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (usingPipeline) {
+                          setSelectedCheckins(new Set(pipelineFallback.map((e: any) => e.id)));
+                        } else {
+                          setSelectedCheckins(new Set(checkins.map((c: any) => c.candidate_job_id)));
+                        }
+                      }}
+                      className="text-xs text-blue-600 font-semibold hover:underline"
+                    >
+                      Select all
+                    </button>
                   </div>
                   <div className="divide-y divide-gray-50 border border-gray-100 rounded-xl overflow-hidden">
-                    {checkins.map((c: any) => {
-                      const cand = c.candidate_job?.candidate;
-                      const selected  = selectedCheckins.has(c.candidate_job_id);
-                      return (
-                        <label key={c.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50/40 ${selected ? 'bg-blue-50' : 'bg-white'}`}>
-                          <input type="checkbox" checked={selected} onChange={() => {
-                            setSelectedCheckins(s => { const n=new Set(s); selected?n.delete(c.candidate_job_id):n.add(c.candidate_job_id); return n; });
-                          }} className="rounded border-gray-300 text-blue-600" />
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-gray-800">{cand?.full_name || '—'}</div>
-                            <div className="text-[10px] text-gray-400 font-mono">{cand?.passport_no} · {cand?.whatsapp_no}</div>
-                          </div>
-                          {c.result && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${c.result==='selected'?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'}`}>{c.result}</span>}
-                        </label>
-                      );
-                    })}
+                    {usingPipeline ? (
+                      pipelineFallback.map((entry: any) => {
+                        const cand = entry.candidate;
+                        const sel = selectedCheckins.has(entry.id);
+                        return (
+                          <label key={entry.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50/40 ${sel ? 'bg-blue-50' : 'bg-white'}`}>
+                            <input type="checkbox" checked={sel} onChange={() => {
+                              setSelectedCheckins(s => { const n = new Set(s); sel ? n.delete(entry.id) : n.add(entry.id); return n; });
+                            }} className="rounded border-gray-300 text-blue-600" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-semibold text-gray-800">{cand?.full_name || '—'}</div>
+                              <div className="text-[10px] text-gray-400 font-mono">{cand?.passport_no || '—'} · {cand?.whatsapp_no}</div>
+                            </div>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500`}>{entry.status?.replace(/_/g, ' ')}</span>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      checkins.map((c: any) => {
+                        const cand = c.candidate_job?.candidate;
+                        const sel = selectedCheckins.has(c.candidate_job_id);
+                        return (
+                          <label key={c.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50/40 ${sel ? 'bg-blue-50' : 'bg-white'}`}>
+                            <input type="checkbox" checked={sel} onChange={() => {
+                              setSelectedCheckins(s => { const n = new Set(s); sel ? n.delete(c.candidate_job_id) : n.add(c.candidate_job_id); return n; });
+                            }} className="rounded border-gray-300 text-blue-600" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-semibold text-gray-800">{cand?.full_name || '—'}</div>
+                              <div className="text-[10px] text-gray-400 font-mono">{cand?.passport_no} · {cand?.whatsapp_no}</div>
+                            </div>
+                            {c.result && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${c.result === 'selected' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>{c.result}</span>}
+                          </label>
+                        );
+                      })
+                    )}
                   </div>
                 </>
               )}
