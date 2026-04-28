@@ -1,0 +1,31 @@
+export interface CandidateFormData {
+  full_name: string;
+  dob?: string;
+  whatsapp_no: string;
+  alternate_contact?: string;
+  email?: string;
+  gender: 'male' | 'female' | 'other';
+  passport_no: string;
+  ecr_type: 'ecr' | 'ecnr';
+  state_id: number;
+  city_id: number;
+  religion?: string;
+  education: string;
+  education_other?: string;
+  position_1_id: number;
+  position_2_id?: number;
+  position_3_id?: number;
+  indian_experience?: string;
+  abroad_experience?: string;
+  indian_driving_license?: string[];
+  gulf_driving_license?: string[];
+  english_speaking?: 'none' | 'basic' | 'conversational' | 'fluent';
+  arabic_speaking?: boolean;
+  gulf_return?: boolean;
+  gulf_return_details?: string;
+  registration_mode: string;
+  source_id: number;
+  referred_by?: string;
+  associate_id?: number;
+  remarks?: string;
+}

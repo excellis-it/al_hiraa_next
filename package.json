@@ -1,0 +1,25 @@
+{
+  "name": "alhiraa-atms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Al-Hiraa Application Tracking & Management System",
+  "workspaces": [
+    "server",
+    "client",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm run start:dev --workspace=server",
+    "dev:client": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=server && npm run build --workspace=client",
+    "db:migrate": "npm run prisma:migrate --workspace=server",
+    "db:seed": "npm run prisma:seed --workspace=server",
+    "db:studio": "npm run prisma:studio --workspace=server",
+    "db:seed-fresh": "npm run prisma:seed-fresh --workspace=server",
+    "db:reset": "npm run db:migrate && npm run db:seed-fresh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

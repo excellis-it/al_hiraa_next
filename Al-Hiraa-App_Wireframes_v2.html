@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Al-Hiraa ATMS - UI Wireframes v2.0</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#333}
+.top-nav{background:#1B4F72;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.top-nav h1{font-size:17px;font-weight:600}
+.role-tabs{display:flex;gap:3px;background:#164060;border-radius:8px;padding:3px}
+.role-tab{padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;color:#a8d4f0;border:none;background:none;transition:.2s}
+.role-tab:hover{background:rgba(255,255,255,.1);color:#fff}
+.role-tab.active{background:#fff;color:#1B4F72;font-weight:600}
+.app-layout{display:flex;min-height:calc(100vh - 48px)}
+.screen{display:none}.screen.active{display:flex}
+.sidebar{width:200px;background:#fff;border-right:1px solid #e0e0e0;padding:12px 0;flex-shrink:0}
+.sb-item{padding:9px 16px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#555;transition:.15s}
+.sb-item:hover{background:#f5f5f5;color:#1B4F72}
+.sb-item.active{background:#D6EAF8;color:#1B4F72;font-weight:600;border-right:3px solid #1B4F72}
+.sb-sec{font-size:10px;text-transform:uppercase;color:#999;padding:14px 16px 5px;letter-spacing:.5px}
+.main{flex:1;padding:20px;overflow-y:auto}
+.sub{display:none}.sub.active{display:block}
+.pg-title{font-size:20px;font-weight:700;color:#1B4F72;margin-bottom:16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stat .l{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.3px}
+.stat .v{font-size:26px;font-weight:700;color:#1B4F72;margin:3px 0}
+.stat .s{font-size:11px;color:#27ae60}.stat .s.r{color:#e74c3c}
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:16px}
+.card-t{font-size:14px;font-weight:600;color:#333;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.badge{background:#D6EAF8;color:#1B4F72;font-size:10px;padding:2px 8px;border-radius:12px}
+.badge.orange{background:#fdebd0;color:#935116}.badge.red{background:#fadbd8;color:#922b21}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f8f9fa;text-align:left;padding:8px 10px;font-weight:600;color:#555;border-bottom:2px solid #e0e0e0;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #f0f0f0}
+tr:hover td{background:#fafbfc}
+.st{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+.st.grn{background:#d4efdf;color:#1e8449}.st.blu{background:#d6eaf8;color:#1b4f72}
+.st.ylw{background:#fef9e7;color:#9a7d0a}.st.red{background:#fadbd8;color:#922b21}
+.st.gry{background:#eaecee;color:#566573}.st.org{background:#fdebd0;color:#935116}
+.form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:11px;font-weight:600;color:#555}
+.fg .req{color:#e74c3c}
+.fg input,.fg select,.fg textarea{padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;background:#fafafa}
+.fg input:focus,.fg select:focus{outline:none;border-color:#1B4F72;background:#fff}
+.fg.full{grid-column:1/-1}
+.btn{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:.15s}
+.btn-p{background:#1B4F72;color:#fff}.btn-p:hover{background:#154360}
+.btn-o{background:#fff;color:#1B4F72;border:1px solid #1B4F72}
+.btn-s{padding:3px 8px;font-size:10px}
+.btn-w{background:#f39c12;color:#fff}.btn-d{background:#e74c3c;color:#fff}
+.chart{background:#f8f9fa;border:2px dashed #ddd;border-radius:8px;height:180px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px}
+.pipeline{display:flex;gap:2px;margin-bottom:16px}
+.pip{flex:1;text-align:center;padding:10px 6px;font-size:11px;font-weight:600;color:#666;background:#eaecee}
+.pip.done{background:#27ae60;color:#fff}.pip.act{background:#1B4F72;color:#fff}
+.pip:first-child{border-radius:6px 0 0 6px}.pip:last-child{border-radius:0 6px 6px 0}
+.pip .ct{display:block;font-size:16px;margin-top:3px}
+.funnel{display:flex;flex-direction:column;gap:3px}
+.fb{display:flex;align-items:center;gap:10px}
+.fl{width:100px;font-size:11px;text-align:right;color:#666}
+.ff{height:24px;border-radius:4px;display:flex;align-items:center;padding:0 8px;color:#fff;font-size:11px;font-weight:600}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.alert-bar{background:#fef9e7;border:1px solid #f9e79f;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7d6608}
+.alert-bar.info{background:#d6eaf8;border-color:#85c1e9;color:#1b4f72}
+.speed{display:inline-block;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#d6eaf8;color:#1B4F72}
+.checkin-board td{vertical-align:middle}
+.welcome{background:linear-gradient(135deg,#1B4F72,#2980b9);color:#fff;border-radius:10px;padding:20px;margin-bottom:16px}
+.welcome h2{font-size:18px;margin-bottom:4px}.welcome p{font-size:12px;opacity:.8}
+.filter-bar{background:#fff;padding:12px 14px;border-radius:8px;display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.filter-bar select,.filter-bar input{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:11px}
+.watermark{text-align:center;padding:30px;color:#ccc;font-size:11px}
+.process-steps{display:flex;gap:6px;flex-wrap:wrap}
+.ps{flex:1;min-width:120px;padding:10px;border-radius:8px;border:2px solid #eee;text-align:center}
+.ps.done{border-color:#27ae60;background:#d4efdf}.ps.act{border-color:#f39c12;background:#fef9e7}.ps.ns{border-color:#eee;background:#f8f9fa}
+.ps .sn{font-size:10px;color:#999}.ps .nm{font-size:11px;font-weight:600;margin-top:3px}.ps .ss{font-size:10px;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="top-nav">
+<h1>Al-Hiraa ATMS v2.0</h1>
+<div class="role-tabs">
+<button class="role-tab active" onclick="showRole('de',this)">Data Entry</button>
+<button class="role-tab" onclick="showRole('rc',this)">Recruiter</button>
+<button class="role-tab" onclick="showRole('pm',this)">Process Mgr</button>
+<button class="role-tab" onclick="showRole('mg',this)">Manager</button>
+<button class="role-tab" onclick="showRole('ad',this)">Admin</button>
+<button class="role-tab" onclick="showRole('as',this)">Associate</button>
+</div>
+</div>
+
+<!-- ═══ DATA ENTRY ═══ -->
+<div class="app-layout screen active" id="de">
+<div class="sidebar">
+<div class="sb-sec">Data Entry</div>
+<div class="sb-item active" onclick="showSub('de-dash',this)">&#x1F4CA; Dashboard</div>
+<div class="sb-item" onclick="showSub('de-new',this)">&#x2795; New Candidate</div>
+<div class="sb-item" onclick="showSub('de-list',this)">&#x1F4CB; Candidate List</div>
+<div class="sb-item" onclick="showSub('de-inc',this)">&#x26A0; Incomplete Queue</div>
+<div class="sb-sec">Account</div>
+<div class="sb-item">&#x2699; Settings</div>
+<div class="sb-item">&#x1F6AA; Logout</div>
+</div>
+<div class="main">
+
+<div class="sub active" id="de-dash">
+<div class="pg-title">Data Entry Dashboard</div>
+<div class="stats">
+<div class="stat"><div class="l">Today's Entries</div><div class="v">12</div><div class="s">+3 vs yesterday</div></div>
+<div class="stat"><div class="l">This Week</div><div class="v">48</div><div class="s">On track</div></div>
+<div class="stat"><div class="l">This Month</div><div class="v">186</div><div class="s">+14% vs last month</div></div>
+<div class="stat"><div class="l">Incomplete Records</div><div class="v" style="color:#f39c12">23</div><div class="s r">Needs completion</div></div>
+</div>
+<div class="card"><div class="card-t">Daily Entries Trend (30 Days)<span class="badge">Line Chart</span></div><div class="chart">Daily entries with average line overlay</div></div>
+<div class="card"><div class="card-t">Recent Entries<span class="badge">Last 20</span></div>
+<table><thead><tr><th>ID</th><th>Name</th><th>WhatsApp</th><th>Position</th><th>State</th><th>Source</th><th>Date</th><th>Status</th><th></th></tr></thead>
+<tbody>
+<tr><td>ALH-04521</td><td>Mohammed Rafi</td><td>+91 98765 43210</td><td>Welder</td><td>West Bengal</td><td>Walk-in</td><td>27 Mar</td><td><span class="st grn">Complete</span></td><td><button class="btn btn-o btn-s">Edit</button></td></tr>
+<tr><td>ALH-04520</td><td>Suresh Kumar</td><td>+91 87654 32109</td><td>Electrician</td><td>Bihar</td><td>Referral</td><td>27 Mar</td><td><span class="st grn">Complete</span></td><td><button class="btn btn-o btn-s">Edit</button></td></tr>
+<tr><td>ALH-04519</td><td>Farhan Ali</td><td>+91 76543 21098</td><td>AC Tech</td><td>UP</td><td>Associate</td><td>27 Mar</td><td><span class="st org">Incomplete</span></td><td><button class="btn btn-o btn-s">Complete</button></td></tr>
+<tr><td>ALH-04518</td><td>Rajesh Prasad</td><td>+91 65432 10987</td><td>Mason</td><td>Jharkhand</td><td>Camp</td><td>26 Mar</td><td><span class="st grn">Complete</span></td><td><button class="btn btn-o btn-s">Edit</button></td></tr>
+<tr><td>ALH-04517</td><td>Imran Sheikh</td><td>+91 54321 09876</td><td>Driver</td><td>WB</td><td>Phone</td><td>26 Mar</td><td><span class="st org">Incomplete</span></td><td><button class="btn btn-o btn-s">Complete</button></td></tr>
+</tbody></table></div>
+</div>
+
+<div class="sub" id="de-new">
+<div class="pg-title">Register New Candidate</div>
+<div class="alert-bar">Minimum for save: <strong>Name + WhatsApp No. + Position Applied For (1)</strong>. Record will be marked as <strong>Incomplete</strong> if other mandatory fields are empty.</div>
+<div class="card"><div class="card-t">Personal Information</div>
+<div class="form-grid">
+<div class="fg"><label>Full Name <span class="req">*</span></label><input placeholder="As per passport"></div>
+<div class="fg"><label>Date of Birth <span class="req">*</span></label><input type="date"></div>
+<div class="fg"><label>Gender <span class="req">*</span></label><select><option>Select</option><option>Male</option><option>Female</option></select></div>
+<div class="fg"><label>WhatsApp No. <span class="req">*</span></label><input placeholder="+91 XXXXX XXXXX"></div>
+<div class="fg"><label>Alt Contact</label><input placeholder="+91 XXXXX XXXXX"></div>
+<div class="fg"><label>Email</label><input type="email" placeholder="email@example.com"></div>
+<div class="fg"><label>Passport Number <span style="color:#1B4F72;font-weight:400">(Primary ID)</span></label><input placeholder="A1234567"></div>
+<div class="fg"><label>ECR Type <span class="req">*</span></label><select><option>Select</option><option>ECR</option><option>ECNR</option></select></div>
+<div class="fg"><label>Religion <span class="req">*</span></label><select><option>Select</option><option>Islam</option><option>Hinduism</option><option>Christianity</option><option>Sikhism</option><option>Other</option></select></div>
+<div class="fg"><label>State <span class="req">*</span></label><select><option>Select State</option><option>West Bengal</option><option>Bihar</option><option>UP</option><option>Jharkhand</option></select></div>
+<div class="fg"><label>City <span class="req">*</span></label><select><option>Select City</option></select></div>
+<div class="fg"><label>Education <span class="req">*</span></label><select><option>Select</option><option>Below 10th</option><option>10th</option><option>12th</option><option>ITI</option><option>Diploma</option><option>Graduate</option><option>Other</option></select></div>
+</div></div>
+<div class="card"><div class="card-t">Skills & Experience</div>
+<div class="form-grid">
+<div class="fg"><label>Position Applied For (1) <span class="req">*</span></label><select><option>Select Position</option><option>Welder</option><option>Electrician</option><option>Plumber</option><option>Pipe Fitter</option><option>Mason</option><option>Carpenter</option><option>Driver</option><option>AC Technician</option><option>Security Guard</option></select></div>
+<div class="fg"><label>Position Applied For (2)</label><select><option>Select</option></select></div>
+<div class="fg"><label>Position Applied For (3)</label><select><option>Select</option></select></div>
+<div class="fg"><label>Indian Work Experience</label><input placeholder="e.g., 3 years"></div>
+<div class="fg"><label>Abroad Work Experience</label><input placeholder="e.g., 2 years Saudi"></div>
+<div class="fg"><label>Indian Driving License</label><select multiple size="3"><option>2 Wheeler</option><option>4 Wheeler</option><option>Heavy Vehicle</option></select></div>
+<div class="fg"><label>Gulf Driving License</label><select multiple size="3"><option>2 Wheeler</option><option>4 Wheeler</option><option>Heavy Vehicle</option></select></div>
+<div class="fg"><label>English Speaking</label><select><option>None</option><option>Basic</option><option>Conversational</option><option>Fluent</option></select></div>
+<div class="fg"><label>Arabic Speaking</label><select><option>None</option><option>Basic</option><option>Conversational</option><option>Fluent</option></select></div>
+<div class="fg"><label>Gulf Return</label><select><option>No</option><option>Yes</option></select></div>
+</div></div>
+<div class="card"><div class="card-t">Registration & Documents</div>
+<div class="form-grid">
+<div class="fg"><label>Mode of Registration <span class="req">*</span></label><select><option>Select</option><option>Walk-in</option><option>Phone</option><option>Online</option><option>Referral</option><option>Camp</option></select></div>
+<div class="fg"><label>Source <span class="req">*</span></label><select><option>Select</option><option>Job Portal</option><option>Social Media</option><option>Newspaper</option><option>Referral</option><option>Camp</option></select></div>
+<div class="fg"><label>Associate</label><select><option>Select</option></select></div>
+<div class="fg"><label>Status <span class="req">*</span></label><select><option>Active</option><option>Inactive</option></select></div>
+<div class="fg"><label>Upload CV</label><input type="file"></div>
+<div class="fg"><label>Photo</label><input type="file"></div>
+<div class="fg full"><label>Remarks</label><textarea rows="2" placeholder="Notes..."></textarea></div>
+</div></div>
+<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+<button class="btn btn-o">Cancel</button>
+<button class="btn btn-w">Save as Incomplete</button>
+<button class="btn btn-p">Save as Complete</button>
+</div>
+</div>
+
+<div class="sub" id="de-list">
+<div class="pg-title">Candidate Database</div>
+<div class="filter-bar">
+<input placeholder="Search name, phone, passport..." style="width:200px">
+<select><option>All Trades</option></select>
+<select><option>All States</option></select>
+<select><option>All Status</option></select>
+<select><option>Complete + Incomplete</option><option>Complete Only</option><option>Incomplete Only</option></select>
+<button class="btn btn-p btn-s">Search</button>
+</div>
+<div class="card">
+<table><thead><tr><th>ID</th><th>Name</th><th>WhatsApp</th><th>Passport</th><th>Trade</th><th>Exp</th><th>State</th><th>Status</th><th>Record</th><th>Date</th></tr></thead>
+<tbody>
+<tr><td>ALH-04521</td><td>Mohammed Rafi</td><td>+91 98765 43210</td><td>K1234567</td><td>Welder</td><td>5y (2 Gulf)</td><td>WB</td><td><span class="st grn">Active</span></td><td><span class="st grn">Complete</span></td><td>27 Mar</td></tr>
+<tr><td>ALH-04520</td><td>Suresh Kumar</td><td>+91 87654 32109</td><td>L7654321</td><td>Electrician</td><td>3y</td><td>Bihar</td><td><span class="st grn">Active</span></td><td><span class="st grn">Complete</span></td><td>27 Mar</td></tr>
+<tr><td>ALH-04519</td><td>Farhan Ali</td><td>+91 76543 21098</td><td>-</td><td>AC Tech</td><td>4y</td><td>UP</td><td><span class="st grn">Active</span></td><td><span class="st org">Incomplete</span></td><td>27 Mar</td></tr>
+</tbody></table>
+<div style="text-align:center;padding:10px;color:#999;font-size:11px">1-20 of 4,521 | &lt; 1 2 3 ... 227 &gt;</div>
+</div>
+</div>
+
+<div class="sub" id="de-inc">
+<div class="pg-title">Incomplete Registration Queue</div>
+<div class="alert-bar info">23 candidates have incomplete registrations. Call them to collect missing information.</div>
+<div class="card">
+<table><thead><tr><th>ID</th><th>Name</th><th>WhatsApp</th><th>Position</th><th>Missing Fields</th><th>Source</th><th>Registered</th><th></th></tr></thead>
+<tbody>
+<tr><td>ALH-04519</td><td>Farhan Ali</td><td>+91 76543 21098</td><td>AC Tech</td><td><span class="st org">Passport, ECR, Religion, Education</span></td><td>Associate (Ramesh)</td><td>27 Mar</td><td><button class="btn btn-p btn-s">Complete</button></td></tr>
+<tr><td>ALH-04517</td><td>Imran Sheikh</td><td>+91 54321 09876</td><td>Driver</td><td><span class="st org">DOB, Passport, State, City</span></td><td>Phone</td><td>26 Mar</td><td><button class="btn btn-p btn-s">Complete</button></td></tr>
+<tr><td>ALH-04510</td><td>Raju Das</td><td>+91 43210 98765</td><td>Plumber</td><td><span class="st org">Passport, Education, ECR</span></td><td>Associate (Salim)</td><td>25 Mar</td><td><button class="btn btn-p btn-s">Complete</button></td></tr>
+<tr><td>ALH-04505</td><td>Amit Yadav</td><td>+91 32109 87654</td><td>Mason</td><td><span class="st org">Passport, Gulf Return details</span></td><td>Walk-in</td><td>24 Mar</td><td><button class="btn btn-p btn-s">Complete</button></td></tr>
+</tbody></table>
+</div>
+</div>
+</div></div>
+
+<!-- ═══ RECRUITER ═══ -->
+<div class="app-layout screen" id="rc">
+<div class="sidebar">
+<div class="sb-sec">Recruitment</div>
+<div class="sb-item active" onclick="showSub('rc-dash',this)">&#x1F4CA; Dashboard</div>
+<div class="sb-item" onclick="showSub('rc-jobs',this)">&#x1F4BC; My Jobs</div>
+<div class="sb-item" onclick="showSub('rc-call',this)">&#x1F4DE; Call Queue</div>
+<div class="sb-item" onclick="showSub('rc-search',this)">&#x1F50D; Candidate Search</div>
+<div class="sb-item" onclick="showSub('rc-cal',this)">&#x1F4C5; Interview Calendar</div>
+<div class="sb-sec">Account</div>
+<div class="sb-item">&#x2699; Settings</div>
+<div class="sb-item">&#x1F6AA; Logout</div>
+</div>
+<div class="main">
+
+<div class="sub active" id="rc-dash">
+<div class="pg-title">Recruitment Dashboard</div>
+<div class="stats">
+<div class="stat"><div class="l">Active Jobs</div><div class="v">5</div><div class="s">Assigned to you</div></div>
+<div class="stat"><div class="l">Calls Today</div><div class="v">28</div><div class="s r">14 remaining</div></div>
+<div class="stat"><div class="l">Lined Up (Week)</div><div class="v">34</div><div class="s">+8 vs last week</div></div>
+<div class="stat"><div class="l">Selections (Month)</div><div class="v">18</div><div class="s">72% conversion</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-t">Recruitment Funnel<span class="badge">All Jobs</span></div>
+<div class="funnel">
+<div class="fb"><span class="fl">Shortlisted</span><div class="ff" style="width:100%;background:#3498db">245</div></div>
+<div class="fb"><span class="fl">Contacted</span><div class="ff" style="width:78%;background:#2980b9">192</div></div>
+<div class="fb"><span class="fl">Interested</span><div class="ff" style="width:52%;background:#1B4F72">128</div></div>
+<div class="fb"><span class="fl">Lined Up</span><div class="ff" style="width:35%;background:#27ae60">86</div></div>
+<div class="fb"><span class="fl">Selected</span><div class="ff" style="width:18%;background:#1e8449">44</div></div>
+</div></div>
+<div class="card"><div class="card-t">Upcoming Interviews<span class="badge">Next 7 days</span></div>
+<table><thead><tr><th>Date</th><th>Job / Company</th><th>Lined Up</th><th>Type</th></tr></thead>
+<tbody>
+<tr><td>28 Mar</td><td>Welder - Saudi Aramco</td><td>14 (+2 backup)</td><td><span class="st blu">In-person</span></td></tr>
+<tr><td>30 Mar</td><td>Electrician - QDVC Qatar</td><td>10 (+2 backup)</td><td><span class="st ylw">Trade Test</span></td></tr>
+<tr><td>02 Apr</td><td>Driver - Al Futtaim UAE</td><td>18 (+3 backup)</td><td><span class="st grn">In-person</span></td></tr>
+</tbody></table></div>
+</div>
+<div class="card"><div class="card-t">Active Jobs Pipeline<span class="badge">5 jobs</span></div>
+<table><thead><tr><th>Job</th><th>Trade</th><th>Company</th><th>Pos</th><th>Short</th><th>Contact</th><th>Interest</th><th>Lined</th><th>Select</th><th>Status</th><th>Speed</th></tr></thead>
+<tbody>
+<tr><td>JOB-142</td><td>Welder</td><td>Saudi Aramco</td><td>20</td><td>85</td><td>62</td><td>41</td><td>28</td><td>14</td><td><span class="st ylw">Interviews</span></td><td><span class="speed">Day 18/45</span></td></tr>
+<tr><td>JOB-145</td><td>Electrician</td><td>QDVC Qatar</td><td>15</td><td>52</td><td>38</td><td>24</td><td>16</td><td>8</td><td><span class="st ylw">Interviews</span></td><td><span class="speed">Day 22/45</span></td></tr>
+<tr><td>JOB-148</td><td>Driver HV</td><td>Al Futtaim</td><td>10</td><td>40</td><td>30</td><td>22</td><td>15</td><td>0</td><td><span class="st blu">Open</span></td><td><span class="speed">Day 8/45</span></td></tr>
+<tr><td>JOB-150</td><td>Pipe Fitter</td><td>Petrofac</td><td>25</td><td>68</td><td>45</td><td>28</td><td>18</td><td>12</td><td><span class="st grn">In Process</span></td><td><span class="speed">Day 35/45</span></td></tr>
+<tr><td>JOB-153</td><td>AC Tech</td><td>Emaar</td><td>8</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td><span class="st blu">Open</span></td><td><span class="speed">Day 2/45</span></td></tr>
+</tbody></table></div>
+</div>
+
+<div class="sub" id="rc-call">
+<div class="pg-title">Call Queue</div>
+<div class="alert-bar" style="background:#d6eaf8;border-color:#85c1e9;color:#1b4f72"><strong>3 follow-up callbacks</strong> scheduled for today. These candidates requested a callback.</div>
+<div class="card"><div class="card-t">Today's Calls<span class="badge">42 remaining across 5 jobs</span></div>
+<table><thead><tr><th>Priority</th><th>Candidate</th><th>Job</th><th>Last Called</th><th>Attempts</th><th>Follow-up</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>
+<tr style="background:#fef9e7"><td><span class="st ylw">CALLBACK</span></td><td><strong>Karim Sheikh</strong><br><span style="font-size:10px;color:#888">ALH-03201</span></td><td>JOB-153 AC Tech</td><td>25 Mar, 2:30 PM</td><td>1</td><td><strong style="color:#f39c12">Today</strong></td><td><span class="st ylw">Maybe Later</span></td><td><button class="btn btn-p btn-s">Interested</button> <button class="btn btn-o btn-s">No Answer</button> <button class="btn btn-o btn-s">Not Int.</button></td></tr>
+<tr style="background:#fef9e7"><td><span class="st ylw">CALLBACK</span></td><td><strong>Salim Ansari</strong><br><span style="font-size:10px;color:#888">ALH-02950</span></td><td>JOB-148 Driver</td><td>24 Mar, 11 AM</td><td>1</td><td><strong style="color:#f39c12">Today</strong></td><td><span class="st ylw">Maybe Later</span></td><td><button class="btn btn-p btn-s">Interested</button> <button class="btn btn-o btn-s">No Answer</button> <button class="btn btn-o btn-s">Not Int.</button></td></tr>
+<tr><td><span class="st red">HIGH</span></td><td><strong>Vinod Yadav</strong><br><span style="font-size:10px;color:#888">ALH-02890</span></td><td>JOB-153 AC Tech</td><td>Never</td><td>0</td><td>-</td><td><span class="st gry">Not Contacted</span></td><td><button class="btn btn-p btn-s">Interested</button> <button class="btn btn-o btn-s">No Answer</button> <button class="btn btn-o btn-s">Not Int.</button></td></tr>
+<tr><td><span class="st blu">NORMAL</span></td><td><strong>Raju Das</strong><br><span style="font-size:10px;color:#888">ALH-04510</span></td><td>JOB-148 Driver</td><td>Never</td><td>0</td><td>-</td><td><span class="st gry">Not Contacted</span></td><td><button class="btn btn-p btn-s">Interested</button> <button class="btn btn-o btn-s">No Answer</button> <button class="btn btn-o btn-s">Not Int.</button></td></tr>
+<tr><td><span class="st gry">RETRY</span></td><td><strong>Deepak Singh</strong><br><span style="font-size:10px;color:#888">ALH-03100</span></td><td>JOB-142 Welder</td><td>26 Mar, 4 PM</td><td style="color:#e74c3c;font-weight:600">3</td><td>-</td><td><span class="st red">Auto: Not Reachable</span></td><td><button class="btn btn-o btn-s">Try Again</button> <button class="btn btn-o btn-s">Skip</button></td></tr>
+</tbody></table>
+</div>
+<div class="card"><div class="card-t">Call Log — Karim Sheikh (ALH-03201)<span class="badge">History</span></div>
+<table><thead><tr><th>Date/Time</th><th>Attempt</th><th>Outcome</th><th>Notes</th><th>Follow-up</th></tr></thead>
+<tbody>
+<tr><td>25 Mar, 2:30 PM</td><td>#1</td><td><span class="st ylw">Callback</span></td><td>Said he's interested but needs to discuss with family. Call back 27th.</td><td>27 Mar</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="sub" id="rc-search">
+<div class="pg-title">Candidate Search & Assignment</div>
+<div class="alert-bar info">Searching for: <strong>JOB-00153 AC Tech - Emaar Dubai</strong> (8 positions, 0 filled)</div>
+<div class="filter-bar">
+<select><option>AC Technician</option></select>
+<select><option>Min 2 yrs exp</option></select>
+<select><option>Gulf Return: Any</option></select>
+<select><option>English: Basic+</option></select>
+<select><option>All States</option></select>
+<select><option>Available only</option><option>Include in-process</option></select>
+<button class="btn btn-p btn-s">Filter</button>
+</div>
+<div class="card">
+<table><thead><tr><th><input type="checkbox"></th><th>ID</th><th>Name</th><th>Trade</th><th>Exp</th><th>Gulf</th><th>English</th><th>State</th><th>Other Jobs</th><th>Flags</th><th></th></tr></thead>
+<tbody>
+<tr><td><input type="checkbox"></td><td>ALH-03201</td><td>Karim Sheikh</td><td>AC Tech</td><td>4y</td><td>Yes (Qatar)</td><td>Conv.</td><td>WB</td><td><span class="st gry">None</span></td><td></td><td><button class="btn btn-p btn-s">Add</button></td></tr>
+<tr><td><input type="checkbox"></td><td>ALH-02890</td><td>Vinod Yadav</td><td>AC Tech</td><td>6y</td><td>Yes (UAE)</td><td>Fluent</td><td>Bihar</td><td><span class="st org">1 job</span></td><td></td><td><button class="btn btn-p btn-s">Add</button></td></tr>
+<tr><td><input type="checkbox"></td><td>ALH-03450</td><td>Farhan Ali</td><td>AC Tech</td><td>3y</td><td>No</td><td>Basic</td><td>UP</td><td><span class="st gry">None</span></td><td></td><td><button class="btn btn-p btn-s">Add</button></td></tr>
+<tr><td><input type="checkbox"></td><td>ALH-01200</td><td>Gopal Thakur</td><td>AC Tech</td><td>2y</td><td>No</td><td>Basic</td><td>Jharkhand</td><td><span class="st gry">None</span></td><td><span class="st red">Blacklisted</span></td><td><button class="btn btn-o btn-s" disabled>Blocked</button></td></tr>
+</tbody></table>
+<div style="display:flex;gap:10px;margin-top:12px">
+<button class="btn btn-p">Add Selected to Pipeline</button>
+<button class="btn btn-o">Add Selected to Waitlist</button>
+</div></div>
+</div>
+
+<div class="sub" id="rc-jobs"></div>
+<div class="sub" id="rc-cal"></div>
+</div></div>
+
+<!-- ═══ PROCESS MANAGER ═══ -->
+<div class="app-layout screen" id="pm">
+<div class="sidebar">
+<div class="sb-sec">Process</div>
+<div class="sb-item active" onclick="showSub('pm-dash',this)">&#x1F4CA; Dashboard</div>
+<div class="sb-item" onclick="showSub('pm-jobs',this)">&#x1F4CB; Active Jobs</div>
+<div class="sb-item" onclick="showSub('pm-int',this)">&#x1F3AF; Interview Day</div>
+<div class="sb-item" onclick="showSub('pm-bot',this)">&#x26A0; Bottlenecks</div>
+<div class="sb-sec">Account</div>
+<div class="sb-item">&#x2699; Settings</div>
+<div class="sb-item">&#x1F6AA; Logout</div>
+</div>
+<div class="main">
+
+<div class="sub active" id="pm-dash">
+<div class="pg-title">Process Manager Dashboard</div>
+<div class="stats">
+<div class="stat"><div class="l">Jobs in Process</div><div class="v">8</div><div class="s">5 companies</div></div>
+<div class="stat"><div class="l">Candidates in Pipeline</div><div class="v">67</div><div class="s">Across all steps</div></div>
+<div class="stat"><div class="l">Deployed (March)</div><div class="v">23</div><div class="s">+5 vs target</div></div>
+<div class="stat"><div class="l">Avg. Deploy Speed</div><div class="v" style="font-size:22px">52 days</div><div class="s r">Target: 30 days</div></div>
+<div class="stat"><div class="l">Bottlenecks</div><div class="v" style="color:#e74c3c">4</div><div class="s r">Needs attention</div></div>
+</div>
+<div class="card"><div class="card-t">Process Pipeline<span class="badge">All Active Jobs</span></div>
+<div class="pipeline">
+<div class="pip done">Selection<span class="ct">67</span></div>
+<div class="pip done">Docs<span class="ct">52</span></div>
+<div class="pip act">Medical<span class="ct">38</span></div>
+<div class="pip">Visa<span class="ct">22</span></div>
+<div class="pip">Payment<span class="ct">15</span></div>
+<div class="pip">Deploy<span class="ct">23</span></div>
+</div></div>
+<div class="card"><div class="card-t">JOB-150 Pipe Fitter - Petrofac Oman<span class="badge">12 candidates</span><span class="speed" style="margin-left:8px">Day 35/45</span></div>
+<table><thead><tr><th>Candidate</th><th>Selection</th><th>Docs</th><th>Medical</th><th>Visa</th><th>Payment</th><th>Deploy</th><th>Flags</th><th></th></tr></thead>
+<tbody>
+<tr><td><strong>Mohammed Rafi</strong><br><span style="font-size:10px;color:#888">ALH-04521</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st ylw">In Progress</span></td><td><span class="st ylw">1/3 paid</span></td><td><span class="st gry">-</span></td><td></td><td><button class="btn btn-p btn-s">Update</button></td></tr>
+<tr><td><strong>Suresh Kumar</strong><br><span style="font-size:10px;color:#888">ALH-04520</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st ylw">In Progress</span></td><td><span class="st gry">-</span></td><td><span class="st gry">Not started</span></td><td><span class="st gry">-</span></td><td></td><td><button class="btn btn-p btn-s">Update</button></td></tr>
+<tr><td><strong>Abdul Hamid</strong><br><span style="font-size:10px;color:#888">ALH-04519</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st ylw">In Progress</span></td><td><span class="st gry">-</span></td><td><span class="st gry">-</span></td><td><span class="st gry">Not started</span></td><td><span class="st gry">-</span></td><td><span class="st org">&#x26A0; Also JOB-142 — Awaiting approval</span></td><td><button class="btn btn-p btn-s">Update</button></td></tr>
+<tr><td><strong>Rajesh Prasad</strong><br><span style="font-size:10px;color:#888">ALH-04518</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st grn">&#x2713;</span></td><td><span class="st red">FAILED</span></td><td><span class="st gry">-</span></td><td><span class="st gry">-</span></td><td><span class="st gry">-</span></td><td></td><td><button class="btn btn-w btn-s">Retry</button> <button class="btn btn-d btn-s">Release</button></td></tr>
+</tbody></table></div>
+</div>
+
+<div class="sub" id="pm-int">
+<div class="pg-title">Interview Day Management</div>
+<div class="card" style="background:linear-gradient(135deg,#1B4F72,#2980b9);color:#fff">
+<div style="font-size:16px;font-weight:700">JOB-142 Welder - Saudi Aramco</div>
+<div style="font-size:13px;opacity:.9;margin-top:4px">28 March 2026 | Hotel Ivory Inn, Salt Lake, Kolkata | Interviewer: Mr. Ahmed (Saudi Aramco HR)</div>
+<div style="font-size:12px;opacity:.8;margin-top:4px">Type: In-person + Trade Test | Prep: Formal dress, passport original, certificates, safety boots for trade test</div>
+</div>
+<div class="stats">
+<div class="stat"><div class="l">Expected</div><div class="v">14</div></div>
+<div class="stat"><div class="l">Arrived</div><div class="v" style="color:#27ae60">10</div></div>
+<div class="stat"><div class="l">No-Show</div><div class="v" style="color:#e74c3c">2</div><div class="s r">14%</div></div>
+<div class="stat"><div class="l">Selected</div><div class="v" style="color:#27ae60">5</div></div>
+<div class="stat"><div class="l">Rejected</div><div class="v" style="color:#e74c3c">2</div></div>
+<div class="stat"><div class="l">Pending</div><div class="v" style="color:#f39c12">3</div></div>
+</div>
+<div class="card"><div class="card-t">Check-in Board<span class="badge">Live</span></div>
+<table class="checkin-board"><thead><tr><th>#</th><th>Candidate</th><th>ID</th><th>Check-in</th><th>Time</th><th>Interview</th><th>Result</th><th></th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Mohammed Rafi</td><td>ALH-04521</td><td><span class="st grn">Arrived</span></td><td>9:15 AM</td><td><span class="st grn">Done</span></td><td><span class="st grn">Selected</span></td><td></td></tr>
+<tr><td>2</td><td>Suresh Kumar</td><td>ALH-04520</td><td><span class="st grn">Arrived</span></td><td>9:20 AM</td><td><span class="st grn">Done</span></td><td><span class="st grn">Selected</span></td><td></td></tr>
+<tr><td>3</td><td>Abdul Hamid</td><td>ALH-04519</td><td><span class="st grn">Arrived</span></td><td>9:30 AM</td><td><span class="st grn">Done</span></td><td><span class="st red">Rejected</span></td><td></td></tr>
+<tr><td>4</td><td>Bikash Roy</td><td>ALH-04100</td><td><span class="st grn">Arrived</span></td><td>9:25 AM</td><td><span class="st blu">In Interview</span></td><td><span class="st ylw">Pending</span></td><td></td></tr>
+<tr><td>5</td><td>Md. Javed</td><td>ALH-03980</td><td><span class="st grn">Arrived</span></td><td>9:40 AM</td><td><span class="st gry">Waiting</span></td><td><span class="st gry">-</span></td><td></td></tr>
+<tr><td>6</td><td>Deepak Singh</td><td>ALH-03100</td><td><span class="st red">No-Show</span></td><td>-</td><td><span class="st gry">-</span></td><td><span class="st gry">-</span></td><td><button class="btn btn-o btn-s">Flag</button></td></tr>
+<tr><td>7</td><td>Gopal Thakur</td><td>ALH-01200</td><td><span class="st red">No-Show</span></td><td>-</td><td><span class="st gry">-</span></td><td><span class="st gry">-</span></td><td><button class="btn btn-o btn-s">Flag</button></td></tr>
+<tr><td>8</td><td>Ravi Sharma</td><td>ALH-03500</td><td><span class="st org">Late</span></td><td>10:30 AM</td><td><span class="st gry">Waiting</span></td><td><span class="st gry">-</span></td><td></td></tr>
+</tbody></table>
+<div style="display:flex;gap:10px;margin-top:12px">
+<button class="btn btn-p">Print Candidate List</button>
+<button class="btn btn-o">Mark All Results Received</button>
+<button class="btn btn-o">Promote Waitlist Candidates</button>
+</div></div>
+</div>
+
+<div class="sub" id="pm-jobs"></div>
+<div class="sub" id="pm-bot"></div>
+</div></div>
+
+<!-- ═══ MANAGER ═══ -->
+<div class="app-layout screen" id="mg">
+<div class="sidebar">
+<div class="sb-sec">Management</div>
+<div class="sb-item active" onclick="showSub('mg-dash',this)">&#x1F4CA; Dashboard</div>
+<div class="sb-item" onclick="showSub('mg-cj',this)">&#x2795; Create Job</div>
+<div class="sb-item" onclick="showSub('mg-msg',this)">&#x1F4E8; Messaging</div>
+<div class="sb-item">&#x1F3E2; Companies</div>
+<div class="sb-item">&#x1F4BC; Jobs</div>
+<div class="sb-item">&#x1F4B0; Payments</div>
+<div class="sb-item">&#x1F4CB; Reports</div>
+<div class="sb-sec">Team</div>
+<div class="sb-item">&#x1F465; Performance</div>
+<div class="sb-sec">Account</div>
+<div class="sb-item">&#x2699; Settings</div>
+<div class="sb-item">&#x1F6AA; Logout</div>
+</div>
+<div class="main">
+
+<div class="sub active" id="mg-dash">
+<div class="pg-title">Manager Dashboard</div>
+<div class="stats">
+<div class="stat"><div class="l">Active Companies</div><div class="v">12</div><div class="s">3 new this month</div></div>
+<div class="stat"><div class="l">Open Jobs</div><div class="v">18</div><div class="s">142 positions</div></div>
+<div class="stat"><div class="l">Revenue (Mar)</div><div class="v" style="font-size:22px">&#x20B9;14.2L</div><div class="s">Collected: &#x20B9;9.8L</div></div>
+<div class="stat"><div class="l">Outstanding</div><div class="v" style="color:#e74c3c;font-size:22px">&#x20B9;4.4L</div><div class="s r">23 pending</div></div>
+<div class="stat"><div class="l">Deployed (Mar)</div><div class="v">23</div><div class="s">+18% vs Feb</div></div>
+<div class="stat"><div class="l">Avg Speed-to-Deploy</div><div class="v" style="font-size:22px">52 days</div><div class="s r">Target: 30</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-t">Revenue Trend<span class="badge">6 Months</span></div><div class="chart">Booked vs Collected bar chart</div></div>
+<div class="card"><div class="card-t">Deployments Trend<span class="badge">12 Months</span></div><div class="chart">Monthly deployments with target line</div></div>
+</div>
+<div class="card"><div class="card-t">Company-wise Status</div>
+<table><thead><tr><th>Company</th><th>Country</th><th>Jobs</th><th>Positions</th><th>Filled</th><th>In Process</th><th>Deployed</th><th>Revenue</th><th>Collected</th><th>Speed</th></tr></thead>
+<tbody>
+<tr><td><strong>Saudi Aramco</strong></td><td>Saudi</td><td>3</td><td>55</td><td>38</td><td>24</td><td>14</td><td>&#x20B9;5.5L</td><td>&#x20B9;3.8L</td><td><span class="speed">48 days</span></td></tr>
+<tr><td><strong>QDVC</strong></td><td>Qatar</td><td>2</td><td>30</td><td>22</td><td>15</td><td>7</td><td>&#x20B9;3.0L</td><td>&#x20B9;2.1L</td><td><span class="speed">55 days</span></td></tr>
+<tr><td><strong>Al Futtaim</strong></td><td>UAE</td><td>2</td><td>25</td><td>10</td><td>5</td><td>2</td><td>&#x20B9;2.5L</td><td>&#x20B9;1.0L</td><td><span class="speed">42 days</span></td></tr>
+<tr><td><strong>Petrofac</strong></td><td>Oman</td><td>1</td><td>25</td><td>12</td><td>12</td><td>0</td><td>&#x20B9;2.5L</td><td>&#x20B9;2.0L</td><td><span class="speed">35 days</span></td></tr>
+</tbody></table></div>
+<div class="g2">
+<div class="card"><div class="card-t">Payment Summary<span class="badge">March</span></div>
+<table><thead><tr><th>Status</th><th>Candidates</th><th>Amount</th></tr></thead>
+<tbody>
+<tr><td><span class="st grn">Fully Paid</span></td><td>32</td><td>&#x20B9;6.4L</td></tr>
+<tr><td><span class="st ylw">Partially Paid</span></td><td>15</td><td>&#x20B9;1.8L pending</td></tr>
+<tr><td><span class="st red">Overdue</span></td><td>8</td><td>&#x20B9;2.6L pending</td></tr>
+</tbody></table>
+<button class="btn btn-p" style="margin-top:10px">Send Payment Reminders</button>
+</div>
+<div class="card"><div class="card-t">Team Performance<span class="badge">March</span></div>
+<table><thead><tr><th>Member</th><th>Role</th><th>KPI</th><th>Trend</th></tr></thead>
+<tbody>
+<tr><td>Ankit</td><td>Data Entry</td><td>186 entries</td><td><span class="st grn">&#x2191; 14%</span></td></tr>
+<tr><td>Priya</td><td>Recruiter</td><td>44 selections</td><td><span class="st grn">&#x2191; 22%</span></td></tr>
+<tr><td>Rohit</td><td>Recruiter</td><td>28 selections</td><td><span class="st ylw">&#x2192; Same</span></td></tr>
+<tr><td>Nisha</td><td>Process Mgr</td><td>23 deployed</td><td><span class="st grn">&#x2191; 18%</span></td></tr>
+</tbody></table></div>
+</div>
+</div>
+
+<div class="sub" id="mg-cj">
+<div class="pg-title">Create New Job</div>
+<div class="g2">
+<div>
+<div class="card"><div class="card-t">Job Details</div>
+<div class="form-grid" style="grid-template-columns:1fr 1fr">
+<div class="fg"><label>Company <span class="req">*</span></label><select><option>Select Company</option><option>Saudi Aramco</option><option>QDVC Qatar</option><option>Al Futtaim UAE</option><option>Petrofac Oman</option><option>Emaar Dubai</option></select></div>
+<div class="fg"><label>Trade / Position <span class="req">*</span></label><select><option>Select</option><option>Welder</option><option>Electrician</option><option>Pipe Fitter</option><option>Driver</option><option>AC Technician</option></select></div>
+<div class="fg"><label>Job Title <span class="req">*</span></label><input placeholder="e.g., Service Crew"></div>
+<div class="fg"><label>Positions Required <span class="req">*</span></label><input type="number" placeholder="e.g., 20"></div>
+<div class="fg"><label>Salary Min</label><input placeholder="e.g., 1500"></div>
+<div class="fg"><label>Salary Max</label><input placeholder="e.g., 2000"></div>
+<div class="fg"><label>Currency</label><select><option>SAR</option><option>QAR</option><option>AED</option><option>OMR</option><option>KWD</option></select></div>
+<div class="fg"><label>Service Fee / Candidate <span class="req">*</span></label><input placeholder="INR e.g., 20000"></div>
+<div class="fg"><label>Experience Min (yrs)</label><input type="number"></div>
+<div class="fg"><label>Experience Max (yrs)</label><input type="number"></div>
+<div class="fg"><label>Interview Date</label><input type="date"></div>
+<div class="fg"><label>Interview Type</label><select><option>In-person</option><option>Video</option><option>Trade Test</option><option>Combined</option></select></div>
+<div class="fg"><label>Priority</label><select><option>Medium</option><option>High</option><option>Low</option></select></div>
+<div class="fg"><label>Deadline</label><input type="date"></div>
+<div class="fg full"><label>Other Requirements</label><textarea rows="3" placeholder="Age range, religion, driving license, language, ECR status, benefits..."></textarea></div>
+</div></div>
+<div style="display:flex;gap:10px;margin-top:12px">
+<button class="btn btn-o">Save Draft</button>
+<button class="btn btn-p">Create Job & Generate Flyer</button>
+</div>
+</div>
+<div>
+<div class="card"><div class="card-t">Job Flyer Preview<span class="badge">Auto-generated</span></div>
+<div style="border:2px solid #1B4F72;border-radius:8px;padding:16px;background:#fff">
+<div style="text-align:center;border-bottom:2px solid #1B4F72;padding-bottom:10px;margin-bottom:10px">
+<div style="font-size:18px;font-weight:800;color:#1B4F72">AL-HIRAA</div>
+<div style="font-size:10px;color:#555">Manpower Consultant Pvt. Ltd.</div>
+<div style="font-size:9px;color:#888;margin-top:4px">P.S. Corporate Park, Salt Lake Sector-V, Kolkata | alhiraa@gmail.com | 8282816997</div>
+</div>
+<div style="text-align:center;background:#1B4F72;color:#fff;padding:8px;border-radius:6px;margin-bottom:10px">
+<div style="font-size:14px;font-weight:700">URGENTLY REQUIRED</div>
+<div style="font-size:11px">FOR LEADING COMPANY IN SAUDI ARABIA</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-bottom:10px">
+<div><strong>Position:</strong> [Trade]</div>
+<div><strong>Vacancies:</strong> [Count]</div>
+<div><strong>Salary:</strong> [Min]-[Max] [Currency]</div>
+<div><strong>Interview:</strong> [Date]</div>
+</div>
+<div style="font-size:10px;color:#555;border-top:1px solid #eee;padding-top:8px">
+<strong>Requirements:</strong> [Other requirements text]
+</div>
+<div style="font-size:9px;color:#888;margin-top:10px;text-align:center">
+Contract: 2 years | Benefits as per labor law | Accommodation + Transport + Medical provided
+</div>
+</div>
+<div style="text-align:center;margin-top:10px"><button class="btn btn-o btn-s">Download PDF</button> <button class="btn btn-o btn-s">Share via WhatsApp</button></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="sub" id="mg-msg">
+<div class="pg-title">WhatsApp & SMS Messaging</div>
+<div class="g2">
+<div class="card"><div class="card-t">Send Blast Message</div>
+<div class="form-grid" style="grid-template-columns:1fr">
+<div class="fg"><label>Recipients</label><select><option>By Job — Select Job</option><option>By Status — Payment Overdue</option><option>By Status — Interview Lined Up</option><option>Custom Filter</option></select></div>
+<div class="fg"><label>Channel</label><select><option>WhatsApp</option><option>SMS</option><option>Both</option></select></div>
+<div class="fg"><label>Template</label><select><option>Interview Reminder</option><option>Payment Reminder</option><option>Selection Confirmation</option><option>Document Request</option><option>Deployment Details</option><option>Custom Message</option></select></div>
+<div class="fg"><label>Preview</label><textarea rows="4" readonly style="background:#f8f9fa">Dear {candidate_name}, your interview for {position} at {company} is scheduled on {date} at {venue}. Please carry: passport, certificates, photos. Dress formally. - Al-Hiraa Manpower</textarea></div>
+<div class="fg"><label>Recipients matched: <strong>14 candidates</strong></label></div>
+</div>
+<button class="btn btn-p" style="margin-top:10px">Send Now</button>
+</div>
+<div class="card"><div class="card-t">Message Log<span class="badge">Last 7 days</span></div>
+<table><thead><tr><th>Date</th><th>Channel</th><th>Template</th><th>Recipients</th><th>Delivered</th><th>Failed</th></tr></thead>
+<tbody>
+<tr><td>27 Mar</td><td><span class="st grn">WhatsApp</span></td><td>Interview Reminder</td><td>14</td><td>13</td><td>1</td></tr>
+<tr><td>26 Mar</td><td><span class="st grn">WhatsApp</span></td><td>Payment Reminder</td><td>8</td><td>8</td><td>0</td></tr>
+<tr><td>25 Mar</td><td><span class="st blu">SMS</span></td><td>Selection Confirmation</td><td>5</td><td>5</td><td>0</td></tr>
+</tbody></table></div>
+</div>
+</div>
+</div></div>
+
+<!-- ═══ ADMIN ═══ -->
+<div class="app-layout screen" id="ad">
+<div class="sidebar">
+<div class="sb-sec">Admin</div>
+<div class="sb-item active" onclick="showSub('ad-dash',this)">&#x1F4CA; Dashboard</div>
+<div class="sb-item" onclick="showSub('ad-users',this)">&#x1F465; Users</div>
+<div class="sb-item">&#x2699; System Config</div>
+<div class="sb-sec">Reports</div>
+<div class="sb-item">&#x1F4CB; Operational</div>
+<div class="sb-item">&#x1F4C8; Performance</div>
+<div class="sb-item">&#x1F4B0; Financial</div>
+<div class="sb-item">&#x1F4CA; Growth</div>
+<div class="sb-sec">All Modules</div>
+<div class="sb-item">&#x1F3E2; Companies</div>
+<div class="sb-item">&#x1F4BC; Jobs</div>
+<div class="sb-item">&#x1F50D; Candidates</div>
+<div class="sb-item">&#x1F504; Processes</div>
+<div class="sb-item">&#x1F4B0; Finance</div>
+<div class="sb-item">&#x1F4E8; Messaging</div>
+<div class="sb-sec">Account</div>
+<div class="sb-item">&#x1F6AA; Logout</div>
+</div>
+<div class="main">
+
+<div class="sub active" id="ad-dash">
+<div class="pg-title">Admin Dashboard</div>
+<div class="stats">
+<div class="stat"><div class="l">Total Candidates</div><div class="v">4,521</div><div class="s">+186 this month</div></div>
+<div class="stat"><div class="l">Active Users</div><div class="v">9</div><div class="s">4 online</div></div>
+<div class="stat"><div class="l">Revenue FY</div><div class="v" style="font-size:20px">&#x20B9;1.42Cr</div><div class="s">+28% YoY</div></div>
+<div class="stat"><div class="l">Deployed FY</div><div class="v">284</div><div class="s">+35% YoY</div></div>
+<div class="stat"><div class="l">Avg Deploy Speed</div><div class="v" style="font-size:20px">52 days</div><div class="s r">Target: 30</div></div>
+<div class="stat"><div class="l">Associates</div><div class="v">14</div><div class="s">&#x20B9;28K commission pending</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-t">Revenue: Booked vs Collected<span class="badge">12 Months</span></div><div class="chart">Grouped bar chart</div></div>
+<div class="card"><div class="card-t">Growth Metrics<span class="badge">12 Months</span></div><div class="chart">Multi-line: Registrations, Deployments, Revenue</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-t">Speed-to-Deploy Analytics</div>
+<table><thead><tr><th>Metric</th><th>Current</th><th>Target</th><th>Trend</th></tr></thead>
+<tbody>
+<tr><td>Overall Average</td><td>52 days</td><td>30 days</td><td><span class="st ylw">&#x2192; Flat</span></td></tr>
+<tr><td>Saudi Arabia</td><td>48 days</td><td>30 days</td><td><span class="st grn">&#x2193; Improving</span></td></tr>
+<tr><td>Qatar</td><td>62 days</td><td>30 days</td><td><span class="st red">&#x2191; Slower</span></td></tr>
+<tr><td>UAE</td><td>42 days</td><td>30 days</td><td><span class="st grn">&#x2193; Improving</span></td></tr>
+</tbody></table>
+<div style="margin-top:8px;font-size:11px;color:#888">Biggest bottleneck: <strong>Visa Stamping</strong> (avg 18 days)</div>
+</div>
+<div class="card"><div class="card-t">Dropout Analytics<span class="badge">March</span></div>
+<table><thead><tr><th>Stage</th><th>Dropouts</th><th>Rate</th><th>Top Reason</th></tr></thead>
+<tbody>
+<tr><td>After Selection</td><td>4</td><td>6%</td><td>Better offer</td></tr>
+<tr><td>Document Collection</td><td>3</td><td>5%</td><td>Personal reasons</td></tr>
+<tr><td>Medical</td><td>2</td><td>4%</td><td>Failed medical</td></tr>
+<tr><td>Visa</td><td>1</td><td>2%</td><td>Visa rejected</td></tr>
+<tr><td>Pre-Deployment</td><td>1</td><td>2%</td><td>Family pressure</td></tr>
+</tbody></table></div>
+</div>
+<div class="card"><div class="card-t">Activity Feed<span class="badge">Live</span></div>
+<div style="font-size:11px;line-height:2.2">
+<div><span style="color:#999">14:32</span> <strong>Ankit</strong> registered ALH-04521 (Complete)</div>
+<div><span style="color:#999">14:28</span> <strong>Priya</strong> lined up 3 candidates for JOB-142</div>
+<div><span style="color:#999">14:15</span> <strong>Nisha</strong> marked medical complete for ALH-04500</div>
+<div><span style="color:#999">14:10</span> <strong>Ramesh (Associate)</strong> submitted new candidate — pending verification</div>
+<div><span style="color:#999">13:55</span> <strong>Priya</strong> logged 12 calls for JOB-153</div>
+<div><span style="color:#999">13:40</span> <strong>Khurshid</strong> created JOB-153 for Emaar</div>
+</div></div>
+</div>
+
+<div class="sub" id="ad-users">
+<div class="pg-title">User Management</div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-p">+ Create New User</button></div>
+<div class="card">
+<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions Today</th><th></th></tr></thead>
+<tbody>
+<tr><td>Khurshid Alam</td><td>khurshid@alhiraa.in</td><td><span class="st blu">Admin</span></td><td><span class="st grn">Online</span></td><td>Now</td><td>42</td><td><button class="btn btn-o btn-s">Edit</button></td></tr>
+<tr><td>Ankit Sharma</td><td>ankit@alhiraa.in</td><td><span class="st gry">Data Entry</span></td><td><span class="st grn">Online</span></td><td>2h ago</td><td>28</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s">Reset</button></td></tr>
+<tr><td>Priya Das</td><td>priya@alhiraa.in</td><td><span class="st ylw">Recruiter</span></td><td><span class="st grn">Online</span></td><td>1h ago</td><td>35</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s">Reset</button></td></tr>
+<tr><td>Nisha Gupta</td><td>nisha@alhiraa.in</td><td><span class="st org">Process Mgr</span></td><td><span class="st grn">Online</span></td><td>30m ago</td><td>18</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s">Reset</button></td></tr>
+</tbody></table></div>
+</div>
+</div></div>
+
+<!-- ═══ ASSOCIATE ═══ -->
+<div class="app-layout screen" id="as">
+<div class="sidebar">
+<div class="sb-sec">Associate Portal</div>
+<div class="sb-item active" onclick="showSub('as-dash',this)">&#x1F4CA; Dashboard</div>
+<div class="sb-item" onclick="showSub('as-reg',this)">&#x2795; Register Candidate</div>
+<div class="sb-item" onclick="showSub('as-cand',this)">&#x1F4CB; My Candidates</div>
+<div class="sb-item" onclick="showSub('as-comm',this)">&#x1F4B0; My Commissions</div>
+<div class="sb-sec">Account</div>
+<div class="sb-item">&#x2699; Settings</div>
+<div class="sb-item">&#x1F6AA; Logout</div>
+</div>
+<div class="main">
+
+<div class="sub active" id="as-dash">
+<div class="welcome"><h2>Welcome, Ramesh Kumar</h2><p>Associate ID: ASC-0015 | Active since Jan 2024 | Commission Rate: &#x20B9;2,000 per deployment</p></div>
+<div class="stats">
+<div class="stat"><div class="l">Total Referred</div><div class="v">42</div><div class="s">Since Jan 2024</div></div>
+<div class="stat"><div class="l">Active in Pipeline</div><div class="v">8</div><div class="s">Being processed</div></div>
+<div class="stat"><div class="l">Deployed</div><div class="v">28</div><div class="s">Successfully placed</div></div>
+<div class="stat"><div class="l">Commission Earned</div><div class="v" style="font-size:20px">&#x20B9;56,000</div><div class="s">&#x20B9;48K paid | &#x20B9;8K pending</div></div>
+</div>
+<div class="card"><div class="card-t">Recent Activity</div>
+<table><thead><tr><th>Candidate</th><th>Position</th><th>Status</th><th>Date</th><th>Commission</th></tr></thead>
+<tbody>
+<tr><td>Farhan Ali</td><td>AC Technician</td><td><span class="st ylw">Pending Verification</span></td><td>27 Mar</td><td>-</td></tr>
+<tr><td>Shahid Khan</td><td>Welder</td><td><span class="st blu">In Process</span></td><td>15 Mar</td><td>Pending</td></tr>
+<tr><td>Arif Hussain</td><td>Electrician</td><td><span class="st grn">Deployed</span></td><td>10 Mar</td><td><span class="st grn">&#x20B9;2,000 earned</span></td></tr>
+<tr><td>Bablu Mandal</td><td>Pipe Fitter</td><td><span class="st grn">Deployed</span></td><td>28 Feb</td><td><span class="st grn">&#x20B9;2,000 paid</span></td></tr>
+</tbody></table></div>
+</div>
+
+<div class="sub" id="as-reg">
+<div class="pg-title">Register New Candidate</div>
+<div class="alert-bar info">Submit basic candidate details. Our team will call and verify before activating the record. You'll be notified once verified.</div>
+<div class="card" style="max-width:600px">
+<div class="form-grid" style="grid-template-columns:1fr">
+<div class="fg"><label>Full Name <span class="req">*</span></label><input placeholder="Candidate's full name"></div>
+<div class="fg"><label>WhatsApp Number <span class="req">*</span></label><input placeholder="+91 XXXXX XXXXX"></div>
+<div class="fg"><label>Position / Trade <span class="req">*</span></label><select><option>Select Position</option><option>Welder</option><option>Electrician</option><option>Plumber</option><option>Pipe Fitter</option><option>Mason</option><option>Driver</option><option>AC Technician</option><option>Security Guard</option><option>Carpenter</option></select></div>
+<div class="fg"><label>State</label><select><option>Select State</option><option>West Bengal</option><option>Bihar</option><option>UP</option><option>Jharkhand</option><option>Odisha</option></select></div>
+<div class="fg"><label>City</label><input placeholder="City name"></div>
+<div class="fg"><label>Remarks</label><textarea rows="2" placeholder="Any additional info about the candidate..."></textarea></div>
+</div>
+<button class="btn btn-p" style="margin-top:14px;width:100%">Submit Candidate for Verification</button>
+</div>
+</div>
+
+<div class="sub" id="as-cand">
+<div class="pg-title">My Candidates</div>
+<div class="filter-bar">
+<select><option>All Statuses</option><option>Pending Verification</option><option>Verified</option><option>Rejected</option><option>Deployed</option></select>
+<input placeholder="Search by name..." style="width:200px">
+<button class="btn btn-p btn-s">Filter</button>
+</div>
+<div class="card">
+<table><thead><tr><th>Name</th><th>WhatsApp</th><th>Position</th><th>Submitted</th><th>Verification</th><th>Job Status</th><th>Commission</th></tr></thead>
+<tbody>
+<tr><td>Farhan Ali</td><td>+91 76543 21098</td><td>AC Tech</td><td>27 Mar</td><td><span class="st ylw">Pending</span></td><td><span class="st gry">-</span></td><td>-</td></tr>
+<tr><td>Shahid Khan</td><td>+91 65432 10987</td><td>Welder</td><td>10 Mar</td><td><span class="st grn">Verified</span></td><td><span class="st blu">In Process</span></td><td>Pending</td></tr>
+<tr><td>Arif Hussain</td><td>+91 54321 09876</td><td>Electrician</td><td>20 Feb</td><td><span class="st grn">Verified</span></td><td><span class="st grn">Deployed</span></td><td><span class="st grn">&#x20B9;2,000</span></td></tr>
+<tr><td>Bablu Mandal</td><td>+91 43210 98765</td><td>Pipe Fitter</td><td>15 Feb</td><td><span class="st grn">Verified</span></td><td><span class="st grn">Deployed</span></td><td><span class="st grn">&#x20B9;2,000</span></td></tr>
+<tr><td>Sanjay Rawat</td><td>+91 32109 87654</td><td>Mason</td><td>10 Feb</td><td><span class="st red">Rejected</span></td><td><span class="st gry">-</span></td><td>-</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="sub" id="as-comm">
+<div class="pg-title">My Commissions</div>
+<div class="stats">
+<div class="stat"><div class="l">Total Earned</div><div class="v" style="font-size:22px">&#x20B9;56,000</div></div>
+<div class="stat"><div class="l">Total Paid</div><div class="v" style="font-size:22px;color:#27ae60">&#x20B9;48,000</div></div>
+<div class="stat"><div class="l">Pending Payout</div><div class="v" style="font-size:22px;color:#f39c12">&#x20B9;8,000</div></div>
+<div class="stat"><div class="l">Commission Rate</div><div class="v" style="font-size:22px">&#x20B9;2,000</div><div class="s">Per deployed candidate</div></div>
+</div>
+<div class="card"><div class="card-t">Commission History</div>
+<table><thead><tr><th>Candidate</th><th>Position</th><th>Deployed</th><th>Amount</th><th>Status</th><th>Paid Date</th><th>Reference</th></tr></thead>
+<tbody>
+<tr><td>Arif Hussain</td><td>Electrician</td><td>10 Mar 2026</td><td>&#x20B9;2,000</td><td><span class="st grn">Earned</span></td><td>-</td><td>-</td></tr>
+<tr><td>Bablu Mandal</td><td>Pipe Fitter</td><td>28 Feb 2026</td><td>&#x20B9;2,000</td><td><span class="st grn">Paid</span></td><td>05 Mar</td><td>TXN-2026-0305</td></tr>
+<tr><td>Ravi Sharma</td><td>Welder</td><td>15 Feb 2026</td><td>&#x20B9;2,000</td><td><span class="st grn">Paid</span></td><td>28 Feb</td><td>TXN-2026-0228</td></tr>
+<tr><td>Anil Kumar</td><td>Mason</td><td>01 Feb 2026</td><td>&#x20B9;2,000</td><td><span class="st grn">Paid</span></td><td>15 Feb</td><td>TXN-2026-0215</td></tr>
+</tbody></table></div>
+</div>
+</div></div>
+
+<div class="watermark">Al-Hiraa ATMS Wireframes v2.0 | March 2026 | 6 User Roles | For development reference</div>
+
+<script>
+function showRole(id,el){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+el.classList.add('active');
+}
+function showSub(id,el){
+const p=el.closest('.app-layout');
+p.querySelectorAll('.sub').forEach(s=>s.classList.remove('active'));
+const target=document.getElementById(id);
+if(target)target.classList.add('active');
+p.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('active'));
+el.classList.add('active');
+}
+</script>
+</body>
+</html>

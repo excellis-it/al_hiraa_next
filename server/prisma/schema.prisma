@@ -1,0 +1,893 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ──────────────────────────────────────────────
+
+enum UserRole {
+  data_entry
+  recruiter
+  process_manager
+  manager
+  admin
+}
+
+enum CandidateStatus {
+  active
+  inactive
+  deployed
+  blacklisted
+}
+
+enum CompletionStatus {
+  complete
+  incomplete
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum EcrType {
+  ecr
+  ecnr
+}
+
+enum InterestStatus {
+  not_contacted
+  contacted_interested
+  contacted_not_interested
+  contacted_not_reachable
+  contacted_maybe_later
+  lined_up
+  interview_selected
+  interview_rejected
+  interview_on_hold
+}
+
+enum ProcessStepStatus {
+  not_started
+  in_progress
+  completed
+  on_hold
+  failed
+}
+
+enum FailureAction {
+  retry
+  release
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  overdue
+  waived
+}
+
+enum JobStatus {
+  open
+  interviews_scheduled
+  in_process
+  closed
+  on_hold
+}
+
+enum JobPriority {
+  high
+  medium
+  low
+}
+
+enum RegistrationMode {
+  walk_in
+  phone
+  online
+  referral
+  associate
+  camp
+}
+
+enum CallOutcome {
+  interested
+  not_interested
+  call_back
+  not_reachable
+  wrong_number
+  // legacy values kept for existing data
+  reached
+  voicemail
+  line_busy
+  switched_off
+}
+
+enum InterviewType {
+  in_person
+  video
+  trade_test
+  combined
+}
+
+enum InterviewEventStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+  postponed
+}
+
+enum CheckinStatus {
+  expected
+  arrived
+  no_show
+  late
+}
+
+enum InterviewStatus {
+  waiting
+  pending
+  in_interview
+  in_progress
+  completed
+  skipped
+}
+
+enum InterviewResult {
+  selected
+  rejected
+  on_hold
+  pending
+}
+
+enum ResultsTiming {
+  same_day
+  delayed
+}
+
+enum DropoutReason {
+  other_offer
+  family_pressure
+  financial_issues
+  medical_unfit
+  visa_rejected
+  salary_mismatch
+  personal_reasons
+  other
+}
+
+enum CommissionStatus {
+  earned
+  paid
+  cancelled
+}
+
+enum FeeChangeStatus {
+  pending
+  approved
+  rejected
+}
+
+enum AssociateStatus {
+  active
+  inactive
+}
+
+enum CompanyStatus {
+  active
+  inactive
+}
+
+enum EnglishLevel {
+  none
+  basic
+  conversational
+  fluent
+}
+
+enum GulfCountry {
+  saudi_arabia
+  uae
+  qatar
+  oman
+  kuwait
+  bahrain
+}
+
+enum Industry {
+  construction
+  oil_and_gas
+  hospitality
+  manufacturing
+  facilities
+  other
+}
+
+// ─── TABLES ─────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(uuid())
+  full_name     String   @db.VarChar(200)
+  email         String   @unique @db.VarChar(255)
+  phone         String   @db.VarChar(20)
+  password_hash String   @db.VarChar(255)
+  role          UserRole
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  call_logs          CallLog[]
+  activity_logs      ActivityLog[]
+  notifications      Notification[]
+  payments_collected Payment[]      @relation("collector")
+  payments_waived    Payment[]      @relation("waiver_approver")
+  deployments_created Deployment[]  @relation("deployment_creator")
+
+  @@map("users")
+}
+
+model Candidate {
+  id                    Int              @id @default(autoincrement())
+  full_name             String           @db.VarChar(200)
+  dob                   DateTime?        @db.Date
+  whatsapp_no           String           @unique @db.VarChar(20)
+  alternate_contact     String?          @db.VarChar(20)
+  email                 String?          @db.VarChar(255)
+  gender                Gender?
+  passport_no           String?          @unique @db.VarChar(20)
+  ecr_type              EcrType?
+  state_id              Int?
+  city_id               Int?
+  religion              String?          @db.VarChar(100)
+  education             String?          @db.VarChar(100)
+  education_other       String?          @db.VarChar(200)
+  position_1_id         Int?
+  position_2_id         Int?
+  position_3_id         Int?
+  indian_experience     String?          @db.VarChar(200)
+  abroad_experience     String?          @db.VarChar(500)
+  indian_driving_license String[]
+  gulf_driving_license  String[]
+  english_speaking      EnglishLevel?
+  arabic_speaking       Boolean          @default(false)
+  gulf_return           Boolean          @default(false)
+  gulf_return_details   String?
+  registration_mode     RegistrationMode?
+  source_id             Int?
+  referred_by           String?          @db.VarChar(200)
+  associate_id          Int?
+  referrer_id           Int?
+  cv_url                String?          @db.VarChar(500)
+  photo_url             String?          @db.VarChar(500)
+  status                CandidateStatus  @default(active)
+  completion_status     CompletionStatus @default(incomplete)
+  is_no_show            Boolean          @default(false)
+  no_show_count         Int              @default(0)
+  external_only         Boolean          @default(false)
+  remarks               String?
+  registered_by         String
+  year_sequence         Int?
+  created_at            DateTime         @default(now())
+  updated_at            DateTime         @updatedAt
+
+  state       State?     @relation(fields: [state_id], references: [id])
+  city        City?      @relation(fields: [city_id], references: [id])
+  position_1  Trade?     @relation("position1", fields: [position_1_id], references: [id])
+  position_2  Trade?     @relation("position2", fields: [position_2_id], references: [id])
+  position_3  Trade?     @relation("position3", fields: [position_3_id], references: [id])
+  source      Source?    @relation(fields: [source_id], references: [id])
+  associate   Associate? @relation(fields: [associate_id], references: [id])
+  referrer    Referrer?  @relation(fields: [referrer_id], references: [id])
+
+  candidate_jobs CandidateJob[]
+  deployments    Deployment[]
+
+  @@index([passport_no])
+  @@index([whatsapp_no])
+  @@index([full_name])
+  @@index([status])
+  @@index([completion_status])
+  @@index([created_at])
+  @@index([external_only])
+  @@map("candidates")
+}
+
+model Company {
+  id               Int           @id @default(autoincrement())
+  name             String        @unique @db.VarChar(300)
+  country          GulfCountry
+  city             String?       @db.VarChar(200)
+  industry         Industry?
+  contact_person   String?       @db.VarChar(200)
+  phone            String?       @db.VarChar(20)
+  email            String?       @db.VarChar(255)
+  status           CompanyStatus @default(active)
+  agreement_details String?
+  agreement_file_url String?     @db.VarChar(500)
+  notes            String?
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  jobs        Job[]
+  deployments Deployment[]
+
+  @@map("companies")
+}
+
+model Job {
+  id                     Int        @id @default(autoincrement())
+  company_id             Int
+  title                  String     @db.VarChar(300)
+  trade_id               Int
+  positions_required     Int
+  positions_filled       Int        @default(0)
+  salary_min             Decimal?   @db.Decimal(10, 2)
+  salary_max             Decimal?   @db.Decimal(10, 2)
+  salary_currency        String     @default("AED") @db.VarChar(10)
+  country                GulfCountry
+  experience_required    String?
+  other_requirements     String?
+  service_fee            Decimal?   @db.Decimal(10, 2)
+  interview_date_start   DateTime?  @db.Date
+  interview_date_end     DateTime?  @db.Date
+  interview_type         InterviewType?
+  job_flyer_url          String?    @db.VarChar(500)
+  flyer_headline         String?    @db.VarChar(500)
+  venue_id               Int?
+  coordinator_id         String?
+  notes                  String?
+  target_deploy_days     Int        @default(45)
+  actual_first_deploy_date DateTime? @db.Date
+  status                 JobStatus  @default(open)
+  priority               JobPriority @default(medium)
+  deadline               DateTime?  @db.Date
+  created_by             String
+  created_at             DateTime   @default(now())
+  updated_at             DateTime   @updatedAt
+
+  // Job-level defaults (pre-fill for all positions)
+  contract_period          String?  @db.VarChar(50)
+  accommodation            Boolean?
+  age                      String?  @db.VarChar(100)
+
+  company          Company           @relation(fields: [company_id], references: [id])
+  trade            Trade             @relation(fields: [trade_id], references: [id])
+  candidate_jobs   CandidateJob[]
+  interview_events InterviewEvent[]
+  positions        JobPosition[]
+  interview_dates  JobInterviewDate[]
+
+  @@index([status])
+  @@index([company_id])
+  @@index([created_at])
+  @@map("jobs")
+}
+
+model JobPosition {
+  id               Int      @id @default(autoincrement())
+  job_id           Int
+  trade_id         Int
+  quantity         Int
+  salary           Decimal? @db.Decimal(10, 2)
+  accommodation    Boolean  @default(false)
+  transportation   Boolean  @default(false)
+  contract_period  String?  @db.VarChar(50)
+  age              String?  @db.VarChar(100)
+  positions_filled Int      @default(0)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  job   Job   @relation(fields: [job_id],   references: [id], onDelete: Cascade)
+  trade Trade @relation("job_position_trade", fields: [trade_id], references: [id])
+
+  @@index([job_id])
+  @@index([trade_id])
+  @@map("job_positions")
+}
+
+model JobInterviewDate {
+  id         Int      @id @default(autoincrement())
+  job_id     Int
+  date       DateTime @db.Date
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+
+  job Job @relation(fields: [job_id], references: [id], onDelete: Cascade)
+
+  @@index([job_id])
+  @@map("job_interview_dates")
+}
+
+model CandidateJob {
+  id              Int            @id @default(autoincrement())
+  candidate_id    Int
+  job_id          Int
+  trade_id        Int?
+  status          InterestStatus @default(not_contacted)
+  waitlist_rank   Int?
+  no_show         Boolean        @default(false)
+  assigned_to     String?
+  call_notes      String?
+  follow_up_date  DateTime?      @db.Date
+  interview_batch Int?
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  candidate          Candidate          @relation(fields: [candidate_id], references: [id])
+  job                Job                @relation(fields: [job_id], references: [id])
+  trade              Trade?             @relation("candidate_job_trade", fields: [trade_id], references: [id])
+  process_tracking   ProcessTracking[]
+  process_details    ProcessDetails?
+  payments           Payment[]
+  call_logs          CallLog[]
+  interview_checkins InterviewCheckin[]
+  dropouts           Dropout[]
+  commissions        AssociateCommission[]
+  fee_change_requests FeeChangeRequest[]
+  deployments        Deployment[]
+
+  @@unique([candidate_id, job_id])
+  @@index([status])
+  @@index([job_id])
+  @@index([candidate_id])
+  @@map("candidate_jobs")
+}
+
+// Operational process details — one record per candidate_job (filled as candidate progresses)
+model ProcessDetails {
+  id                       Int       @id @default(autoincrement())
+  candidate_job_id         Int       @unique
+
+  // Selection
+  year_of_selection        Int?
+  date_of_interview        DateTime? @db.Date
+  date_of_selection        DateTime? @db.Date
+  selection_month          String?   @db.VarChar(50)
+  mode_of_selection        String?   @db.VarChar(100)
+  interview_location       String?   @db.VarChar(200)
+  client_remark            String?   @db.VarChar(500)
+  vendor                   String?   @db.VarChar(200)
+  sponsor                  String?   @db.VarChar(200)
+  candidate_status         String?   @db.VarChar(100)
+
+  // Medical
+  medical_status           String?   @db.VarChar(50)    // fit / unfit / pending / awaited
+  medical_app_date         DateTime? @db.Date
+  medical_completion_date  DateTime? @db.Date
+  medical_approval_date    DateTime? @db.Date
+  medical_expiry_date      DateTime? @db.Date
+  medical_repeat_date      DateTime? @db.Date
+
+  // Visa & MOFA
+  courier_sent_date        DateTime? @db.Date
+  courier_received_date    DateTime? @db.Date
+  documents_checklist      Json?
+  mofa_number              String?   @db.VarChar(100)
+  mofa_date                DateTime? @db.Date
+  mofa_received_date       DateTime? @db.Date
+  visa_receiving_date      DateTime? @db.Date
+  visa_issue_date          DateTime? @db.Date
+  visa_expiry_date         DateTime? @db.Date
+  vfs_applied_date         DateTime? @db.Date
+  vfs_received_date        DateTime? @db.Date
+
+  // Ticket & Travel
+  ticket_booking_date      DateTime? @db.Date
+  ticket_confirm_date      DateTime? @db.Date
+  onboarding_city          String?   @db.VarChar(100)
+  exit_paper_date          DateTime? @db.Date
+  deployment_date          DateTime? @db.Date
+  deployment_month         String?   @db.VarChar(50)
+
+  // Financial
+  vendor_service_charge    Decimal?  @db.Decimal(10, 2)
+  advance_received         Decimal?  @db.Decimal(12, 2)
+  exit_setting_payment     Decimal?  @db.Decimal(12, 2)
+  other_setting_charge     Decimal?  @db.Decimal(12, 2)
+  total_received_amount    Decimal?  @db.Decimal(12, 2)
+  total_receivable_amount  Decimal?  @db.Decimal(12, 2)
+  refund_date              DateTime? @db.Date
+  refund_amount            Decimal?  @db.Decimal(12, 2)
+  disc_allot               Decimal?  @db.Decimal(12, 2)
+
+  // Family contact
+  family_contact_name      String?   @db.VarChar(200)
+  family_contact_phone     String?   @db.VarChar(20)
+  candidate_address        String?
+  remarks                  String?
+  other_remarks            String?
+
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+
+  candidate_job CandidateJob @relation(fields: [candidate_job_id], references: [id])
+
+  @@index([candidate_status])
+  @@index([medical_status])
+  @@map("process_details")
+}
+
+model ProcessTracking {
+  id               Int               @id @default(autoincrement())
+  candidate_job_id Int
+  step_number      Int
+  step_name        String            @db.VarChar(100)
+  status           ProcessStepStatus @default(not_started)
+  failure_action   FailureAction?
+  failure_reason   String?
+  retry_count      Int               @default(0)
+  started_at       DateTime?
+  completed_at     DateTime?
+  step_data        Json?
+  notes            String?
+  updated_by       String?
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+
+  candidate_job CandidateJob @relation(fields: [candidate_job_id], references: [id])
+
+  @@unique([candidate_job_id, step_number])
+  @@index([candidate_job_id])
+  @@index([status])
+  @@map("process_tracking")
+}
+
+model Payment {
+  id                    Int           @id @default(autoincrement())
+  candidate_job_id      Int
+  total_fee             Decimal       @db.Decimal(10, 2)
+  installment_number    Int
+  amount_due            Decimal       @db.Decimal(10, 2)
+  amount_paid           Decimal       @default(0) @db.Decimal(10, 2)
+  fee_waiver_amount     Decimal       @default(0) @db.Decimal(10, 2)
+  fee_waiver_approved_by String?
+  due_date              DateTime      @db.Date
+  paid_date             DateTime?     @db.Date
+  payment_method        String?       @db.VarChar(50)
+  receipt_number        String?       @db.VarChar(100)
+  status                PaymentStatus @default(pending)
+  collected_by          String?
+  notes                 String?
+  created_at            DateTime      @default(now())
+  updated_at            DateTime      @updatedAt
+
+  candidate_job   CandidateJob @relation(fields: [candidate_job_id], references: [id])
+  collector       User?        @relation("collector", fields: [collected_by], references: [id])
+  waiver_approver User?        @relation("waiver_approver", fields: [fee_waiver_approved_by], references: [id])
+
+  @@index([candidate_job_id])
+  @@index([status])
+  @@map("payments")
+}
+
+model CallLog {
+  id                     Int         @id @default(autoincrement())
+  candidate_job_id       Int
+  caller_id              String
+  call_timestamp         DateTime    @default(now())
+  outcome                CallOutcome
+  notes                  String?
+  follow_up_date         DateTime?   @db.Date
+  follow_up_reminder_sent Boolean    @default(false)
+  call_attempt_number    Int
+  created_at             DateTime    @default(now())
+
+  candidate_job CandidateJob @relation(fields: [candidate_job_id], references: [id])
+  caller        User         @relation(fields: [caller_id], references: [id])
+
+  @@index([candidate_job_id])
+  @@index([caller_id])
+  @@map("call_logs")
+}
+
+model Associate {
+  id                       Int             @id @default(autoincrement())
+  full_name                String          @db.VarChar(200)
+  phone                    String          @unique @db.VarChar(20)
+  email                    String?         @db.VarChar(255)
+  location_state           String?         @db.VarChar(100)
+  location_city            String?         @db.VarChar(100)
+  commission_rate          Decimal         @db.Decimal(10, 2)
+  commission_type          String          @default("per_deployment") @db.VarChar(50)
+  status                   AssociateStatus @default(active)
+  password_hash            String          @db.VarChar(255)
+  bank_account_name        String?         @db.VarChar(200)
+  bank_name                String?         @db.VarChar(200)
+  bank_account_number      String?         @db.VarChar(50)
+  bank_ifsc                String?         @db.VarChar(20)
+  total_commission_earned  Decimal         @default(0) @db.Decimal(12, 2)
+  total_commission_paid    Decimal         @default(0) @db.Decimal(12, 2)
+  created_at               DateTime        @default(now())
+  updated_at               DateTime        @updatedAt
+
+  candidates  Candidate[]
+  commissions AssociateCommission[]
+
+  @@map("associates")
+}
+
+model Referrer {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(200)
+  phone      String?     @db.VarChar(20)
+  email      String?     @db.VarChar(255)
+  notes      String?
+  is_active  Boolean     @default(true)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+
+  candidates Candidate[]
+
+  @@map("referrers")
+}
+
+model AssociateCommission {
+  id                Int              @id @default(autoincrement())
+  associate_id      Int
+  candidate_job_id  Int
+  commission_amount Decimal          @db.Decimal(10, 2)
+  status            CommissionStatus @default(earned)
+  earned_date       DateTime?        @db.Date
+  paid_date         DateTime?        @db.Date
+  payment_reference String?          @db.VarChar(200)
+  created_at        DateTime         @default(now())
+
+  associate     Associate    @relation(fields: [associate_id], references: [id])
+  candidate_job CandidateJob @relation(fields: [candidate_job_id], references: [id])
+
+  @@index([associate_id])
+  @@map("associate_commissions")
+}
+
+model InterviewEvent {
+  id              Int                  @id @default(autoincrement())
+  job_id          Int
+  event_date      DateTime             @db.Date
+  venue_name      String?              @db.VarChar(300)
+  venue_address   String?
+  venue_phone     String?              @db.VarChar(20)
+  capacity        Int?
+  interviewer_name String?             @db.VarChar(200)
+  interview_type  InterviewType?
+  candidate_count Int?
+  results_timing  ResultsTiming        @default(same_day)
+  status          InterviewEventStatus @default(scheduled)
+  notes           String?
+  created_by      String
+  created_at      DateTime             @default(now())
+  updated_at      DateTime             @updatedAt
+
+  job      Job               @relation(fields: [job_id], references: [id])
+  checkins InterviewCheckin[]
+
+  @@index([job_id])
+  @@index([event_date])
+  @@map("interview_events")
+}
+
+model InterviewCheckin {
+  id                 Int              @id @default(autoincrement())
+  interview_event_id Int
+  candidate_job_id   Int
+  checkin_status     CheckinStatus    @default(expected)
+  checkin_time       DateTime?
+  interview_status   InterviewStatus?
+  result             InterviewResult?
+  result_notes       String?
+  slot_number        Int?
+  checked_in_by      String?
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+
+  interview_event InterviewEvent @relation(fields: [interview_event_id], references: [id])
+  candidate_job   CandidateJob   @relation(fields: [candidate_job_id], references: [id])
+
+  @@index([interview_event_id])
+  @@map("interview_checkins")
+}
+
+model Dropout {
+  id                           Int           @id @default(autoincrement())
+  candidate_job_id             Int
+  dropout_stage                String        @db.VarChar(100)
+  dropout_reason               DropoutReason
+  reason_details               String?
+  replacement_candidate_job_id Int?
+  recorded_by                  String
+  created_at                   DateTime      @default(now())
+
+  candidate_job CandidateJob @relation(fields: [candidate_job_id], references: [id])
+
+  @@index([candidate_job_id])
+  @@map("dropouts")
+}
+
+
+model FeeChangeRequest {
+  id               Int             @id @default(autoincrement())
+  candidate_job_id Int
+  requested_by     String
+  original_fee     Decimal         @db.Decimal(10, 2)
+  requested_fee    Decimal         @db.Decimal(10, 2)
+  reason           String
+  status           FeeChangeStatus @default(pending)
+  approved_by      String?
+  approved_at      DateTime?
+  created_at       DateTime        @default(now())
+
+  candidate_job CandidateJob @relation(fields: [candidate_job_id], references: [id])
+
+  @@index([candidate_job_id])
+  @@map("fee_change_requests")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  user_id     String?
+  entity_type String   @db.VarChar(100)
+  entity_id   String   @db.VarChar(100)
+  action      String   @db.VarChar(50)
+  old_value   Json?
+  new_value   Json?
+  ip_address  String?  @db.VarChar(50)
+  created_at  DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@index([entity_type, entity_id])
+  @@index([user_id])
+  @@index([created_at])
+  @@map("activity_log")
+}
+
+// ─── MASTER TABLES ──────────────────────────────────────
+
+model Trade {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique @db.VarChar(200)
+  display_order Int       @default(0)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+
+  candidates_pos1 Candidate[]   @relation("position1")
+  candidates_pos2 Candidate[]   @relation("position2")
+  candidates_pos3 Candidate[]   @relation("position3")
+  jobs            Job[]
+  job_positions   JobPosition[] @relation("job_position_trade")
+  candidate_jobs  CandidateJob[] @relation("candidate_job_trade")
+  deployments     Deployment[]  @relation("deployment_position")
+
+  @@map("trades")
+}
+
+model State {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique @db.VarChar(200)
+  display_order Int       @default(0)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+
+  cities     City[]
+  candidates Candidate[]
+
+  @@map("states")
+}
+
+model City {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(200)
+  state_id      Int
+  display_order Int       @default(0)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+
+  state      State       @relation(fields: [state_id], references: [id])
+  candidates Candidate[]
+
+  @@unique([name, state_id])
+  @@index([state_id])
+  @@map("cities")
+}
+
+model Source {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique @db.VarChar(200)
+  display_order Int       @default(0)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+
+  candidates Candidate[]
+
+  @@map("sources")
+}
+
+model InterviewVenue {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique @db.VarChar(300)
+  address         String?   @db.VarChar(500)
+  city            String?   @db.VarChar(200)
+  phone           String?   @db.VarChar(20)
+  google_maps_url String?   @db.VarChar(1000)
+  display_order   Int       @default(0)
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+
+  @@map("interview_venues")
+}
+
+model MessageTemplate {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(200)
+  template_type String   @db.VarChar(50)
+  subject       String?  @db.VarChar(500)
+  body          String
+  is_active     Boolean  @default(true)
+  created_by    String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("message_templates")
+}
+
+model Notification {
+  id                  Int       @id @default(autoincrement())
+  user_id             String
+  message             String
+  type                String    @default("info") @db.VarChar(50)
+  is_read             Boolean   @default(false)
+  related_entity_type String?   @db.VarChar(100)
+  related_entity_id   String?   @db.VarChar(100)
+  created_at          DateTime  @default(now())
+  read_at             DateTime?
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, is_read])
+  @@map("notifications")
+}
+
+enum DeploymentStatus {
+  active
+  completed
+  terminated
+  extended
+}
+
+model Deployment {
+  id                      Int              @id @default(autoincrement())
+  candidate_id            Int
+  candidate_job_id        Int?
+  company_id              Int
+  position_id             Int
+  deployment_date         DateTime         @db.Date
+  contract_end_date       DateTime         @db.Date
+  salary_amount           Decimal          @db.Decimal(10, 2)
+  salary_currency         String           @default("SAR") @db.VarChar(10)
+  country                 GulfCountry
+  visa_number             String?          @db.VarChar(50)
+  emergency_contact_name  String?          @db.VarChar(200)
+  emergency_contact_phone String?          @db.VarChar(20)
+  status                  DeploymentStatus @default(active)
+  notes                   String?
+  expiry_notified         Boolean          @default(false)
+  created_by              String
+  created_at              DateTime         @default(now())
+  updated_at              DateTime         @updatedAt
+
+  candidate     Candidate    @relation(fields: [candidate_id], references: [id])
+  candidate_job CandidateJob? @relation(fields: [candidate_job_id], references: [id])
+  company       Company      @relation(fields: [company_id], references: [id])
+  position      Trade        @relation("deployment_position", fields: [position_id], references: [id])
+  created_by_user User       @relation("deployment_creator", fields: [created_by], references: [id])
+
+  @@index([candidate_id])
+  @@index([status])
+  @@index([contract_end_date])
+  @@map("deployments")
+}
