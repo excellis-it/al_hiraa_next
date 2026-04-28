@@ -37,10 +37,9 @@ const CHECKIN_STATUSES = [
 ];
 
 const INTERVIEW_STATUSES = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'in_progress', label: 'In Progress' },
+  { value: 'waiting', label: 'Waiting' },
+  { value: 'in_interview', label: 'In Interview' },
   { value: 'completed', label: 'Completed' },
-  { value: 'skipped', label: 'Skipped' },
 ];
 
 const RESULT_OPTIONS = [
