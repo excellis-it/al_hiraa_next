@@ -31,7 +31,7 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 SQL_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'excelv4f_alhiraa (2).sql')
-DB_URL = os.environ.get('DATABASE_URL', 'postgresql://excellis:1234@127.0.0.1:5433/alhiradb')
+DB_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Excellis2026@localhost:5433/al_hiraa')
 
 # Single shared system user for all old-DB user references
 DEFAULT_USER_ID = 'admin-001'
