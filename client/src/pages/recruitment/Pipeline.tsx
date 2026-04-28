@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Search, Filter, ChevronLeft, ChevronRight, Edit2, Phone, X, CheckSquare, Square, ClipboardList } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import { useGetPipelineQuery, useUpdatePipelineStatusMutation } from '../../store/api/pipelineApi';
@@ -41,11 +41,11 @@ export default function Pipeline() {
   const [followUpToday, setFollowUpToday] = useState(false);
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  // Debounce search to avoid firing on every keystroke
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
-    clearTimeout((handleSearchChange as any)._timer);
-    (handleSearchChange as any)._timer = setTimeout(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
       setDebouncedSearch(value);
       setPage(1);
     }, 300);

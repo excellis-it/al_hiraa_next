@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router';
+import toast from 'react-hot-toast';
 import {
   UserPlus, Search, ChevronLeft, ChevronRight, Eye, ChevronDown,
   MessageSquare, Mail, Phone, Download, Upload, Filter, X, CheckSquare, Square,
@@ -127,65 +128,138 @@ function CellValue({ col, row }: { col: string; row: any }) {
       );
     case 'last_call_status': return <CallStatusBadge value={row.last_call_status} />;
     case 'interview_status': return <InterviewBadge value={row.interview_status} />;
-    case 'created_at': return <span className="text-xs text-gray-500 whitespace-nowrap">{fmtDate(row.created_at)}</span>;
-    case 'updated_at': return <span className="text-xs text-gray-500 whitespace-nowrap">{fmtDate(row.updated_at)}</span>;
-    case 'dob': return <span className="text-xs text-gray-600 whitespace-nowrap">{fmtDate(row.dob)}</span>;
-    case 'age': return <span className="text-xs text-gray-600">{calcAge(row.dob) ?? '—'}</span>;
+    case 'created_at': return <span className="text-[11px] text-gray-400 whitespace-nowrap tabular-nums">{fmtDate(row.created_at)}</span>;
+    case 'updated_at': return <span className="text-[11px] text-gray-400 whitespace-nowrap tabular-nums">{fmtDate(row.updated_at)}</span>;
+    case 'dob': return <span className="text-[11px] text-gray-500 whitespace-nowrap tabular-nums">{fmtDate(row.dob)}</span>;
+    case 'age': {
+      const age = calcAge(row.dob);
+      return age != null
+        ? <span className="text-[11px] font-semibold text-gray-600 tabular-nums">{age}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
+    }
     case 'full_name':
-      return <span className="font-semibold text-gray-800 text-xs whitespace-nowrap">{row.full_name}</span>;
-    case 'gender':
-      return <span className="text-xs text-gray-600 capitalize">{row.gender || '—'}</span>;
+      return <span className="font-semibold text-gray-900 text-xs whitespace-nowrap">{row.full_name}</span>;
+    case 'gender': {
+      if (!row.gender) return <span className="text-gray-300 text-xs">—</span>;
+      const isMale = row.gender.toLowerCase() === 'male';
+      return (
+        <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full ${isMale ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+          {row.gender}
+        </span>
+      );
+    }
     case 'whatsapp_no': case 'alternate_contact':
-      return <span className="font-mono text-xs text-gray-600">{row[col] || '—'}</span>;
+      return row[col]
+        ? <span className="font-mono text-[11px] text-gray-600 tracking-tight">{row[col]}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'email':
-      return <span className="text-xs text-gray-600 truncate max-w-[170px] block">{row.email || '—'}</span>;
-    case 'state': return <span className="text-xs text-gray-600">{row.state?.name || '—'}</span>;
-    case 'city': return <span className="text-xs text-gray-600">{row.city?.name || '—'}</span>;
-    case 'position_1': return <span className="text-xs text-blue-700 font-medium">{row.position_1?.name || '—'}</span>;
-    case 'position_2': return <span className="text-xs text-gray-600">{row.position_2?.name || '—'}</span>;
-    case 'position_3': return <span className="text-xs text-gray-600">{row.position_3?.name || '—'}</span>;
-    case 'source': return <span className="text-xs text-gray-600">{row.source?.name || '—'}</span>;
-    case 'associate': return <span className="text-xs text-gray-600">{row.associate?.full_name || '—'}</span>;
+      return row.email
+        ? <span className="text-[11px] text-gray-500 truncate max-w-[170px] block">{row.email}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
+    case 'state': return <span className="text-[11px] text-gray-600">{row.state?.name || <span className="text-gray-300">—</span>}</span>;
+    case 'city': return <span className="text-[11px] text-gray-600">{row.city?.name || <span className="text-gray-300">—</span>}</span>;
+    case 'position_1':
+      return row.position_1?.name
+        ? <span className="inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{row.position_1.name}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
+    case 'position_2':
+      return row.position_2?.name
+        ? <span className="inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{row.position_2.name}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
+    case 'position_3':
+      return row.position_3?.name
+        ? <span className="inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{row.position_3.name}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
+    case 'source':
+      return row.source?.name
+        ? <span className="text-[11px] text-violet-700 font-medium">{row.source.name}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
+    case 'associate':
+      return row.associate?.full_name
+        ? <span className="text-[11px] text-gray-600">{row.associate.full_name}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'passport_no':
       return row.passport_no
-        ? <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{row.passport_no}</span>
+        ? <span className="font-mono text-[11px] bg-gray-100 px-2 py-0.5 rounded-md text-gray-700 tracking-wide">{row.passport_no}</span>
         : <span className="text-gray-300 text-xs">—</span>;
     case 'candidate_code':
-      return <span className="font-mono text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-md">{row.candidate_code}</span>;
+      return <span className="font-mono text-[11px] text-blue-600 font-bold bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-lg">{row.candidate_code}</span>;
     case 'indian_driving_license':
-      return <span className="text-xs text-gray-600">{(row.indian_driving_license || []).join(', ') || '—'}</span>;
+      return (row.indian_driving_license || []).length
+        ? <span className="text-[11px] text-gray-600">{(row.indian_driving_license || []).join(', ')}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'gulf_driving_license':
-      return <span className="text-xs text-gray-600">{(row.gulf_driving_license || []).join(', ') || '—'}</span>;
+      return (row.gulf_driving_license || []).length
+        ? <span className="text-[11px] text-gray-600">{(row.gulf_driving_license || []).join(', ')}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'arabic_speaking':
-      return <span className="text-xs text-gray-600">{row.arabic_speaking ? 'Yes' : 'No'}</span>;
+      return (
+        <span className={`inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full ${row.arabic_speaking ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+          {row.arabic_speaking ? 'Yes' : 'No'}
+        </span>
+      );
     case 'gulf_return':
-      return <span className="text-xs text-gray-600">{row.gulf_return ? 'Yes' : 'No'}</span>;
+      return (
+        <span className={`inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full ${row.gulf_return ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-400'}`}>
+          {row.gulf_return ? 'Yes' : 'No'}
+        </span>
+      );
     case 'english_speaking':
-      return <span className="text-xs text-gray-600 capitalize">{row.english_speaking?.replace(/_/g, ' ') || '—'}</span>;
+      return row.english_speaking
+        ? <span className="text-[11px] text-gray-600 capitalize">{row.english_speaking.replace(/_/g, ' ')}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'ecr_type':
-      return <span className="text-xs text-gray-600 uppercase">{row.ecr_type || '—'}</span>;
+      return row.ecr_type
+        ? <span className={`inline-flex text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${row.ecr_type === 'ecr' ? 'bg-violet-50 text-violet-700' : 'bg-cyan-50 text-cyan-700'}`}>{row.ecr_type}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'registration_mode':
-      return <span className="text-xs text-gray-600 capitalize">{row.registration_mode?.replace(/_/g, ' ') || '—'}</span>;
+      return row.registration_mode
+        ? <span className="text-[11px] text-gray-500 capitalize">{row.registration_mode.replace(/_/g, ' ')}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'remarks':
-      return <span className="text-xs text-gray-500 line-clamp-1">{row.remarks || '—'}</span>;
+      return row.remarks
+        ? <span className="text-[11px] text-gray-500 line-clamp-1">{row.remarks}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     case 'registered_by_name':
-      return <span className="text-xs text-gray-600">{row.registered_by_name || '—'}</span>;
+      return <span className="text-[11px] text-gray-600">{row.registered_by_name || <span className="text-gray-300">—</span>}</span>;
     case 'referred_by':
-      return <span className="text-xs text-gray-600">{row.referrer?.name || '—'}</span>;
+      return row.referrer?.name
+        ? <span className="text-[11px] text-gray-600">{row.referrer.name}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
     default:
-      return <span className="text-xs text-gray-600">{row[col] ?? '—'}</span>;
+      return <span className="text-[11px] text-gray-600">{row[col] != null ? row[col] : <span className="text-gray-300">—</span>}</span>;
   }
 }
 
 // ── Column header filter dropdown ─────────────────────────────────────────────
 
-const COLUMN_FILTER_OPTIONS: Record<string, string[]> = {
-  status: ['active', 'inactive', 'deployed', 'blacklisted'],
-  completion_status: ['complete', 'incomplete'],
-  gender: ['male', 'female'],
-  ecr_type: ['ecr', 'ecnr'],
-  gulf_return: ['true', 'false'],
-  arabic_speaking: ['true', 'false'],
+const COLUMN_FILTER_OPTIONS: Record<string, { label: string; value: string; dot?: string }[]> = {
+  status: [
+    { label: 'Active',      value: 'active',      dot: 'bg-emerald-500' },
+    { label: 'Inactive',    value: 'inactive',    dot: 'bg-gray-400'    },
+    { label: 'Deployed',    value: 'deployed',    dot: 'bg-blue-500'    },
+    { label: 'Blacklisted', value: 'blacklisted', dot: 'bg-red-500'     },
+  ],
+  completion_status: [
+    { label: 'Complete',   value: 'complete',   dot: 'bg-emerald-500' },
+    { label: 'Incomplete', value: 'incomplete', dot: 'bg-amber-400'   },
+  ],
+  gender: [
+    { label: 'Male',   value: 'male',   dot: 'bg-blue-400'   },
+    { label: 'Female', value: 'female', dot: 'bg-pink-400'   },
+  ],
+  ecr_type: [
+    { label: 'ECR',  value: 'ecr',  dot: 'bg-violet-400' },
+    { label: 'ECNR', value: 'ecnr', dot: 'bg-cyan-400'   },
+  ],
+  gulf_return: [
+    { label: 'Yes', value: 'true',  dot: 'bg-emerald-500' },
+    { label: 'No',  value: 'false', dot: 'bg-gray-400'    },
+  ],
+  arabic_speaking: [
+    { label: 'Yes', value: 'true',  dot: 'bg-emerald-500' },
+    { label: 'No',  value: 'false', dot: 'bg-gray-400'    },
+  ],
 };
 
 function ColFilter({
@@ -198,32 +272,85 @@ function ColFilter({
   onChange: (v: string) => void;
 }) {
   const opts = COLUMN_FILTER_OPTIONS[col];
+
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
   if (!opts) return null;
 
+  const activeOpt = opts.find(o => o.value === value);
+
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
+    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      {/* Trigger button */}
       <button
-        className={`ml-1 p-0.5 rounded hover:bg-white/30 transition-colors ${value ? 'text-white' : 'text-white/50'}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          const next = document.getElementById(`col-filter-${col}`);
-          if (next) next.focus();
-        }}
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className={`ml-1 flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
+          value ? 'bg-white/20 text-white' : 'text-white/40 hover:text-white/70 hover:bg-white/10'
+        }`}
       >
-        <ChevronDown size={10} />
+        {activeOpt?.dot && (
+          <span className={`w-1.5 h-1.5 rounded-full ${activeOpt.dot} ring-1 ring-white/40`} />
+        )}
+        <ChevronDown size={9} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
-      <select
-        id={`col-filter-${col}`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
-        style={{ fontSize: '1px' }}
-      >
-        <option value="">All</option>
-        {opts.map((o) => (
-          <option key={o} value={o}>{o}</option>
-        ))}
-      </select>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-[300] min-w-[140px] overflow-hidden"
+          style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06)' }}
+        >
+          {/* Header */}
+          <div className="px-3 py-2 border-b border-gray-50">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Filter</span>
+          </div>
+          {/* All option */}
+          <button
+            type="button"
+            onClick={() => { onChange(''); setOpen(false); }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors ${
+              !value ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
+            <span className="flex-1 text-left">All</span>
+            {!value && <span className="text-blue-500">✓</span>}
+          </button>
+          {/* Divider */}
+          <div className="mx-3 border-t border-gray-50" />
+          {/* Options */}
+          {opts.map((o) => {
+            const isSelected = value === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => { onChange(o.value); setOpen(false); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors ${
+                  isSelected ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {o.dot
+                  ? <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${o.dot}`} />
+                  : <span className="w-1.5 h-1.5 flex-shrink-0" />
+                }
+                <span className="flex-1 text-left">{o.label}</span>
+                {isSelected && <span className="text-blue-500">✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -896,9 +1023,9 @@ export default function CandidateList() {
     el.scrollBy({ left: direction === 'right' ? 400 : -400, behavior: 'smooth' });
   };
 
-  const { data: tradesData } = useGetTradesQuery(true);
-  const { data: sourcesData } = useGetSourcesQuery(true);
-  const { data: statesData } = useGetStatesQuery(undefined);
+  const { data: tradesData } = useGetTradesQuery(true, { skip: !showAdvanced });
+  const { data: sourcesData } = useGetSourcesQuery(true, { skip: !showMoreFilters });
+  const { data: statesData } = useGetStatesQuery(undefined, { skip: !showAdvanced });
   const { data: citiesData } = useGetCitiesQuery(
     filterStateId ? { state_id: Number(filterStateId) } : undefined,
     { skip: !filterStateId }
@@ -1270,10 +1397,11 @@ export default function CandidateList() {
       )}
 
       {/* Table */}
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
         {isLoading ? (
-          <div className="flex items-center justify-center flex-1">
-            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          <div className="flex items-center justify-center flex-1 gap-3">
+            <div className="w-7 h-7 border-[3px] border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+            <span className="text-sm text-gray-400 font-medium">Loading candidates…</span>
           </div>
         ) : (
           <>
@@ -1281,30 +1409,28 @@ export default function CandidateList() {
             <div className="overflow-auto flex-1" ref={tableScrollRef}>
               <table className="border-collapse" style={{ minWidth: '4100px' }}>
                 <thead>
-                  <tr className="bg-slate-700 text-white text-[11px] font-semibold">
+                  <tr className="text-[11px] font-semibold tracking-wide uppercase"
+                    style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
                     {/* Sticky: checkbox */}
                     <th
-                      className="sticky left-0 z-20 bg-slate-700 px-3 py-2.5 border-r border-slate-600"
-                      style={{ width: 40, minWidth: 40 }}
+                      className="sticky left-0 z-20 px-3 py-3 border-r border-white/10"
+                      style={{ width: 40, minWidth: 40, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}
                     >
-                      <button onClick={toggleAll} className="flex items-center justify-center text-white/80 hover:text-white">
-                        {allOnPageSelected
-                          ? <CheckSquare size={14} />
-                          : <Square size={14} />
-                        }
+                      <button onClick={toggleAll} className="flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                        {allOnPageSelected ? <CheckSquare size={14} className="text-blue-400" /> : <Square size={14} />}
                       </button>
                     </th>
                     {/* Sticky: # */}
                     <th
-                      className="sticky left-[40px] z-20 bg-slate-700 px-2 py-2.5 border-r border-slate-600 text-center"
-                      style={{ width: 44, minWidth: 44 }}
+                      className="sticky left-[40px] z-20 px-2 py-3 border-r border-white/10 text-center text-slate-400"
+                      style={{ width: 44, minWidth: 44, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}
                     >
                       #
                     </th>
                     {/* Sticky: view */}
                     <th
-                      className="sticky left-[84px] z-20 bg-slate-700 px-2 py-2.5 border-r border-slate-600 text-center"
-                      style={{ width: 44, minWidth: 44 }}
+                      className="sticky left-[84px] z-20 px-2 py-3 border-r border-white/10 text-center text-slate-400"
+                      style={{ width: 44, minWidth: 44, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}
                     >
                       View
                     </th>
@@ -1312,7 +1438,7 @@ export default function CandidateList() {
                     {COLUMNS.map((col) => (
                       <th
                         key={col.key}
-                        className="px-3 py-2.5 text-left border-r border-slate-600 last:border-r-0 whitespace-nowrap"
+                        className="px-3 py-3 text-left border-r border-white/10 last:border-r-0 whitespace-nowrap text-slate-300"
                         style={{ width: col.width, minWidth: col.width }}
                       >
                         <div className="flex items-center gap-1">
@@ -1334,37 +1460,39 @@ export default function CandidateList() {
                   {rows.map((row, idx) => {
                     const isSelected = selected.has(row.id);
                     const rowNum = (page - 1) * 50 + idx + 1;
+                    const rowBg = isSelected ? 'bg-blue-50' : 'bg-white hover:bg-slate-50/80';
+                    const stickyBg = isSelected ? 'bg-blue-50' : 'bg-white';
                     return (
                       <tr
                         key={row.id}
-                        className={`border-b border-gray-50 text-xs transition-colors ${
-                          isSelected ? 'bg-blue-50' : idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-gray-50 hover:bg-slate-50'
-                        }`}
+                        className={`text-xs transition-colors group ${rowBg} ${isSelected ? 'ring-inset ring-1 ring-blue-200' : ''}`}
                       >
                         {/* Sticky: checkbox */}
                         <td
-                          className={`sticky left-0 z-10 px-3 py-2 border-r border-gray-100 ${isSelected ? 'bg-blue-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                          style={{ width: 40, minWidth: 40 }}
+                          className={`sticky left-0 z-10 px-3 py-2.5 border-b border-r border-gray-100 ${stickyBg}`}
+                          style={{ width: 40, minWidth: 40, boxShadow: '2px 0 4px rgba(0,0,0,0.04)' }}
                         >
-                          <button onClick={() => toggleOne(row.id)} className="flex items-center justify-center text-gray-400 hover:text-blue-600">
-                            {isSelected ? <CheckSquare size={14} className="text-blue-600" /> : <Square size={14} />}
+                          <button onClick={() => toggleOne(row.id)} className="flex items-center justify-center text-gray-300 hover:text-blue-500 transition-colors">
+                            {isSelected
+                              ? <CheckSquare size={14} className="text-blue-500" />
+                              : <Square size={14} className="group-hover:text-gray-400" />}
                           </button>
                         </td>
                         {/* Sticky: # */}
                         <td
-                          className={`sticky left-[40px] z-10 px-2 py-2 border-r border-gray-100 text-center text-gray-400 font-mono ${isSelected ? 'bg-blue-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                          className={`sticky left-[40px] z-10 px-2 py-2.5 border-b border-r border-gray-100 text-center text-[11px] font-medium text-gray-400 ${stickyBg}`}
                           style={{ width: 44, minWidth: 44 }}
                         >
                           {rowNum}
                         </td>
                         {/* Sticky: view */}
                         <td
-                          className={`sticky left-[84px] z-10 px-2 py-2 border-r border-gray-100 text-center ${isSelected ? 'bg-blue-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                          style={{ width: 44, minWidth: 44 }}
+                          className={`sticky left-[84px] z-10 px-2 py-2.5 border-b border-r border-gray-100 text-center ${stickyBg}`}
+                          style={{ width: 44, minWidth: 44, boxShadow: '3px 0 8px rgba(0,0,0,0.06)' }}
                         >
                           <button
                             onClick={() => setDrawerCandidateId(row.id)}
-                            className="inline-flex items-center justify-center w-6 h-6 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-100 transition-all"
                             title="View details"
                           >
                             <Eye size={13} />
@@ -1374,7 +1502,7 @@ export default function CandidateList() {
                         {COLUMNS.map((col) => (
                           <td
                             key={col.key}
-                            className="px-3 py-2 border-r border-gray-100 last:border-r-0"
+                            className="px-3 py-2.5 border-b border-r border-gray-100 last:border-r-0 text-gray-700"
                             style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
                           >
                             <CellValue col={col.key} row={row} />
@@ -1385,10 +1513,16 @@ export default function CandidateList() {
                   })}
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={COLUMNS.length + 3} className="py-20 text-center">
-                        <Users size={40} className="mx-auto mb-3 text-gray-200" strokeWidth={1} />
-                        <p className="text-sm text-gray-400 font-medium">No candidates found</p>
-                        <p className="text-xs text-gray-300 mt-1">Try adjusting search or filters</p>
+                      <td colSpan={COLUMNS.length + 3} className="py-24 text-center">
+                        <div className="inline-flex flex-col items-center gap-3">
+                          <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                            <Users size={28} className="text-gray-300" strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-500">No candidates found</p>
+                            <p className="text-xs text-gray-400 mt-0.5">Try adjusting your search or filters</p>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -1397,39 +1531,41 @@ export default function CandidateList() {
             </div>
 
             {/* Horizontal scroll controls */}
-            <div className="flex items-center gap-1.5 px-4 py-2 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
-              <span className="text-[10px] text-gray-400 font-medium mr-1">SCROLL</span>
-              <button onClick={() => scrollTable('far-left')} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 transition-colors" title="Jump to start">
-                <ChevronsLeft size={13} />
+            <div className="flex items-center gap-1.5 px-4 py-2 border-t border-gray-100 bg-gray-50/70 flex-shrink-0">
+              <span className="text-[10px] text-gray-400 font-semibold tracking-widest uppercase mr-1">Scroll</span>
+              <button onClick={() => scrollTable('far-left')} className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-blue-600 hover:border-blue-300 hover:shadow-sm transition-all" title="Jump to start">
+                <ChevronsLeft size={12} />
               </button>
-              <button onClick={() => scrollTable('left')} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 transition-colors" title="Scroll left">
-                <ChevronLeft size={13} />
+              <button onClick={() => scrollTable('left')} className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-blue-600 hover:border-blue-300 hover:shadow-sm transition-all" title="Scroll left">
+                <ChevronLeft size={12} />
               </button>
-              <div className="flex-1 mx-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-400 rounded-full w-1/4 opacity-60" />
+              <div className="flex-1 mx-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-400 rounded-full w-1/4" />
               </div>
-              <button onClick={() => scrollTable('right')} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 transition-colors" title="Scroll right">
-                <ChevronRight size={13} />
+              <button onClick={() => scrollTable('right')} className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-blue-600 hover:border-blue-300 hover:shadow-sm transition-all" title="Scroll right">
+                <ChevronRight size={12} />
               </button>
-              <button onClick={() => scrollTable('far-right')} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 transition-colors" title="Jump to end">
-                <ChevronsRight size={13} />
+              <button onClick={() => scrollTable('far-right')} className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-blue-600 hover:border-blue-300 hover:shadow-sm transition-all" title="Jump to end">
+                <ChevronsRight size={12} />
               </button>
             </div>
 
             {/* Pagination */}
             {meta && meta.pages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 flex-shrink-0">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-white flex-shrink-0">
                 <span className="text-xs text-gray-400">
-                  Showing <span className="font-semibold text-gray-700">{(page - 1) * 50 + 1}–{Math.min(page * 50, meta.total)}</span> of{' '}
-                  <span className="font-semibold text-gray-700">{meta.total.toLocaleString()}</span>
+                  Showing{' '}
+                  <span className="font-semibold text-gray-700">{(page - 1) * 50 + 1}–{Math.min(page * 50, meta.total)}</span>
+                  {' '}of{' '}
+                  <span className="font-semibold text-gray-700">{meta.total.toLocaleString()}</span> candidates
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-600 hover:shadow-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                   >
-                    <ChevronLeft size={14} />
+                    <ChevronLeft size={13} />
                   </button>
                   {Array.from({ length: Math.min(meta.pages, 7) }, (_, i) => {
                     const p = Math.max(1, Math.min(meta.pages - 6, page - 3)) + i;
@@ -1437,8 +1573,10 @@ export default function CandidateList() {
                       <button
                         key={p}
                         onClick={() => setPage(p)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors ${
-                          page === p ? 'bg-blue-600 text-white shadow-sm' : 'border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600'
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-all ${
+                          page === p
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                            : 'border border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-600 hover:shadow-sm'
                         }`}
                       >
                         {p}
@@ -1448,9 +1586,9 @@ export default function CandidateList() {
                   <button
                     onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
                     disabled={page >= meta.pages}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-600 hover:shadow-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                   >
-                    <ChevronRight size={14} />
+                    <ChevronRight size={13} />
                   </button>
                 </div>
               </div>

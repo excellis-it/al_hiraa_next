@@ -852,13 +852,13 @@ type EventGroup = {
 // ── Group Card ────────────────────────────────────────────────────────────────
 
 function GroupCard({
-  group, isActive, stageCounts, onClick,
-}: { group: EventGroup; isActive: boolean; stageCounts: Record<string,number>; onClick: () => void }) {
-  const { companyName, date, events, totalCheckins } = group;
+  group, isActive, stageCounts, processCount, onClick,
+}: { group: EventGroup; isActive: boolean; stageCounts: Record<string,number>; processCount: number; onClick: () => void }) {
+  const { companyName, date, events } = group;
   const initial  = companyName.charAt(0).toUpperCase();
   const daysLeft = daysFromNow(date);
   const isPast   = daysLeft !== null && daysLeft < 0;
-  const total    = isActive ? (stageCounts.all ?? totalCheckins) : totalCheckins;
+  const total    = isActive ? (stageCounts.all ?? processCount) : processCount;
   const trades   = events.map((e: any) => e.job?.title).filter(Boolean) as string[];
   const tradeLabel = trades.length <= 2
     ? trades.join(', ')
@@ -932,8 +932,8 @@ function GroupCard({
 
 export default function ProcessModule() {
   const [search, setSearch]               = useState('');
-  const [stageFilter, setStageFilter]     = useState<string>('selection');
-  const [tradeFilter, setTradeFilter]     = useState<string>('selection');
+  const [stageFilter, setStageFilter]     = useState<string>('all');
+  const [tradeFilter, setTradeFilter]     = useState<string>('all');
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | 'all' | null>(null);
   const [viewRecord, setViewRecord]       = useState<any | null>(null);
   const [editRecord, setEditRecord]       = useState<any | null>(null);
@@ -974,6 +974,15 @@ export default function ProcessModule() {
 
   const { data, isLoading, refetch } = useGetAllProcessDetailsQuery(queryParams);
   const records: any[] = data?.data || [];
+
+  // Pre-compute process record count per group key for accurate inactive card counts
+  const recordCountByGroupKey = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const group of eventGroups) {
+      counts[group.key] = records.filter(r => group.jobIds.includes(r.candidate_job?.job?.id)).length;
+    }
+    return counts;
+  }, [records, eventGroups]);
 
   // Filter by active group's job IDs (client-side, covers all trades in the group)
   const groupFiltered = useMemo(() => {
@@ -1042,8 +1051,9 @@ export default function ProcessModule() {
                 group={group}
                 isActive={isActive}
                 stageCounts={isActive ? stageCounts : {}}
+                processCount={recordCountByGroupKey[group.key] ?? 0}
                 onClick={() => {
-                  setStageFilter('selection');
+                  setStageFilter('all');
                   setTradeFilter('all');
                   setSelectedGroupKey(isActive ? 'all' : group.key);
                 }}
@@ -1082,7 +1092,7 @@ export default function ProcessModule() {
         {PIPELINE_STAGES.map(s => {
           const isActive = stageFilter === s.key;
           return (
-            <button key={s.key} onClick={() => setStageFilter(s.key)}
+            <button key={s.key} onClick={() => setStageFilter(isActive ? 'all' : s.key)}
               className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-xl border-2 transition-all ${isActive ? 'border-amber-400 bg-amber-50 shadow' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
               <span className={`text-xl font-bold ${isActive ? 'text-amber-700' : 'text-gray-700'}`}>{stageCounts[s.key] || 0}</span>
               <span className={`text-[10px] font-semibold text-center leading-tight mt-0.5 ${isActive ? 'text-amber-700' : 'text-gray-400'}`}>{s.label}</span>

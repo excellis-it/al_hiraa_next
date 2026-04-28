@@ -60,11 +60,12 @@ export default function TopNav() {
   };
 
   const initials = user?.full_name
-    .split(' ')
+    ?.split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(0, 2)
     .join('')
-    .toUpperCase();
+    .toUpperCase() ?? '';
 
   const isAdmin = user?.role === 'admin';
 
@@ -99,7 +100,7 @@ export default function TopNav() {
               aria-haspopup="menu"
               aria-expanded={menuOpen}
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {initials}
               </div>
               <div className="hidden sm:block text-left">
@@ -117,7 +118,7 @@ export default function TopNav() {
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 mt-2 w-64 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 z-[60] overflow-hidden"
+                className="absolute right-0 mt-2 w-64 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 z-60 overflow-hidden"
               >
                 <div className="px-4 py-3 border-b border-gray-100">
                   <div className="text-sm font-semibold text-gray-800 truncate">{user.full_name}</div>
