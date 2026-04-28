@@ -319,9 +319,10 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
 // ── Company Interview Card ─────────────────────────────────────────────────────
 
-function CompanyCard({ cg, events, onPrintFlyer, onEdit, onDelete }: {
-  cg: { companyId: number; companyName: string; color: typeof COMPANY_COLORS[0]; jobs: any[] };
+function JobRow({ job, events, color, onPrintFlyer, onEdit, onDelete }: {
+  job: any;
   events: any[];
+  color: typeof COMPANY_COLORS[0];
   onPrintFlyer: (jobs: any[]) => void;
   onEdit: (job: any) => void;
   onDelete: (jobId: number) => void;
@@ -329,16 +330,11 @@ function CompanyCard({ cg, events, onPrintFlyer, onEdit, onDelete }: {
   const navigate = useNavigate();
   const [createEvent, { isLoading: creatingEvent }] = useCreateInterviewEventMutation();
   const [expanded, setExpanded] = useState(true);
-  const totalPositions = cg.jobs.reduce((s: number, j: any) => s + (j.positions_required || 0), 0);
-  const allPositions: any[] = cg.jobs.flatMap((j: any) => (j.positions || []).map((p: any) => ({ ...p, _job: j })));
-
-  // Find the first interview event ID for "View" link
-  const firstEventId = events.find((e: any) => cg.jobs.some((j: any) => j.id === e.job_id))?.id;
+  const positions: any[] = job.positions || [];
+  const eventId = events.find((e: any) => e.job_id === job.id)?.id;
 
   async function handleView() {
-    if (firstEventId) { navigate(`/recruitment/interviews/${firstEventId}`); return; }
-    const job = cg.jobs[0];
-    if (!job) return;
+    if (eventId) { navigate(`/recruitment/interviews/${eventId}`); return; }
     try {
       const eventDate = job.interview_date_start
         ? new Date(job.interview_date_start).toISOString().slice(0, 10)
@@ -351,8 +347,70 @@ function CompanyCard({ cg, events, onPrintFlyer, onEdit, onDelete }: {
   }
 
   return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {job.title && (
+          <span className={`text-xs font-semibold ${color.text} truncate max-w-xs`}>{job.title}</span>
+        )}
+        <span className="text-[10px] text-gray-400 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+          {job.positions_required || 0} vacancies
+        </span>
+        <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+          <button onClick={() => onPrintFlyer([job])} title="View Flyer" className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded-lg hover:shadow-sm hover:border-gray-300 transition-all">
+            <Download size={11} /> Flyer
+          </button>
+          <button onClick={handleView} disabled={creatingEvent} className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg hover:shadow-sm transition-all disabled:opacity-50">
+            <Eye size={11} /> View
+          </button>
+          <button onClick={() => onEdit(job)} title="Edit" className="p-1 text-gray-400 hover:text-blue-600 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all">
+            <Edit2 size={12} />
+          </button>
+          <button onClick={() => { if (confirm('Delete this interview?')) onDelete(job.id); }} title="Delete" className="p-1 text-gray-400 hover:text-red-600 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all">
+            <Trash2 size={12} />
+          </button>
+          {positions.length > 0 && (
+            <button onClick={() => setExpanded(e => !e)} className="p-1 text-gray-400 hover:text-gray-600">
+              <ChevronRight size={13} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
+            </button>
+          )}
+        </div>
+      </div>
+      {expanded && positions.length > 0 && (
+        <div className="space-y-1">
+          {positions.map((pos: any, i: number) => (
+            <div key={pos.id || i} className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 border border-gray-100 text-xs">
+              <span className="font-semibold text-gray-700 w-40 truncate">{pos.trade?.name || 'Trade'}</span>
+              <span className="text-gray-500"><Users size={11} className="inline mr-1" />{pos.quantity} qty</span>
+              {pos.salary && <span className="text-gray-500">{COUNTRY_CURRENCY[job.country] || ''} {Number(pos.salary).toLocaleString()}</span>}
+              {pos.accommodation && <span className="text-emerald-600">Accom</span>}
+              {pos.transportation && <span className="text-emerald-600">Transport</span>}
+              {pos.contract_period && <span className="text-gray-400">{pos.contract_period}yr</span>}
+              {pos.age && <span className="text-gray-400">Age: {pos.age}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {positions.length === 0 && (
+        <div className="text-xs text-gray-400">{job.title} — {job.positions_required} vacancies</div>
+      )}
+    </div>
+  );
+}
+
+function CompanyCard({ cg, events, onPrintFlyer, onEdit, onDelete }: {
+  cg: { companyId: number; companyName: string; color: typeof COMPANY_COLORS[0]; jobs: any[] };
+  events: any[];
+  onPrintFlyer: (jobs: any[]) => void;
+  onEdit: (job: any) => void;
+  onDelete: (jobId: number) => void;
+}) {
+  const totalPositions = cg.jobs.reduce((s: number, j: any) => s + (j.positions_required || 0), 0);
+  const multiJob = cg.jobs.length > 1;
+
+  return (
     <div className={`px-5 py-4 ${cg.color.light} border-l-4 ${cg.color.border}`}>
-      <div className="flex items-center gap-3">
+      {/* Company header */}
+      <div className="flex items-center gap-3 mb-3">
         <CompanyInitials name={cg.companyName} color={cg.color} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -365,52 +423,41 @@ function CompanyCard({ cg, events, onPrintFlyer, onEdit, onDelete }: {
                 {GULF_COUNTRIES.find(g => g.value === cg.jobs[0].country)?.label || cg.jobs[0].country}
               </span>
             )}
+            {multiJob && (
+              <span className="text-[10px] text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200">
+                {cg.jobs.length} interviews
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <button onClick={() => onPrintFlyer(cg.jobs)} title="View Flyer" className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-white border border-gray-200 px-2.5 py-1 rounded-lg hover:shadow-sm hover:border-gray-300 transition-all">
+        {/* Company-level flyer (all jobs) only when single job — multi-job has per-job flyers */}
+        {!multiJob && (
+          <button onClick={() => onPrintFlyer(cg.jobs)} title="View Flyer" className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-white border border-gray-200 px-2.5 py-1 rounded-lg hover:shadow-sm hover:border-gray-300 transition-all flex-shrink-0">
             <Download size={12} /> View Flyer
           </button>
-          <button
-            onClick={handleView}
-            disabled={creatingEvent}
-            className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg hover:shadow-sm transition-all disabled:opacity-50"
-          >
-            <Eye size={12} /> View
-          </button>
-          <button onClick={() => onEdit(cg.jobs[0])} title="Edit interview" className="p-1.5 text-gray-400 hover:text-blue-600 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all">
-            <Edit2 size={13} />
-          </button>
-          <button onClick={() => { if (confirm('Delete this interview and all associated data?')) onDelete(cg.jobs[0]?.id); }} title="Delete interview" className="p-1.5 text-gray-400 hover:text-red-600 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all">
-            <Trash2 size={13} />
-          </button>
-          {allPositions.length > 0 && (
-            <button onClick={() => setExpanded(e => !e)} className="p-1 text-gray-400 hover:text-gray-600">
-              <ChevronRight size={14} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
-      {expanded && allPositions.length > 0 && (
-        <div className="mt-3 space-y-1.5">
-          {allPositions.map((pos: any, i: number) => (
-            <div key={pos.id || i} className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 border border-gray-100 text-xs">
-              <span className="font-semibold text-gray-700 w-40 truncate">{pos.trade?.name || 'Trade'}</span>
-              <span className="text-gray-500"><Users size={11} className="inline mr-1" />{pos.quantity} qty</span>
-              {pos.salary && <span className="text-gray-500">{COUNTRY_CURRENCY[cg.jobs[0]?.country] || ''} {Number(pos.salary).toLocaleString()}</span>}
-              {pos.accommodation && <span className="text-emerald-600">Accom</span>}
-              {pos.transportation && <span className="text-emerald-600">Transport</span>}
-              {pos.contract_period && <span className="text-gray-400">{pos.contract_period}yr</span>}
-              {pos.age && <span className="text-gray-400">Age: {pos.age}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {allPositions.length === 0 && cg.jobs.map((job: any) => (
-        <div key={job.id} className="mt-2 text-xs text-gray-500">{job.title} — {job.positions_required} vacancies</div>
-      ))}
+      {/* Per-job rows — each with its own Edit/Delete/View */}
+      <div className={multiJob ? 'space-y-3' : ''}>
+        {cg.jobs.map((job, idx) => (
+          <div key={job.id} className={multiJob ? 'bg-white/60 rounded-xl p-3 border border-white' : ''}>
+            {multiJob && (
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                Interview {idx + 1}
+              </div>
+            )}
+            <JobRow
+              job={job}
+              events={events}
+              color={cg.color}
+              onPrintFlyer={onPrintFlyer}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
