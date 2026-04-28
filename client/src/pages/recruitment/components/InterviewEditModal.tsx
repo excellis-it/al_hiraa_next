@@ -146,7 +146,6 @@ export default function InterviewEditModal({
         notes: notes || undefined,
         flyer_headline: flyer_headline || undefined,
         positions: positions.map((p) => ({
-          id: p.id || undefined,
           trade_id: +p.trade_id,
           quantity: +p.qty,
           salary: p.salary ? +p.salary : undefined,
