@@ -62,8 +62,8 @@ export class ProcessDetailsService {
   async update(candidateJobId: number, dto: any) {
     const data: any = {};
     for (const [k, v] of Object.entries(dto)) {
-      if (v === undefined || v === null) continue;
-      data[k] = DATE_FIELDS.includes(k) ? (v ? new Date(v as string) : null) : v;
+      if (v === undefined || v === null || v === '') continue;
+      data[k] = DATE_FIELDS.includes(k) ? new Date(v as string) : v;
     }
     return this.prisma.processDetails.upsert({
       where: { candidate_job_id: candidateJobId },

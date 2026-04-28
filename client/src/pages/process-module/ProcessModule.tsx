@@ -52,6 +52,26 @@ const PIPELINE_STAGES = [
   { key: 'flight',    num: 6, label: 'Flight',           subtitle: 'Booking → Confirmation → Departure',    icon: Plane       },
 ];
 
+const CANDIDATE_STATUS_COLORS: Record<string, string> = {
+  selected:           'bg-blue-50 text-blue-700 border-blue-200',
+  documents_pending:  'bg-amber-50 text-amber-700 border-amber-200',
+  medical_done:       'bg-teal-50 text-teal-700 border-teal-200',
+  visa_applied:       'bg-violet-50 text-violet-700 border-violet-200',
+  visa_received:      'bg-indigo-50 text-indigo-700 border-indigo-200',
+  ticket_booked:      'bg-sky-50 text-sky-700 border-sky-200',
+  deployed:           'bg-emerald-50 text-emerald-700 border-emerald-200',
+  on_hold:            'bg-orange-50 text-orange-700 border-orange-200',
+  cancelled:          'bg-red-50 text-red-700 border-red-200',
+};
+
+const MEDICAL_STATUS_COLORS: Record<string, string> = {
+  pending:  'bg-gray-100 text-gray-600',
+  applied:  'bg-blue-100 text-blue-700',
+  fit:      'bg-emerald-100 text-emerald-700',
+  unfit:    'bg-red-100 text-red-700',
+  awaited:  'bg-amber-100 text-amber-700',
+};
+
 // Single active color — amber/gold
 const ACTIVE = {
   bg:     'bg-amber-500',
@@ -150,9 +170,9 @@ function StageDots({ record }: { record: any }) {
 
 function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: () => void; onEdit: (r: any) => void }) {
   const [open, setOpen] = useState<Set<string>>(new Set(['selection']));
-  const cj   = record.candidate_job;
-  const cand = cj?.candidate;
-  const job  = cj?.job;
+  const cj       = record.candidate_job;
+  const cand     = cj?.candidate;
+  const job      = cj?.job;
   const payments: any[] = cj?.payments || [];
 
   const toggle = (k: string) => setOpen(s => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
@@ -162,196 +182,335 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
   const discount  = Number(record.disc_allot || 0);
   const dueAmount = totalFee > 0 ? Math.max(0, totalFee - totalPaid - discount) : 0;
   const curStage  = computeStage(record);
+  const curIdx    = PIPELINE_STAGES.findIndex(s => s.key === curStage);
   const nextStep  = computeNextStep(record);
   const dc        = docsCount(record);
   const visaExpiring = daysFromNow(record.visa_expiry_date);
   const medExpiring  = daysFromNow(record.medical_expiry_date);
+  const cl: Record<string, boolean> = (record.documents_checklist as Record<string, boolean>) || {};
 
-  const cl: Record<string,boolean> = (record.documents_checklist as Record<string,boolean>) || {};
-
-  const SectionHeader = ({ stageKey, label, subtitle, num }: { stageKey: string; label: string; subtitle: string; num: number }) => {
-    const isCurrentStage = curStage === stageKey;
-    const isPastStage = PIPELINE_STAGES.findIndex(s => s.key === stageKey) < PIPELINE_STAGES.findIndex(s => s.key === curStage);
+  // ── Sub-components ──
+  const StageBtn = ({ stageKey, label, subtitle, num, Icon }: {
+    stageKey: string; label: string; subtitle: string; num: number; Icon: React.ElementType;
+  }) => {
+    const isActive = curStage === stageKey;
+    const isPast   = PIPELINE_STAGES.findIndex(s => s.key === stageKey) < curIdx;
+    const isOpen   = open.has(stageKey);
     return (
-      <button onClick={() => toggle(stageKey)}
-        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left border-b border-gray-100 transition-colors ${
-          isCurrentStage ? 'bg-amber-50' : isPastStage ? 'bg-gray-50/60' : 'bg-white hover:bg-gray-50'
+      <button
+        onClick={() => toggle(stageKey)}
+        className={`w-full flex items-center gap-3 px-5 py-3.5 text-left border-b border-gray-100 transition-all ${
+          isActive ? 'bg-amber-50/70' : isPast ? 'bg-emerald-50/40' : 'bg-white hover:bg-gray-50'
+        }`}
+      >
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+          isPast   ? 'bg-emerald-100 text-emerald-600' :
+          isActive ? 'bg-amber-100 text-amber-600'     : 'bg-gray-100 text-gray-400'
         }`}>
-        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-          isPastStage ? 'bg-emerald-100 text-emerald-700' : isCurrentStage ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-400'
-        }`}>{isPastStage ? '✓' : num}</div>
-        <div className="flex-1 min-w-0">
-          <div className={`text-xs font-semibold ${isCurrentStage ? 'text-amber-700' : isPastStage ? 'text-emerald-700' : 'text-gray-600'}`}>{label}</div>
-          <div className="text-[10px] text-gray-400">{subtitle}</div>
+          {isPast ? <CheckCircle2 size={16} /> : <Icon size={15} />}
         </div>
-        {open.has(stageKey) ? <ChevronDown size={12} className="text-gray-400 flex-shrink-0" /> : <ChevronRight size={12} className="text-gray-400 flex-shrink-0" />}
+        <div className="flex-1 min-w-0">
+          <div className={`text-sm font-semibold leading-tight ${
+            isActive ? 'text-amber-700' : isPast ? 'text-emerald-700' : 'text-gray-600'
+          }`}>
+            <span className={`text-[10px] font-bold mr-1.5 ${
+              isActive ? 'text-amber-400' : isPast ? 'text-emerald-400' : 'text-gray-300'
+            }`}>#{num}</span>
+            {label}
+          </div>
+          <div className="text-xs text-gray-400 mt-0.5">{subtitle}</div>
+        </div>
+        <ChevronDown
+          size={14}
+          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
     );
   };
 
-  const Row = ({ label, value, highlight }: { label: string; value: string | null | undefined; highlight?: boolean }) => (
-    <div className="flex items-center justify-between py-1 border-b border-gray-50 last:border-0">
-      <span className="text-[11px] text-gray-400">{label}</span>
-      <span className={`text-[11px] font-semibold ${highlight ? 'text-amber-700' : value ? 'text-gray-700' : 'text-gray-300'}`}>{value || '—'}</span>
+  const Row = ({ label, value, highlight, mono }: {
+    label: string; value: string | null | undefined; highlight?: boolean; mono?: boolean;
+  }) => (
+    <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+      <span className="text-sm text-gray-400 flex-shrink-0 mr-4">{label}</span>
+      <span className={`text-sm font-semibold text-right ${
+        highlight ? 'text-amber-700' : value ? 'text-gray-800' : 'text-gray-300'
+      } ${mono ? 'font-mono tracking-wide' : ''}`}>
+        {value || '—'}
+      </span>
     </div>
   );
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-start justify-between px-4 py-3 border-b border-gray-100 bg-white flex-shrink-0">
-          <div className="min-w-0 flex-1">
-            <div className="font-bold text-gray-900 text-sm">{cand?.full_name || '—'}</div>
-            <div className="flex flex-wrap gap-x-2 mt-0.5">
-              <span className="text-[11px] font-mono font-semibold text-blue-600">{cand?.passport_no || '—'}</span>
-              <span className="text-[11px] text-gray-400">{cand?.whatsapp_no}</span>
-              <span className="text-[11px] text-gray-400">{job?.title}</span>
+      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-white shadow-2xl flex flex-col overflow-hidden">
+
+        {/* ── Header ── */}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 px-5 py-5 flex-shrink-0">
+          <div className="flex items-start justify-between mb-4">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-bold text-white leading-tight">{cand?.full_name || '—'}</h2>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                {cand?.passport_no && (
+                  <span className="text-xs font-mono font-semibold text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-md">{cand.passport_no}</span>
+                )}
+                {cand?.whatsapp_no && (
+                  <span className="text-xs text-gray-400">{cand.whatsapp_no}</span>
+                )}
+                <span className="text-xs text-gray-400">{job?.title}</span>
+                <span className="text-xs text-gray-500">@</span>
+                <span className="text-xs font-semibold text-gray-300">{job?.company?.name}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <StageDots record={record} />
-              <span className="text-[11px] font-semibold text-amber-700">
-                {PIPELINE_STAGES.find(s => s.key === curStage)?.label}
-              </span>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+              <button
+                onClick={() => onEdit(record)}
+                className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-xl transition-colors"
+              >
+                Edit
+              </button>
+              <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 transition-colors">
+                <X size={15} />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-            <button onClick={() => onEdit(record)} className="text-xs font-semibold text-white bg-blue-600 px-2.5 py-1.5 rounded-lg hover:bg-blue-700">Edit</button>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={15} /></button>
+
+          {/* Stage progress */}
+          <div className="flex items-center gap-1">
+            {PIPELINE_STAGES.map((s, i) => {
+              const isPast   = i < curIdx;
+              const isActive = i === curIdx;
+              return (
+                <div key={s.key} className="flex-1 flex flex-col items-center gap-1">
+                  <div className={`w-full h-1.5 rounded-full transition-all ${
+                    isPast ? 'bg-emerald-400' : isActive ? 'bg-amber-400' : 'bg-white/15'
+                  }`} />
+                  {isActive && (
+                    <span className="text-[9px] font-bold text-amber-300 whitespace-nowrap">{s.label}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Next Step Banner */}
-        <div className={`flex items-center gap-2 px-4 py-2 border-b text-xs font-medium ${nextStep.color} flex-shrink-0`}>
-          <ArrowRight size={12} className="flex-shrink-0" />
-          <span><strong>Next:</strong> {nextStep.label}</span>
+        {/* ── Next Step Banner ── */}
+        <div className={`flex items-center gap-2.5 px-5 py-3 border-b text-sm font-medium flex-shrink-0 ${nextStep.color}`}>
+          <ArrowRight size={14} className="flex-shrink-0" />
+          <span><strong className="font-bold">Next:</strong> {nextStep.label}</span>
         </div>
 
-        {/* Expiry alerts (compact) */}
+        {/* ── Expiry Alerts ── */}
         {((visaExpiring !== null && visaExpiring <= 30) || (medExpiring !== null && medExpiring <= 30)) && (
-          <div className="flex gap-2 px-4 py-1.5 bg-red-50 border-b border-red-100 flex-shrink-0 flex-wrap">
+          <div className="flex gap-3 px-5 py-2.5 bg-red-50 border-b border-red-100 flex-shrink-0 flex-wrap">
             {visaExpiring !== null && visaExpiring <= 30 && (
-              <span className="text-[11px] font-semibold text-red-600">
+              <span className="text-sm font-semibold text-red-600 flex items-center gap-1.5">
+                <Globe size={13} />
                 Visa {visaExpiring < 0 ? `EXPIRED ${Math.abs(visaExpiring)}d ago` : `expires in ${visaExpiring}d`}
               </span>
             )}
             {medExpiring !== null && medExpiring <= 30 && (
-              <span className="text-[11px] font-semibold text-red-600">
+              <span className="text-sm font-semibold text-red-600 flex items-center gap-1.5">
+                <Stethoscope size={13} />
                 Medical {medExpiring < 0 ? `EXPIRED ${Math.abs(medExpiring)}d ago` : `expires in ${medExpiring}d`}
               </span>
             )}
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto">
+        {/* ── Body ── */}
+        <div className="flex-1 overflow-y-auto bg-gray-50/40">
+
           {/* Selection */}
-          <SectionHeader stageKey="selection" label="Selection Offer" subtitle="Interview → Selection → Offer" num={1} />
+          <StageBtn stageKey="selection" label="Selection Offer" subtitle="Interview → Selection → Offer" num={1} Icon={BadgeCheck} />
           {open.has('selection') && (
-            <div className="px-4 py-2.5 bg-white">
-              <Row label="Interview date"    value={fmtDate(record.date_of_interview, true)} />
-              <Row label="Selection date"    value={fmtDate(record.date_of_selection, true)} />
-              <Row label="Mode"              value={record.mode_of_selection} />
-              <Row label="Location"          value={record.interview_location} />
-              <Row label="Salary"            value={job?.salary_min ? `${fmtCurrency(job.salary_min)} ${job.salary_currency || ''}`.trim() : null} />
-              <Row label="Service charge"    value={job?.service_fee ? fmtCurrency(job.service_fee) : null} highlight />
-              <Row label="Vendor charge"     value={record.vendor_service_charge ? fmtCurrency(record.vendor_service_charge) : null} highlight />
-              <Row label="Sponsor"           value={record.sponsor} />
+            <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
+              <Row label="Interview date"  value={fmtDate(record.date_of_interview, true)} />
+              <Row label="Selection date"  value={fmtDate(record.date_of_selection, true)} />
+              <Row label="Mode"            value={record.mode_of_selection?.replace(/_/g, ' ')} />
+              <Row label="Location"        value={record.interview_location} />
+              <Row label="Salary"          value={job?.salary_min ? `${fmtCurrency(job.salary_min)} ${job.salary_currency || ''}`.trim() : null} />
+              <Row label="Service charge"  value={record.vendor_service_charge ? fmtCurrency(record.vendor_service_charge) : null} highlight />
+              <Row label="Sponsor"         value={record.sponsor} />
+              {record.candidate_status && (
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-gray-400">Status</span>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${CANDIDATE_STATUS_COLORS[record.candidate_status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                    {record.candidate_status.replace(/_/g, ' ')}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
           {/* Documents */}
-          <SectionHeader stageKey="documents" label={`Documents (${dc.submitted}/${dc.total})`} subtitle="Passport, photos, certificates" num={2} />
+          <StageBtn stageKey="documents" label={`Documents (${dc.submitted}/${dc.total})`} subtitle="Passport, photos, certificates" num={2} Icon={FileText} />
           {open.has('documents') && (
-            <div className="px-4 py-2.5 bg-white">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-2">
+            <div className="px-5 py-3 bg-white border-b border-gray-100">
+              {/* Progress bar */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-gray-500">{dc.submitted} of {dc.total} submitted</span>
+                  <span className="text-xs font-bold text-emerald-600">{Math.round((dc.submitted/dc.total)*100)}%</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className="bg-emerald-400 h-2 rounded-full transition-all" style={{ width: `${(dc.submitted/dc.total)*100}%` }} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 mb-3 p-3 bg-gray-50 rounded-xl">
                 {DOCS_CHECKLIST.map(d => (
-                  <div key={d.key} className="flex items-center gap-1.5 py-0.5">
+                  <div key={d.key} className="flex items-center gap-2">
                     {cl[d.key]
-                      ? <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
-                      : <Square size={12} className="text-gray-300 flex-shrink-0" />}
-                    <span className={`text-[11px] ${cl[d.key] ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>{d.label}</span>
+                      ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
+                      : <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 flex-shrink-0" />}
+                    <span className={`text-xs ${cl[d.key] ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>{d.label}</span>
                   </div>
                 ))}
               </div>
-              <Row label="Passport No" value={cand?.passport_no} />
-              <Row label="ECR Type"    value={cand?.ecr_type?.replace('_',' ').toUpperCase()} />
+              <Row label="Passport No"      value={cand?.passport_no} mono />
+              <Row label="ECR Type"         value={cand?.ecr_type?.replace('_',' ').toUpperCase()} />
               <Row label="Courier sent"     value={fmtDate(record.courier_sent_date, true)} />
               <Row label="Courier received" value={fmtDate(record.courier_received_date, true)} />
             </div>
           )}
 
           {/* Medical */}
-          <SectionHeader stageKey="medical" label="Medical" subtitle="Application → Completion → Approval" num={3} />
+          <StageBtn stageKey="medical" label="Medical" subtitle="Application → Completion → Approval" num={3} Icon={Stethoscope} />
           {open.has('medical') && (
-            <div className="px-4 py-2.5 bg-white">
-              <Row label="Status"      value={record.medical_status?.toUpperCase()} highlight={record.medical_status === 'fit'} />
-              <Row label="Applied"     value={fmtDate(record.medical_app_date, true)} />
-              <Row label="Completion"  value={fmtDate(record.medical_completion_date, true)} />
-              <Row label="Approval"    value={fmtDate(record.medical_approval_date, true)} />
-              <Row label="Expiry"      value={fmtDate(record.medical_expiry_date, true)} />
+            <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
+              {record.medical_status && (
+                <div className="flex items-center justify-between py-2 border-b border-gray-50">
+                  <span className="text-sm text-gray-400">Status</span>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${MEDICAL_STATUS_COLORS[record.medical_status] || 'bg-gray-100 text-gray-600'}`}>
+                    {record.medical_status.toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <Row label="Applied"    value={fmtDate(record.medical_app_date, true)} />
+              <Row label="Completion" value={fmtDate(record.medical_completion_date, true)} />
+              <Row label="Approval"   value={fmtDate(record.medical_approval_date, true)} />
+              <Row label="Expiry"     value={fmtDate(record.medical_expiry_date, true)} highlight={!!(medExpiring !== null && medExpiring <= 30)} />
               {record.medical_repeat_date && <Row label="Repeat" value={fmtDate(record.medical_repeat_date, true)} />}
             </div>
           )}
 
           {/* Payment */}
-          <SectionHeader stageKey="payment" label="Payment" subtitle="Up to 4 installments" num={4} />
+          <StageBtn stageKey="payment" label="Payment" subtitle="Up to 4 installments" num={4} Icon={DollarSign} />
           {open.has('payment') && (
-            <div className="px-4 py-2.5 bg-white">
-              {[1,2,3,4].map(n => {
-                const p = payments.find((x: any) => x.installment_number === n);
-                if (!p) return null;
-                return (
-                  <div key={n} className="flex items-center justify-between py-1 border-b border-gray-50 last:border-0">
-                    <span className="text-[11px] text-gray-400">Installment {n}</span>
-                    <span className="text-[11px] font-semibold text-gray-700">
-                      {fmtCurrency(p.amount_paid)} / {fmtCurrency(p.amount_due)}
-                      <span className={`ml-1.5 text-[10px] px-1 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{p.status}</span>
-                    </span>
-                  </div>
-                );
-              })}
-              <div className="mt-2 border border-gray-100 rounded-lg overflow-hidden text-[11px]">
-                <div className="flex justify-between px-2.5 py-1 bg-gray-50"><span className="text-gray-500">Total fee</span><span className="font-semibold">{fmtCurrency(record.total_receivable_amount)}</span></div>
-                <div className="flex justify-between px-2.5 py-1"><span className="text-gray-500">Discount</span><span className="font-semibold">{fmtCurrency(record.disc_allot)}</span></div>
-                <div className="flex justify-between px-2.5 py-1"><span className="text-gray-500">Collected</span><span className="font-semibold text-emerald-700">{fmtCurrency(totalPaid)}</span></div>
-                <div className={`flex justify-between px-2.5 py-1 ${dueAmount > 0 ? 'bg-red-50' : 'bg-emerald-50'}`}>
-                  <span className={`font-bold ${dueAmount > 0 ? 'text-red-700' : 'text-emerald-700'}`}>Due (auto-calc)</span>
-                  <span className={`font-bold ${dueAmount > 0 ? 'text-red-700' : 'text-emerald-700'}`}>{fmtCurrency(dueAmount)}</span>
+            <div className="px-5 py-3 bg-white border-b border-gray-100">
+              {payments.length > 0 && (
+                <div className="space-y-1.5 mb-3">
+                  {[1,2,3,4].map(n => {
+                    const p = payments.find((x: any) => x.installment_number === n);
+                    if (!p) return null;
+                    return (
+                      <div key={n} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                        <span className="text-sm text-gray-500 font-medium">Installment {n}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-700">{fmtCurrency(p.amount_paid)} / {fmtCurrency(p.amount_due)}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{p.status}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              )}
+              {/* Summary cards */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: 'Total Fee',  val: fmtCurrency(record.total_receivable_amount), color: 'bg-gray-50 text-gray-700' },
+                  { label: 'Discount',   val: fmtCurrency(record.disc_allot),              color: 'bg-blue-50 text-blue-700' },
+                  { label: 'Collected',  val: fmtCurrency(totalPaid),                      color: 'bg-emerald-50 text-emerald-700' },
+                  { label: 'Due',        val: fmtCurrency(dueAmount),                      color: dueAmount > 0 ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700' },
+                ].map(({ label, val, color }) => (
+                  <div key={label} className={`${color} rounded-xl p-2.5 text-center`}>
+                    <div className="text-[10px] font-bold uppercase tracking-wide opacity-70 mb-0.5">{label}</div>
+                    <div className="text-sm font-bold">{val}</div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
           {/* Visa & MOFA */}
-          <SectionHeader stageKey="visa" label="Visa & MOFA" subtitle="Courier → Visa → MOFA → VFS" num={5} />
+          <StageBtn stageKey="visa" label="Visa & MOFA" subtitle="Courier → Visa → MOFA → VFS" num={5} Icon={Globe} />
           {open.has('visa') && (
-            <div className="px-4 py-2.5 bg-white">
-              <Row label="Visa issued"      value={fmtDate(record.visa_issue_date, true)} />
-              <Row label="Visa expiry"      value={fmtDate(record.visa_expiry_date, true)} highlight={!!(visaExpiring !== null && visaExpiring <= 30)} />
-              <Row label="Visa receiving"   value={fmtDate(record.visa_receiving_date, true)} />
-              <Row label="MOFA No."         value={record.mofa_number} />
-              <Row label="MOFA date"        value={fmtDate(record.mofa_date, true)} />
-              <Row label="MOFA received"    value={fmtDate(record.mofa_received_date, true)} />
-              <Row label="VFS applied"      value={fmtDate(record.vfs_applied_date, true)} />
-              <Row label="VFS received"     value={fmtDate(record.vfs_received_date, true)} />
+            <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
+              <Row label="Visa issued"    value={fmtDate(record.visa_issue_date, true)} />
+              <Row label="Visa expiry"    value={fmtDate(record.visa_expiry_date, true)} highlight={!!(visaExpiring !== null && visaExpiring <= 30)} />
+              <Row label="Visa receiving" value={fmtDate(record.visa_receiving_date, true)} />
+              <Row label="MOFA No."       value={record.mofa_number} mono />
+              <Row label="MOFA date"      value={fmtDate(record.mofa_date, true)} />
+              <Row label="MOFA received"  value={fmtDate(record.mofa_received_date, true)} />
+              <Row label="VFS applied"    value={fmtDate(record.vfs_applied_date, true)} />
+              <Row label="VFS received"   value={fmtDate(record.vfs_received_date, true)} />
             </div>
           )}
 
           {/* Flight */}
-          <SectionHeader stageKey="flight" label="Flight" subtitle="Booking → Confirmation → Departure" num={6} />
+          <StageBtn stageKey="flight" label="Flight" subtitle="Booking → Confirmation → Departure" num={6} Icon={Plane} />
           {open.has('flight') && (
-            <div className="px-4 py-2.5 bg-white">
+            <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
               <Row label="Booking date"    value={fmtDate(record.ticket_booking_date, true)} />
               <Row label="Confirmed date"  value={fmtDate(record.ticket_confirm_date, true)} />
               <Row label="Onboarding city" value={record.onboarding_city} />
               <Row label="Deployment date" value={fmtDate(record.deployment_date, true)} highlight={!!record.deployment_date} />
-              <Row label="Status"          value={record.candidate_status?.replace(/_/g,' ')} />
             </div>
           )}
         </div>
       </div>
     </>
+  );
+}
+
+// ── Edit Drawer sub-components — module-level prevents cursor-reset bug ─────────
+// Defining components inside ProcessEditDrawer would create a new type each render,
+// causing React to unmount/remount the input and lose cursor position every keystroke.
+
+const EDIT_SEC_COLORS: Record<string, { border: string; icon: string; label: string }> = {
+  blue:    { border: 'border-l-blue-500',    icon: 'text-blue-500',    label: 'text-blue-700'    },
+  emerald: { border: 'border-l-emerald-500', icon: 'text-emerald-500', label: 'text-emerald-700' },
+  violet:  { border: 'border-l-violet-500',  icon: 'text-violet-500',  label: 'text-violet-700'  },
+  amber:   { border: 'border-l-amber-500',   icon: 'text-amber-500',   label: 'text-amber-700'   },
+  indigo:  { border: 'border-l-indigo-500',  icon: 'text-indigo-500',  label: 'text-indigo-700'  },
+  sky:     { border: 'border-l-sky-500',     icon: 'text-sky-500',     label: 'text-sky-700'     },
+  gray:    { border: 'border-l-gray-400',    icon: 'text-gray-400',    label: 'text-gray-600'    },
+};
+
+function EditSec({ title, icon: Icon, color = 'blue', children }: {
+  title: string; icon: React.ElementType; color?: string; children: React.ReactNode;
+}) {
+  const c = EDIT_SEC_COLORS[color] || EDIT_SEC_COLORS.blue;
+  return (
+    <div className={`bg-white rounded-2xl border border-gray-100 border-l-4 ${c.border} shadow-sm overflow-hidden`}>
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-50">
+        <Icon size={14} className={c.icon} />
+        <span className={`text-xs font-bold uppercase tracking-wider ${c.label}`}>{title}</span>
+      </div>
+      <div className="px-4 py-3">{children}</div>
+    </div>
+  );
+}
+
+const MONEY_CLS = 'w-full text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all text-gray-800 placeholder-gray-300';
+
+function MoneyInp({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 pointer-events-none select-none">₹</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={value}
+          onChange={e => onChange(e.target.value.replace(/[^0-9.]/g, ''))}
+          placeholder="0"
+          className={`${MONEY_CLS} px-3 py-2 pl-7`}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -372,7 +531,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
     client_remark:            record.client_remark       || '',
     vendor:                   record.vendor              || '',
     sponsor:                  record.sponsor             || '',
-    vendor_service_charge:    record.vendor_service_charge || '',
+    vendor_service_charge:    record.vendor_service_charge ?? '',
     candidate_status:         record.candidate_status    || 'selected',
     medical_status:           record.medical_status            || 'pending',
     medical_app_date:         record.medical_app_date?.substring(0,10)         || '',
@@ -395,12 +554,12 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
     onboarding_city:          record.onboarding_city      || '',
     deployment_date:          record.deployment_date?.substring(0,10)          || '',
     deployment_month:         record.deployment_month     || '',
-    total_receivable_amount:  record.total_receivable_amount || '',
-    total_received_amount:    record.total_received_amount   || '',
-    disc_allot:               record.disc_allot              || '',
-    advance_received:         record.advance_received        || '',
+    total_receivable_amount:  record.total_receivable_amount ?? '',
+    total_received_amount:    record.total_received_amount   ?? '',
+    disc_allot:               record.disc_allot              ?? '',
+    advance_received:         record.advance_received        ?? '',
     refund_date:              record.refund_date?.substring(0,10) || '',
-    refund_amount:            record.refund_amount           || '',
+    refund_amount:            record.refund_amount           ?? '',
     family_contact_name:      record.family_contact_name  || '',
     family_contact_phone:     record.family_contact_phone || '',
     candidate_address:        record.candidate_address    || '',
@@ -411,6 +570,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
     (record.documents_checklist as Record<string, any>) || {}
   );
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const set = (k: string, v: string) => setForm(f => {
     const next: any = { ...f, [k]: v };
@@ -444,51 +604,59 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
   };
 
   const handleSave = async () => {
+    setSaveError(null);
     const payload: any = { ...form, documents_checklist: docs };
     if (payload.deployment_date) payload.candidate_status = 'deployed';
-    await updateDetails({ candidateJobId: record.candidate_job_id, ...payload });
+    const result = await updateDetails({ candidateJobId: record.candidate_job_id, ...payload });
+    if ('error' in result) {
+      setSaveError('Save failed. Please check your inputs and try again.');
+      return;
+    }
     onClose();
   };
 
-  const lbl = 'block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5';
-  const inp = 'w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 focus:outline-none focus:border-blue-400 focus:bg-white transition-all';
-
-  function Sec({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <div className="mb-3">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 pb-1 border-b border-gray-100">{title}</div>
-        {children}
-      </div>
-    );
-  }
+  const inp = 'w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 placeholder-gray-300';
+  const lbl = 'block text-xs font-semibold text-gray-500 mb-1';
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-white shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
-          <div>
-            <div className="font-bold text-gray-900 text-sm">{cand?.full_name}</div>
-            <div className="text-[11px] text-gray-400">{cand?.passport_no} · {job?.title} @ {job?.company?.name}</div>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-0">
+      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px]" onClick={onClose} />
+      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-2xl bg-white shadow-2xl flex flex-col animate-slide-in-right">
 
-          <Sec title="Selection Offer">
-            <div className="grid grid-cols-3 gap-2">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-800 to-slate-900 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+              <FileText size={18} className="text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-white text-base leading-tight">{cand?.full_name}</p>
+              <p className="text-slate-400 text-xs mt-0.5">{job?.title} · {job?.company?.name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 bg-gray-50">
+
+          {/* Selection Offer */}
+          <EditSec title="Selection Offer" icon={BadgeCheck} color="blue">
+            <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Interview Date</label><input type="date" value={form.date_of_interview} onChange={e=>set('date_of_interview',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Selection Date</label><input type="date" value={form.date_of_selection} onChange={e=>set('date_of_selection',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Mode</label><Select value={form.mode_of_selection} onChange={e=>set('mode_of_selection',e.target.value)}><option value="">Select</option>{MODE_OPTIONS.map(m=><option key={m.value} value={m.value}>{m.label}</option>)}</Select></div>
               <div><label className={lbl}>Status</label><Select value={form.candidate_status} onChange={e=>set('candidate_status',e.target.value)}>{CANDIDATE_STATUS_OPTIONS.map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}</Select></div>
-              <div><label className={lbl}>Service Charge (₹)</label><input type="number" value={form.vendor_service_charge} onChange={e=>set('vendor_service_charge',e.target.value)} className={inp} /></div>
-              <div><label className={lbl}>Vendor (if sub-agent)</label><input value={form.vendor} onChange={e=>set('vendor',e.target.value)} className={inp} placeholder="e.g. Al-Noor Travels" /></div>
+              <div><label className={lbl}>Vendor / Sub-agent</label><input value={form.vendor} onChange={e=>set('vendor',e.target.value)} className={inp} placeholder="e.g. Al-Noor Travels" /></div>
+              <MoneyInp label="Service Charge" value={String(form.vendor_service_charge)} onChange={v=>set('vendor_service_charge',v)} />
             </div>
-          </Sec>
+          </EditSec>
 
-          <Sec title="Documents">
-            {/* Passport + ID Document Uploads */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
+          {/* Documents */}
+          <EditSec title="Documents" icon={FileText} color="violet">
+            <div className="grid grid-cols-2 gap-3 mb-3">
               {[
                 { key: 'passport_doc', label: 'Passport Copy' },
                 { key: 'id_doc', label: 'ID Document' },
@@ -496,20 +664,20 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                 const url = typeof docs[key] === 'string' ? docs[key] : null;
                 const name = docs[`${key}_name`] as string | undefined;
                 return (
-                  <div key={key} className="border border-dashed border-gray-200 rounded-lg p-2">
-                    <div className="text-[10px] font-semibold text-gray-500 mb-1.5">{label}</div>
+                  <div key={key} className="border border-dashed border-gray-200 rounded-xl p-3 bg-gray-50 hover:bg-white transition-colors">
+                    <div className="text-xs font-semibold text-gray-500 mb-2">{label}</div>
                     {url ? (
-                      <div className="flex items-center gap-1.5">
-                        <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline truncate flex-1">
-                          <Eye size={10} /> {name || 'View file'}
+                      <div className="flex items-center gap-2">
+                        <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline truncate flex-1">
+                          <Eye size={12} /> {name || 'View file'}
                         </a>
-                        <button type="button" onClick={() => setDocs(d => { const n = { ...d }; delete n[key]; delete n[`${key}_name`]; return n; })} className="text-gray-300 hover:text-red-400">
-                          <X size={10} />
+                        <button type="button" onClick={() => setDocs(d => { const n = { ...d }; delete n[key]; delete n[`${key}_name`]; return n; })} className="text-gray-300 hover:text-red-400 transition-colors">
+                          <X size={12} />
                         </button>
                       </div>
                     ) : (
-                      <label className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-blue-600 cursor-pointer transition-colors">
-                        {uploading[key] ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />}
+                      <label className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-600 cursor-pointer transition-colors">
+                        {uploading[key] ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
                         {uploading[key] ? 'Uploading…' : 'Upload PDF / image'}
                         <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
                           onChange={e => e.target.files?.[0] && uploadDocFile(key, e.target.files[0])} />
@@ -519,27 +687,26 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                 );
               })}
             </div>
-
-            {/* Document Checklist */}
-            <div className="p-2 bg-gray-50 rounded-lg mb-2">
-              <div className="text-[10px] font-semibold text-gray-500 mb-1.5">Document Checklist</div>
-              <div className="grid grid-cols-2 gap-1">
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-3 mb-3">
+              <div className="text-xs font-semibold text-gray-500 mb-2">Document Checklist</div>
+              <div className="grid grid-cols-2 gap-1.5">
                 {DOCS_CHECKLIST.map(d => (
-                  <label key={d.key} className="flex items-center gap-1.5 cursor-pointer py-0.5">
-                    <input type="checkbox" checked={typeof docs[d.key] === 'boolean' ? !!docs[d.key] : false} onChange={() => toggleDoc(d.key)} className="rounded border-gray-300 text-emerald-600 w-3 h-3" />
-                    <span className={`text-[11px] ${docs[d.key] ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>{d.label}</span>
+                  <label key={d.key} className="flex items-center gap-2 cursor-pointer py-0.5">
+                    <input type="checkbox" checked={typeof docs[d.key] === 'boolean' ? !!docs[d.key] : false} onChange={() => toggleDoc(d.key)} className="rounded border-gray-300 text-emerald-600 w-3.5 h-3.5" />
+                    <span className={`text-sm ${docs[d.key] ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>{d.label}</span>
                   </label>
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div><label className={lbl}>Courier Sent</label><input type="date" value={form.courier_sent_date} onChange={e=>set('courier_sent_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Courier Received</label><input type="date" value={form.courier_received_date} onChange={e=>set('courier_received_date',e.target.value)} className={inp} /></div>
             </div>
-          </Sec>
+          </EditSec>
 
-          <Sec title="Medical">
-            <div className="grid grid-cols-3 gap-2">
+          {/* Medical */}
+          <EditSec title="Medical" icon={Stethoscope} color="emerald">
+            <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Status</label><Select value={form.medical_status} onChange={e=>set('medical_status',e.target.value)}>{MEDICAL_STATUS_OPTIONS.map(s=><option key={s} value={s}>{s.toUpperCase()}</option>)}</Select></div>
               <div><label className={lbl}>Application</label><input type="date" value={form.medical_app_date} onChange={e=>set('medical_app_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Completion</label><input type="date" value={form.medical_completion_date} onChange={e=>set('medical_completion_date',e.target.value)} className={inp} /></div>
@@ -547,18 +714,25 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
               <div><label className={lbl}>Expiry</label><input type="date" value={form.medical_expiry_date} onChange={e=>set('medical_expiry_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Repeat</label><input type="date" value={form.medical_repeat_date} onChange={e=>set('medical_repeat_date',e.target.value)} className={inp} /></div>
             </div>
-          </Sec>
+            {form.medical_approval_date && (
+              <p className="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl flex items-center gap-1.5">
+                <CheckCircle2 size={12} /> Medical approval entered — status set to <strong>Fit</strong> automatically.
+              </p>
+            )}
+          </EditSec>
 
-          <Sec title="Payment">
-            <div className="grid grid-cols-3 gap-2">
-              <div><label className={lbl}>Total Fee (₹)</label><input type="number" value={form.total_receivable_amount} onChange={e=>set('total_receivable_amount',e.target.value)} className={inp} /></div>
-              <div><label className={lbl}>Discount (₹)</label><input type="number" value={form.disc_allot} onChange={e=>set('disc_allot',e.target.value)} className={inp} /></div>
-              <div><label className={lbl}>Advance (₹)</label><input type="number" value={form.advance_received} onChange={e=>set('advance_received',e.target.value)} className={inp} /></div>
+          {/* Payment */}
+          <EditSec title="Payment" icon={DollarSign} color="amber">
+            <div className="grid grid-cols-3 gap-3">
+              <MoneyInp label="Total Fee" value={String(form.total_receivable_amount)} onChange={v=>set('total_receivable_amount',v)} />
+              <MoneyInp label="Discount" value={String(form.disc_allot)} onChange={v=>set('disc_allot',v)} />
+              <MoneyInp label="Advance" value={String(form.advance_received)} onChange={v=>set('advance_received',v)} />
             </div>
-          </Sec>
+          </EditSec>
 
-          <Sec title="Visa & MOFA">
-            <div className="grid grid-cols-3 gap-2">
+          {/* Visa & MOFA */}
+          <EditSec title="Visa & MOFA" icon={Globe} color="indigo">
+            <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Visa Issue</label><input type="date" value={form.visa_issue_date} onChange={e=>set('visa_issue_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Visa Expiry</label><input type="date" value={form.visa_expiry_date} onChange={e=>set('visa_expiry_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Visa Receiving</label><input type="date" value={form.visa_receiving_date} onChange={e=>set('visa_receiving_date',e.target.value)} className={inp} /></div>
@@ -568,31 +742,49 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
               <div><label className={lbl}>VFS Applied</label><input type="date" value={form.vfs_applied_date} onChange={e=>set('vfs_applied_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>VFS Received</label><input type="date" value={form.vfs_received_date} onChange={e=>set('vfs_received_date',e.target.value)} className={inp} /></div>
             </div>
-          </Sec>
+          </EditSec>
 
-          <Sec title="Flight">
-            <div className="grid grid-cols-3 gap-2">
+          {/* Flight */}
+          <EditSec title="Flight & Deployment" icon={Plane} color="sky">
+            <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Booking Date</label><input type="date" value={form.ticket_booking_date} onChange={e=>set('ticket_booking_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Confirm Date</label><input type="date" value={form.ticket_confirm_date} onChange={e=>set('ticket_confirm_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Onboarding City</label><Select value={form.onboarding_city} onChange={e=>set('onboarding_city',e.target.value)}><option value="">Select</option>{ONBOARDING_CITIES.map(c=><option key={c} value={c}>{c}</option>)}</Select></div>
               <div><label className={lbl}>Deployment Date</label><input type="date" value={form.deployment_date} onChange={e=>set('deployment_date',e.target.value)} className={inp} /></div>
               <div className="col-span-2"><label className={lbl}>Deployment Month</label><input value={form.deployment_month} onChange={e=>set('deployment_month',e.target.value)} placeholder="e.g. April 2026" className={inp} /></div>
             </div>
-            {form.deployment_date && <p className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-1.5 rounded-lg mt-1 flex items-center gap-1"><Zap size={10} />Status will auto-set to Deployed on save.</p>}
-          </Sec>
+            {form.deployment_date && (
+              <p className="mt-2 text-xs text-sky-700 bg-sky-50 border border-sky-100 px-3 py-2 rounded-xl flex items-center gap-1.5">
+                <Zap size={12} /> Status will auto-set to <strong>Deployed</strong> on save.
+              </p>
+            )}
+          </EditSec>
 
-          <Sec title="Remarks & Contact">
-            <div className="grid grid-cols-2 gap-2 pb-2">
-              <div><label className={lbl}>Remarks</label><input value={form.remarks} onChange={e=>set('remarks',e.target.value)} className={inp} /></div>
-              <div><label className={lbl}>Family Contact</label><input value={form.family_contact_name} onChange={e=>set('family_contact_name',e.target.value)} className={inp} /></div>
+          {/* Remarks & Contact */}
+          <EditSec title="Remarks & Contact" icon={Users} color="gray">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2"><label className={lbl}>Remarks</label><input value={form.remarks} onChange={e=>set('remarks',e.target.value)} className={inp} placeholder="Any remarks…" /></div>
+              <div><label className={lbl}>Family Contact Name</label><input value={form.family_contact_name} onChange={e=>set('family_contact_name',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Family Phone</label><input value={form.family_contact_phone} onChange={e=>set('family_contact_phone',e.target.value)} className={inp} /></div>
-              <div><label className={lbl}>Address</label><input value={form.candidate_address} onChange={e=>set('candidate_address',e.target.value)} className={inp} /></div>
+              <div className="col-span-2"><label className={lbl}>Address</label><input value={form.candidate_address} onChange={e=>set('candidate_address',e.target.value)} className={inp} /></div>
             </div>
-          </Sec>
+          </EditSec>
+
         </div>
-        <div className="border-t border-gray-100 px-4 py-3 flex justify-end gap-2 flex-shrink-0 bg-gray-50">
-          <button onClick={onClose} className="btn-secondary text-xs">Cancel</button>
-          <button onClick={handleSave} disabled={isLoading} className="btn-primary text-xs disabled:opacity-40">{isLoading ? 'Saving…' : 'Save Changes'}</button>
+
+        {/* Footer */}
+        <div className="border-t border-gray-100 px-6 py-4 flex-shrink-0 bg-white">
+          {saveError && (
+            <p className="text-xs text-red-600 font-medium mb-3 px-1">{saveError}</p>
+          )}
+          <div className="flex justify-end gap-3">
+            <button onClick={onClose} className="px-5 py-2 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+              Cancel
+            </button>
+            <button onClick={handleSave} disabled={isLoading} className="btn-primary disabled:opacity-40">
+              {isLoading ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -1294,7 +1486,19 @@ export default function ProcessModule() {
       )}
 
       {viewRecord && <ViewDetailsDrawer record={viewRecord} onClose={()=>setViewRecord(null)} onEdit={handleEdit} />}
-      {editRecord && <ProcessEditDrawer record={editRecord} onClose={()=>{setEditRecord(null);refetch();}} />}
+      {editRecord && (
+        <ProcessEditDrawer
+          record={editRecord}
+          onClose={() => {
+            const savedId = editRecord!.id;
+            setEditRecord(null);
+            refetch().then((result: any) => {
+              const fresh = result.data?.data?.find((r: any) => r.id === savedId);
+              if (fresh) setViewRecord(fresh);
+            });
+          }}
+        />
+      )}
       {showAdd && <AddToProcessModal interview={activeGroup?.events[0] ?? null} onClose={()=>setShowAdd(false)} onDone={refetch} />}
     </div>
   );
