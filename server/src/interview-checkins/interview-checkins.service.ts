@@ -12,11 +12,29 @@ export class InterviewCheckinsService {
       include: {
         candidate_job: {
           include: {
+            trade: { select: { id: true, name: true } },
             candidate: {
               select: {
                 id: true,
+                candidate_code: true,
                 full_name: true,
+                passport_no: true,
                 whatsapp_no: true,
+                alternate_contact: true,
+                gender: true,
+                dob: true,
+                ecr_type: true,
+                education: true,
+                education_other: true,
+                indian_experience: true,
+                abroad_experience: true,
+                registration_mode: true,
+                associate_id: true,
+                associate: { select: { id: true, full_name: true } },
+                referrer: { select: { id: true, name: true } },
+                position_1: { select: { id: true, name: true } },
+                state: { select: { id: true, name: true } },
+                city: { select: { id: true, name: true } },
               },
             },
           },
@@ -62,7 +80,31 @@ export class InterviewCheckinsService {
         include: {
           candidate_job: {
             include: {
-              candidate: { select: { id: true, full_name: true, whatsapp_no: true } },
+              trade: { select: { id: true, name: true } },
+              candidate: {
+                select: {
+                  id: true,
+                  candidate_code: true,
+                  full_name: true,
+                  passport_no: true,
+                  whatsapp_no: true,
+                  alternate_contact: true,
+                  gender: true,
+                  dob: true,
+                  ecr_type: true,
+                  education: true,
+                  education_other: true,
+                  indian_experience: true,
+                  abroad_experience: true,
+                  registration_mode: true,
+                  associate_id: true,
+                  associate: { select: { id: true, full_name: true } },
+                  referrer: { select: { id: true, name: true } },
+                  position_1: { select: { id: true, name: true } },
+                  state: { select: { id: true, name: true } },
+                  city: { select: { id: true, name: true } },
+                },
+              },
             },
           },
         },

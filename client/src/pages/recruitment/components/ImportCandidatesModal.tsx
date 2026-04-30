@@ -166,23 +166,64 @@ export default function ImportCandidatesModal({
     return s;
   }, [existingCheckins]);
 
+  const cellStr = (v: any): string => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'number') {
+      // Avoid scientific notation for phone numbers / large integers
+      return Number.isInteger(v) ? v.toString() : String(v);
+    }
+    if (v instanceof Date) return v.toISOString().split('T')[0];
+    return String(v).trim();
+  };
+
+  const parseRowsFromSheet = (rawRows: any[][], headers: string[]): ParsedRow[] => {
+    return rawRows.map((cols, idx) => {
+      const row: Record<string, any> = { _rowIndex: idx + 2 };
+      headers.forEach((h, i) => {
+        row[h] = cellStr(cols[i]).trim();
+      });
+      if (!row.full_name?.trim())      row._error = 'missing full_name';
+      else if (!row.passport_no?.trim()) row._error = 'missing passport_no';
+      else if (!row.whatsapp_no?.trim()) row._error = 'missing whatsapp_no';
+      else if (row.associate_name?.trim()) {
+        const assocLower = row.associate_name.trim().toLowerCase();
+        const found = associates.some((a: any) => (a.full_name || '').toLowerCase() === assocLower);
+        if (!found) row._error = `associate "${row.associate_name}" not found in master list`;
+      }
+      return row as ParsedRow;
+    });
+  };
+
   const handleFile = async (file: File) => {
     setFileName(file.name);
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-    if (lines.length < 2) {
-      toast.error('CSV has no data rows');
+    const isXlsx = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
+
+    if (isXlsx) {
+      const buf = await file.arrayBuffer();
+      const wb2 = XLSX.read(buf, { type: 'array', cellDates: true });
+      // Use first sheet named "Template" if present, otherwise first sheet
+      const sheetName = wb2.SheetNames.includes('Template') ? 'Template' : wb2.SheetNames[0];
+      const ws2 = wb2.Sheets[sheetName];
+      const aoa: any[][] = XLSX.utils.sheet_to_json(ws2, { header: 1, defval: '' });
+      if (aoa.length < 2) { toast.error('Excel file has no data rows'); return; }
+      const headers = (aoa[0] as string[]).map(normalizeHeader);
+      const dataRows = aoa.slice(1).filter((r: any[]) => r.some((c) => String(c ?? '').trim()));
+      if (dataRows.length === 0) { toast.error('Excel file has no data rows'); return; }
+      setRows(parseRowsFromSheet(dataRows, headers));
+      setStep('preview');
       return;
     }
+
+    // CSV path
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length < 2) { toast.error('CSV has no data rows'); return; }
     const headers = parseCsvLine(lines[0]).map(normalizeHeader);
     const parsed: ParsedRow[] = lines.slice(1).map((line, idx) => {
       const cols = parseCsvLine(line);
       const row: Record<string, any> = { _rowIndex: idx + 2 };
-      headers.forEach((h, i) => {
-        row[h] = (cols[i] ?? '').trim();
-      });
-      // Validate required fields
-      if (!row.full_name?.trim()) row._error = 'missing full_name';
+      headers.forEach((h, i) => { row[h] = (cols[i] ?? '').trim(); });
+      if (!row.full_name?.trim())       row._error = 'missing full_name';
       else if (!row.passport_no?.trim()) row._error = 'missing passport_no';
       else if (!row.whatsapp_no?.trim()) row._error = 'missing whatsapp_no';
       else if (row.associate_name?.trim()) {
@@ -205,18 +246,7 @@ export default function ImportCandidatesModal({
 
     const wb = XLSX.utils.book_new();
 
-    // ── Sheet 2: Valid Options (must be added first for cell-range references) ──
-    // Columns: A=gender  B=ecr_type  C=education  D=experience  E=associate_name
-    const maxLen = Math.max(GENDER_OPTS.length, ECR_OPTS.length, EDU_OPTS.length, EXP_OPTS.length, ASSOC_OPTS.length, 1);
-    const optRows: any[][] = [['gender', 'ecr_type', 'education', 'experience', 'associate_name']];
-    for (let i = 0; i < maxLen; i++) {
-      optRows.push([GENDER_OPTS[i] ?? '', ECR_OPTS[i] ?? '', EDU_OPTS[i] ?? '', EXP_OPTS[i] ?? '', ASSOC_OPTS[i] ?? '']);
-    }
-    const optWs = XLSX.utils.aoa_to_sheet(optRows);
-    optWs['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 26 }];
-    XLSX.utils.book_append_sheet(wb, optWs, 'Valid Options');
-
-    // ── Sheet 1: Template ────────────────────────────────────────────────────────
+    // ── Sheet 1: Template (added first so Excel opens it by default) ─────────────
     // Columns: A=full_name B=passport_no C=whatsapp_no D=alternate_contact E=dob
     //          F=gender    G=ecr_type    H=education   I=indian_experience  J=abroad_experience
     //          K=associate_name  L=referrer_name
@@ -231,8 +261,8 @@ export default function ImportCandidatesModal({
 
     // Real Excel dropdown validation — uses !dataValidation (SheetJS CE 0.18 feature)
     // Short lists → inline quoted string; long lists → cell range on Valid Options sheet
-    const eduEnd   = EDU_OPTS.length + 1;   // row number of last education option
-    const expEnd   = EXP_OPTS.length + 1;   // row number of last experience option
+    const eduEnd   = EDU_OPTS.length + 1;
+    const expEnd   = EXP_OPTS.length + 1;
     const assocEnd = ASSOC_OPTS.length > 0 ? ASSOC_OPTS.length + 1 : 2;
     (tplWs as any)['!dataValidation'] = {
       'F2:F1000': { type: 'list', formula1: '"male,female,other"' },
@@ -244,8 +274,19 @@ export default function ImportCandidatesModal({
         ? { 'K2:K1000': { type: 'list', formula1: `'Valid Options'!$E$2:$E$${assocEnd}` } }
         : {}),
     };
-
     XLSX.utils.book_append_sheet(wb, tplWs, 'Template');
+
+    // ── Sheet 2: Valid Options (dropdown source lists) ───────────────────────────
+    // Columns: A=gender  B=ecr_type  C=education  D=experience  E=associate_name
+    const maxLen = Math.max(GENDER_OPTS.length, ECR_OPTS.length, EDU_OPTS.length, EXP_OPTS.length, ASSOC_OPTS.length, 1);
+    const optRows: any[][] = [['gender', 'ecr_type', 'education', 'experience', 'associate_name']];
+    for (let i = 0; i < maxLen; i++) {
+      optRows.push([GENDER_OPTS[i] ?? '', ECR_OPTS[i] ?? '', EDU_OPTS[i] ?? '', EXP_OPTS[i] ?? '', ASSOC_OPTS[i] ?? '']);
+    }
+    const optWs = XLSX.utils.aoa_to_sheet(optRows);
+    optWs['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 26 }];
+    XLSX.utils.book_append_sheet(wb, optWs, 'Valid Options');
+
     XLSX.writeFile(wb, 'interview-candidates-template.xlsx');
   };
 
@@ -370,7 +411,7 @@ export default function ImportCandidatesModal({
               </div>
               <input
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,.xlsx,.xls,text/csv"
                 className="hidden"
                 id="batch-csv-input"
                 onChange={(e) => {
@@ -383,7 +424,7 @@ export default function ImportCandidatesModal({
                 className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-2 border-dashed border-gray-200 hover:border-blue-300 px-4 py-8 rounded-xl transition-colors cursor-pointer"
               >
                 <Upload size={18} />
-                {fileName || 'Click to choose a CSV file…'}
+                {fileName || 'Click to choose a CSV or Excel (.xlsx) file…'}
               </label>
               <div className="flex justify-between">
                 <button onClick={() => setStep('trade')} className="btn-secondary text-sm">
