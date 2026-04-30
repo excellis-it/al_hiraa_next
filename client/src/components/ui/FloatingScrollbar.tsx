@@ -14,7 +14,7 @@ export default function FloatingScrollbar({
   targetRef,
   contentWidth = 2600,
 }: {
-  targetRef: React.RefObject<HTMLDivElement>;
+  targetRef: React.RefObject<HTMLDivElement | null>;
   contentWidth?: number;
 }) {
   const barRef = useRef<HTMLDivElement>(null);
