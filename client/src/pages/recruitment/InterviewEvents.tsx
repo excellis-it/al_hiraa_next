@@ -10,6 +10,7 @@ import { useGetCompaniesQuery } from '../../store/api/companiesApi';
 import { useGetTradesQuery, useGetVenuesQuery } from '../../store/api/mastersApi';
 import { useGetUsersQuery } from '../../store/api/usersApi';
 import { useGetInterviewEventsQuery, useCreateInterviewEventMutation } from '../../store/api/interviewEventsApi';
+import { useGetVendorsQuery } from '../../store/api/vendorsApi';
 import JobPostingPrint from './JobPostingPrint';
 import InterviewEditModal from './components/InterviewEditModal';
 import toast from 'react-hot-toast';
@@ -71,7 +72,9 @@ interface PositionRow {
   qty: string;
   salary: string;
   accommodation: string;
+  accommodation_cost: string;
   transportation: string;
+  transportation_cost: string;
   contract_period: string;
   age_min: string;
   age_max: string;
@@ -81,20 +84,30 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const [company_id, setCompanyId] = useState('');
   const [country, setCountry] = useState('');
   const [interview_date_start, setDateStart] = useState('');
+  const [interview_time, setInterviewTime] = useState('');
   const [interview_date_end, setDateEnd] = useState('');
   const [service_fee, setServiceFee] = useState('');
   const [venue_id, setVenueId] = useState('');
   const [coordinator_id, setCoordinatorId] = useState('');
+  const [vendor_id, setVendorId] = useState('');
   const [notes, setNotes] = useState('');
   const [flyer_headline, setFlyerHeadline] = useState('');
-  const emptyPosition = (): PositionRow => ({ id: Date.now(), trade_id: '', qty: '', salary: '', accommodation: '', transportation: '', contract_period: '', age_min: '', age_max: '' });
+
+  const emptyPosition = (): PositionRow => ({
+    id: Date.now(), trade_id: '', qty: '', salary: '',
+    accommodation: '', accommodation_cost: '',
+    transportation: '', transportation_cost: '',
+    contract_period: '', age_min: '', age_max: '',
+  });
   const [positions, setPositions] = useState<PositionRow[]>([{ ...emptyPosition(), id: 1 }]);
 
   const [create, { isLoading }] = useCreateJobMutation();
+  const [createEvent] = useCreateInterviewEventMutation();
   const { data: companiesData } = useGetCompaniesQuery({ limit: 200 } as any);
   const { data: tradesData } = useGetTradesQuery(true);
   const { data: venuesData } = useGetVenuesQuery(undefined);
   const { data: usersData } = useGetUsersQuery(undefined);
+  const { data: vendorsData } = useGetVendorsQuery({ status: 'active', limit: 200 } as any);
   const { data: companyJobsData } = useGetJobsQuery(
     { company_id: company_id ? +company_id : undefined, limit: 200 } as any,
     { skip: !company_id }
@@ -103,9 +116,9 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const allTrades: any[] = (tradesData as any[]) || [];
   const venues: any[] = (venuesData as any[]) || [];
   const users: any[] = (usersData as any)?.data ?? (Array.isArray(usersData) ? usersData : []);
+  const vendors: any[] = (vendorsData as any)?.data || [];
   const currency = COUNTRY_CURRENCY[country] || '';
 
-  // Filter trades: if a company is selected, show trades used by that company first (then remaining)
   const trades: any[] = (() => {
     if (!company_id || !companyJobsData) return allTrades;
     const companyJobs: any[] = companyJobsData?.data || [];
@@ -160,12 +173,12 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   };
 
   const handleSubmit = async () => {
-    if (!company_id || positions.some(p => !p.trade_id || !p.qty)) return;
+    if (!company_id || !service_fee || positions.some(p => !p.trade_id || !p.qty)) return;
     try {
-      await create({
+      const job: any = await create({
         company_id: +company_id,
         country: country || undefined,
-        service_fee: service_fee ? +service_fee : undefined,
+        service_fee: +service_fee,
         interview_date_start: interview_date_start || undefined,
         interview_date_end: interview_date_end || undefined,
         venue_id: venue_id ? +venue_id : undefined,
@@ -182,6 +195,23 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
           age: (p.age_min && p.age_max) ? `${p.age_min}-${p.age_max}` : p.age_min || p.age_max || undefined,
         })),
       }).unwrap();
+
+      // Derive event-level accommodation/transportation from positions (use first position with a value)
+      const firstAccom = positions.find(p => p.accommodation === 'yes' || p.accommodation === 'no');
+      const firstTrans = positions.find(p => p.transportation === 'yes' || p.transportation === 'no');
+      const eventDate = interview_date_start
+        ? `${interview_date_start}T${interview_time || '09:00'}:00`
+        : new Date().toISOString().slice(0, 10);
+      await createEvent({
+        job_id: job.id,
+        event_date: eventDate,
+        vendor_id: vendor_id ? +vendor_id : undefined,
+        accommodation: firstAccom ? firstAccom.accommodation === 'yes' : undefined,
+        accommodation_cost: firstAccom?.accommodation === 'no' && firstAccom.accommodation_cost ? +firstAccom.accommodation_cost : undefined,
+        transportation: firstTrans ? firstTrans.transportation === 'yes' : undefined,
+        transportation_cost: firstTrans?.transportation === 'no' && firstTrans.transportation_cost ? +firstTrans.transportation_cost : undefined,
+      }).unwrap();
+
       toast.success('Interview created');
       onSuccess();
     } catch (e) { console.error(e); toast.error('Failed to create interview'); }
@@ -189,7 +219,7 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
   const lbl = 'block text-[10px] font-semibold text-gray-400 uppercase mb-1';
   const inp = 'w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all';
-  const canSubmit = !!company_id && positions.every(p => p.trade_id && p.qty);
+  const canSubmit = !!company_id && !!service_fee && positions.every(p => p.trade_id && p.qty);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -219,8 +249,10 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
               </div>
             )}
             <div>
-              <label className={lbl}>Service Fee (₹ per candidate)</label>
-              <input type="number" value={service_fee} onChange={e => setServiceFee(e.target.value)} placeholder="Optional" className={inp} />
+              <label className={lbl}>Service Fee * (₹ per candidate)</label>
+              <input type="number" value={service_fee} onChange={e => setServiceFee(e.target.value)}
+                placeholder="Required"
+                className={inp + (!service_fee ? ' border-red-300 focus:border-red-400 focus:ring-red-100' : '')} />
             </div>
             <Select label="Interview Venue" value={venue_id} onChange={e => setVenueId(e.target.value)}>
               <option value="">Select venue</option>
@@ -237,6 +269,10 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
               <input type="date" value={interview_date_start} onChange={e => setDateStart(e.target.value)} min={new Date().toISOString().substring(0, 10)} className={inp} />
             </div>
             <div>
+              <label className={lbl}>Interview Time</label>
+              <input type="time" value={interview_time} onChange={e => setInterviewTime(e.target.value)} className={inp} />
+            </div>
+            <div>
               <label className={lbl}>Interview Date (Day 2 — optional)</label>
               <input type="date" value={interview_date_end} onChange={e => setDateEnd(e.target.value)} min={interview_date_start || new Date().toISOString().substring(0, 10)} className={inp} />
             </div>
@@ -250,6 +286,13 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                 <div className="px-3 py-2 text-sm bg-gray-100 border border-gray-200 rounded-xl text-gray-500">{selectedCoordinator.phone}</div>
               </div>
             )}
+            <div className="col-span-2">
+              <label className={lbl}>Vendor (optional)</label>
+              <select value={vendor_id} onChange={e => setVendorId(e.target.value)} className={inp}>
+                <option value="">No vendor</option>
+                {vendors.map((v: any) => <option key={v.id} value={v.id}>{v.name} ({v.vendor_id})</option>)}
+              </select>
+            </div>
           </div>
 
           {/* Trade Positions */}
@@ -291,16 +334,33 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                       <label className={lbl}>Salary {currency ? `(${currency})` : ''}</label>
                       <input type="number" value={pos.salary} onChange={e => updatePosition(pos.id, 'salary', e.target.value)} placeholder="e.g. 1800" className={inp} />
                     </div>
+
+                    {/* Accommodation */}
                     <Select label="Accommodation" value={pos.accommodation} onChange={e => updatePosition(pos.id, 'accommodation', e.target.value)}>
                       <option value="">--</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
+                      <option value="yes">Yes (provided)</option>
+                      <option value="no">No (candidate pays)</option>
                     </Select>
+                    {pos.accommodation === 'no' && (
+                      <div>
+                        <label className={lbl}>Accom. Cost (SAR)</label>
+                        <input type="number" value={pos.accommodation_cost} onChange={e => updatePosition(pos.id, 'accommodation_cost', e.target.value)} placeholder="0" min={0} className={inp} />
+                      </div>
+                    )}
+
+                    {/* Transportation */}
                     <Select label="Transportation" value={pos.transportation} onChange={e => updatePosition(pos.id, 'transportation', e.target.value)}>
                       <option value="">--</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
+                      <option value="yes">Yes (provided)</option>
+                      <option value="no">No (candidate pays)</option>
                     </Select>
+                    {pos.transportation === 'no' && (
+                      <div>
+                        <label className={lbl}>Transport Cost (SAR)</label>
+                        <input type="number" value={pos.transportation_cost} onChange={e => updatePosition(pos.id, 'transportation_cost', e.target.value)} placeholder="0" min={0} className={inp} />
+                      </div>
+                    )}
+
                     <Select label="Contract Period" value={pos.contract_period} onChange={e => updatePosition(pos.id, 'contract_period', e.target.value)}>
                       <option value="">--</option>
                       <option value="1">1 Year</option>
@@ -335,7 +395,10 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
         </div>
 
         <div className="flex items-center justify-between gap-2.5 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex-shrink-0">
-          <p className="text-xs text-gray-400">{positions.length} position{positions.length > 1 ? 's' : ''} · {positions.reduce((s, p) => s + (+p.qty || 0), 0)} total vacancies</p>
+          <div>
+            <p className="text-xs text-gray-400">{positions.length} position{positions.length > 1 ? 's' : ''} · {positions.reduce((s, p) => s + (+p.qty || 0), 0)} total vacancies</p>
+            {!service_fee && <p className="text-[10px] text-red-500 font-semibold mt-0.5">Service fee is required</p>}
+          </div>
           <div className="flex gap-2">
             <button onClick={onClose} className="btn-secondary text-sm">Cancel</button>
             <button onClick={handleSubmit} disabled={isLoading || !canSubmit} className="btn-primary text-sm disabled:opacity-40 disabled:cursor-not-allowed">
@@ -682,7 +745,14 @@ export default function InterviewEvents() {
       </div>
 
       {showForm && <InterviewFormModal onClose={() => setShowForm(false)} onSuccess={() => { setShowForm(false); refetch(); }} />}
-      {editJob && <InterviewEditModal job={editJob} onClose={() => setEditJob(null)} onSuccess={() => { setEditJob(null); refetch(); }} />}
+      {editJob && (
+        <InterviewEditModal
+          job={editJob}
+          event={allEvents.find((e: any) => e.job_id === editJob.id)}
+          onClose={() => setEditJob(null)}
+          onSuccess={() => { setEditJob(null); refetch(); }}
+        />
+      )}
       {printJobs && (
         <JobPostingPrint
           jobs={printJobs}

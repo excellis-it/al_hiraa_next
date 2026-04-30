@@ -38,6 +38,9 @@ export type ProcessDetailsAvgAggregateOutputType = {
   total_receivable_amount: runtime.Decimal | null
   refund_amount: runtime.Decimal | null
   disc_allot: runtime.Decimal | null
+  vendor_id: number | null
+  accommodation_cost: runtime.Decimal | null
+  transportation_cost: runtime.Decimal | null
 }
 
 export type ProcessDetailsSumAggregateOutputType = {
@@ -52,6 +55,9 @@ export type ProcessDetailsSumAggregateOutputType = {
   total_receivable_amount: runtime.Decimal | null
   refund_amount: runtime.Decimal | null
   disc_allot: runtime.Decimal | null
+  vendor_id: number | null
+  accommodation_cost: runtime.Decimal | null
+  transportation_cost: runtime.Decimal | null
 }
 
 export type ProcessDetailsMinAggregateOutputType = {
@@ -98,6 +104,11 @@ export type ProcessDetailsMinAggregateOutputType = {
   refund_date: Date | null
   refund_amount: runtime.Decimal | null
   disc_allot: runtime.Decimal | null
+  vendor_id: number | null
+  accommodation: boolean | null
+  accommodation_cost: runtime.Decimal | null
+  transportation: boolean | null
+  transportation_cost: runtime.Decimal | null
   family_contact_name: string | null
   family_contact_phone: string | null
   candidate_address: string | null
@@ -151,6 +162,11 @@ export type ProcessDetailsMaxAggregateOutputType = {
   refund_date: Date | null
   refund_amount: runtime.Decimal | null
   disc_allot: runtime.Decimal | null
+  vendor_id: number | null
+  accommodation: boolean | null
+  accommodation_cost: runtime.Decimal | null
+  transportation: boolean | null
+  transportation_cost: runtime.Decimal | null
   family_contact_name: string | null
   family_contact_phone: string | null
   candidate_address: string | null
@@ -205,6 +221,11 @@ export type ProcessDetailsCountAggregateOutputType = {
   refund_date: number
   refund_amount: number
   disc_allot: number
+  vendor_id: number
+  accommodation: number
+  accommodation_cost: number
+  transportation: number
+  transportation_cost: number
   family_contact_name: number
   family_contact_phone: number
   candidate_address: number
@@ -228,6 +249,9 @@ export type ProcessDetailsAvgAggregateInputType = {
   total_receivable_amount?: true
   refund_amount?: true
   disc_allot?: true
+  vendor_id?: true
+  accommodation_cost?: true
+  transportation_cost?: true
 }
 
 export type ProcessDetailsSumAggregateInputType = {
@@ -242,6 +266,9 @@ export type ProcessDetailsSumAggregateInputType = {
   total_receivable_amount?: true
   refund_amount?: true
   disc_allot?: true
+  vendor_id?: true
+  accommodation_cost?: true
+  transportation_cost?: true
 }
 
 export type ProcessDetailsMinAggregateInputType = {
@@ -288,6 +315,11 @@ export type ProcessDetailsMinAggregateInputType = {
   refund_date?: true
   refund_amount?: true
   disc_allot?: true
+  vendor_id?: true
+  accommodation?: true
+  accommodation_cost?: true
+  transportation?: true
+  transportation_cost?: true
   family_contact_name?: true
   family_contact_phone?: true
   candidate_address?: true
@@ -341,6 +373,11 @@ export type ProcessDetailsMaxAggregateInputType = {
   refund_date?: true
   refund_amount?: true
   disc_allot?: true
+  vendor_id?: true
+  accommodation?: true
+  accommodation_cost?: true
+  transportation?: true
+  transportation_cost?: true
   family_contact_name?: true
   family_contact_phone?: true
   candidate_address?: true
@@ -395,6 +432,11 @@ export type ProcessDetailsCountAggregateInputType = {
   refund_date?: true
   refund_amount?: true
   disc_allot?: true
+  vendor_id?: true
+  accommodation?: true
+  accommodation_cost?: true
+  transportation?: true
+  transportation_cost?: true
   family_contact_name?: true
   family_contact_phone?: true
   candidate_address?: true
@@ -536,6 +578,11 @@ export type ProcessDetailsGroupByOutputType = {
   refund_date: Date | null
   refund_amount: runtime.Decimal | null
   disc_allot: runtime.Decimal | null
+  vendor_id: number | null
+  accommodation: boolean | null
+  accommodation_cost: runtime.Decimal | null
+  transportation: boolean | null
+  transportation_cost: runtime.Decimal | null
   family_contact_name: string | null
   family_contact_phone: string | null
   candidate_address: string | null
@@ -613,6 +660,11 @@ export type ProcessDetailsWhereInput = {
   refund_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
   refund_amount?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: Prisma.IntNullableFilter<"ProcessDetails"> | number | null
+  accommodation?: Prisma.BoolNullableFilter<"ProcessDetails"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableFilter<"ProcessDetails"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
   family_contact_phone?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
   candidate_address?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
@@ -621,6 +673,7 @@ export type ProcessDetailsWhereInput = {
   created_at?: Prisma.DateTimeFilter<"ProcessDetails"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"ProcessDetails"> | Date | string
   candidate_job?: Prisma.XOR<Prisma.CandidateJobScalarRelationFilter, Prisma.CandidateJobWhereInput>
+  vendor_ref?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
 }
 
 export type ProcessDetailsOrderByWithRelationInput = {
@@ -668,6 +721,11 @@ export type ProcessDetailsOrderByWithRelationInput = {
   refund_date?: Prisma.SortOrderInput | Prisma.SortOrder
   refund_amount?: Prisma.SortOrderInput | Prisma.SortOrder
   disc_allot?: Prisma.SortOrderInput | Prisma.SortOrder
+  vendor_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
   family_contact_name?: Prisma.SortOrderInput | Prisma.SortOrder
   family_contact_phone?: Prisma.SortOrderInput | Prisma.SortOrder
   candidate_address?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -676,6 +734,7 @@ export type ProcessDetailsOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   candidate_job?: Prisma.CandidateJobOrderByWithRelationInput
+  vendor_ref?: Prisma.VendorOrderByWithRelationInput
 }
 
 export type ProcessDetailsWhereUniqueInput = Prisma.AtLeast<{
@@ -726,6 +785,11 @@ export type ProcessDetailsWhereUniqueInput = Prisma.AtLeast<{
   refund_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
   refund_amount?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: Prisma.IntNullableFilter<"ProcessDetails"> | number | null
+  accommodation?: Prisma.BoolNullableFilter<"ProcessDetails"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableFilter<"ProcessDetails"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
   family_contact_phone?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
   candidate_address?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
@@ -734,6 +798,7 @@ export type ProcessDetailsWhereUniqueInput = Prisma.AtLeast<{
   created_at?: Prisma.DateTimeFilter<"ProcessDetails"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"ProcessDetails"> | Date | string
   candidate_job?: Prisma.XOR<Prisma.CandidateJobScalarRelationFilter, Prisma.CandidateJobWhereInput>
+  vendor_ref?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
 }, "id" | "candidate_job_id">
 
 export type ProcessDetailsOrderByWithAggregationInput = {
@@ -781,6 +846,11 @@ export type ProcessDetailsOrderByWithAggregationInput = {
   refund_date?: Prisma.SortOrderInput | Prisma.SortOrder
   refund_amount?: Prisma.SortOrderInput | Prisma.SortOrder
   disc_allot?: Prisma.SortOrderInput | Prisma.SortOrder
+  vendor_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
   family_contact_name?: Prisma.SortOrderInput | Prisma.SortOrder
   family_contact_phone?: Prisma.SortOrderInput | Prisma.SortOrder
   candidate_address?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -843,6 +913,11 @@ export type ProcessDetailsScalarWhereWithAggregatesInput = {
   refund_date?: Prisma.DateTimeNullableWithAggregatesFilter<"ProcessDetails"> | Date | string | null
   refund_amount?: Prisma.DecimalNullableWithAggregatesFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.DecimalNullableWithAggregatesFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: Prisma.IntNullableWithAggregatesFilter<"ProcessDetails"> | number | null
+  accommodation?: Prisma.BoolNullableWithAggregatesFilter<"ProcessDetails"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableWithAggregatesFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableWithAggregatesFilter<"ProcessDetails"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableWithAggregatesFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.StringNullableWithAggregatesFilter<"ProcessDetails"> | string | null
   family_contact_phone?: Prisma.StringNullableWithAggregatesFilter<"ProcessDetails"> | string | null
   candidate_address?: Prisma.StringNullableWithAggregatesFilter<"ProcessDetails"> | string | null
@@ -895,6 +970,10 @@ export type ProcessDetailsCreateInput = {
   refund_date?: Date | string | null
   refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: string | null
   family_contact_phone?: string | null
   candidate_address?: string | null
@@ -903,6 +982,7 @@ export type ProcessDetailsCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string
   candidate_job: Prisma.CandidateJobCreateNestedOneWithoutProcess_detailsInput
+  vendor_ref?: Prisma.VendorCreateNestedOneWithoutProcess_detailsInput
 }
 
 export type ProcessDetailsUncheckedCreateInput = {
@@ -950,6 +1030,11 @@ export type ProcessDetailsUncheckedCreateInput = {
   refund_date?: Date | string | null
   refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: string | null
   family_contact_phone?: string | null
   candidate_address?: string | null
@@ -1002,6 +1087,10 @@ export type ProcessDetailsUpdateInput = {
   refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1010,6 +1099,7 @@ export type ProcessDetailsUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   candidate_job?: Prisma.CandidateJobUpdateOneRequiredWithoutProcess_detailsNestedInput
+  vendor_ref?: Prisma.VendorUpdateOneWithoutProcess_detailsNestedInput
 }
 
 export type ProcessDetailsUncheckedUpdateInput = {
@@ -1057,6 +1147,11 @@ export type ProcessDetailsUncheckedUpdateInput = {
   refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1111,6 +1206,11 @@ export type ProcessDetailsCreateManyInput = {
   refund_date?: Date | string | null
   refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: string | null
   family_contact_phone?: string | null
   candidate_address?: string | null
@@ -1163,6 +1263,10 @@ export type ProcessDetailsUpdateManyMutationInput = {
   refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1217,6 +1321,11 @@ export type ProcessDetailsUncheckedUpdateManyInput = {
   refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1276,6 +1385,11 @@ export type ProcessDetailsCountOrderByAggregateInput = {
   refund_date?: Prisma.SortOrder
   refund_amount?: Prisma.SortOrder
   disc_allot?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
   family_contact_name?: Prisma.SortOrder
   family_contact_phone?: Prisma.SortOrder
   candidate_address?: Prisma.SortOrder
@@ -1297,6 +1411,9 @@ export type ProcessDetailsAvgOrderByAggregateInput = {
   total_receivable_amount?: Prisma.SortOrder
   refund_amount?: Prisma.SortOrder
   disc_allot?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
 }
 
 export type ProcessDetailsMaxOrderByAggregateInput = {
@@ -1343,6 +1460,11 @@ export type ProcessDetailsMaxOrderByAggregateInput = {
   refund_date?: Prisma.SortOrder
   refund_amount?: Prisma.SortOrder
   disc_allot?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
   family_contact_name?: Prisma.SortOrder
   family_contact_phone?: Prisma.SortOrder
   candidate_address?: Prisma.SortOrder
@@ -1396,6 +1518,11 @@ export type ProcessDetailsMinOrderByAggregateInput = {
   refund_date?: Prisma.SortOrder
   refund_amount?: Prisma.SortOrder
   disc_allot?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
   family_contact_name?: Prisma.SortOrder
   family_contact_phone?: Prisma.SortOrder
   candidate_address?: Prisma.SortOrder
@@ -1417,6 +1544,19 @@ export type ProcessDetailsSumOrderByAggregateInput = {
   total_receivable_amount?: Prisma.SortOrder
   refund_amount?: Prisma.SortOrder
   disc_allot?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
+}
+
+export type ProcessDetailsListRelationFilter = {
+  every?: Prisma.ProcessDetailsWhereInput
+  some?: Prisma.ProcessDetailsWhereInput
+  none?: Prisma.ProcessDetailsWhereInput
+}
+
+export type ProcessDetailsOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type ProcessDetailsCreateNestedOneWithoutCandidate_jobInput = {
@@ -1449,6 +1589,48 @@ export type ProcessDetailsUncheckedUpdateOneWithoutCandidate_jobNestedInput = {
   delete?: Prisma.ProcessDetailsWhereInput | boolean
   connect?: Prisma.ProcessDetailsWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProcessDetailsUpdateToOneWithWhereWithoutCandidate_jobInput, Prisma.ProcessDetailsUpdateWithoutCandidate_jobInput>, Prisma.ProcessDetailsUncheckedUpdateWithoutCandidate_jobInput>
+}
+
+export type ProcessDetailsCreateNestedManyWithoutVendor_refInput = {
+  create?: Prisma.XOR<Prisma.ProcessDetailsCreateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput> | Prisma.ProcessDetailsCreateWithoutVendor_refInput[] | Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput[]
+  connectOrCreate?: Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput | Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput[]
+  createMany?: Prisma.ProcessDetailsCreateManyVendor_refInputEnvelope
+  connect?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+}
+
+export type ProcessDetailsUncheckedCreateNestedManyWithoutVendor_refInput = {
+  create?: Prisma.XOR<Prisma.ProcessDetailsCreateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput> | Prisma.ProcessDetailsCreateWithoutVendor_refInput[] | Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput[]
+  connectOrCreate?: Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput | Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput[]
+  createMany?: Prisma.ProcessDetailsCreateManyVendor_refInputEnvelope
+  connect?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+}
+
+export type ProcessDetailsUpdateManyWithoutVendor_refNestedInput = {
+  create?: Prisma.XOR<Prisma.ProcessDetailsCreateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput> | Prisma.ProcessDetailsCreateWithoutVendor_refInput[] | Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput[]
+  connectOrCreate?: Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput | Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput[]
+  upsert?: Prisma.ProcessDetailsUpsertWithWhereUniqueWithoutVendor_refInput | Prisma.ProcessDetailsUpsertWithWhereUniqueWithoutVendor_refInput[]
+  createMany?: Prisma.ProcessDetailsCreateManyVendor_refInputEnvelope
+  set?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  disconnect?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  delete?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  connect?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  update?: Prisma.ProcessDetailsUpdateWithWhereUniqueWithoutVendor_refInput | Prisma.ProcessDetailsUpdateWithWhereUniqueWithoutVendor_refInput[]
+  updateMany?: Prisma.ProcessDetailsUpdateManyWithWhereWithoutVendor_refInput | Prisma.ProcessDetailsUpdateManyWithWhereWithoutVendor_refInput[]
+  deleteMany?: Prisma.ProcessDetailsScalarWhereInput | Prisma.ProcessDetailsScalarWhereInput[]
+}
+
+export type ProcessDetailsUncheckedUpdateManyWithoutVendor_refNestedInput = {
+  create?: Prisma.XOR<Prisma.ProcessDetailsCreateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput> | Prisma.ProcessDetailsCreateWithoutVendor_refInput[] | Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput[]
+  connectOrCreate?: Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput | Prisma.ProcessDetailsCreateOrConnectWithoutVendor_refInput[]
+  upsert?: Prisma.ProcessDetailsUpsertWithWhereUniqueWithoutVendor_refInput | Prisma.ProcessDetailsUpsertWithWhereUniqueWithoutVendor_refInput[]
+  createMany?: Prisma.ProcessDetailsCreateManyVendor_refInputEnvelope
+  set?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  disconnect?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  delete?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  connect?: Prisma.ProcessDetailsWhereUniqueInput | Prisma.ProcessDetailsWhereUniqueInput[]
+  update?: Prisma.ProcessDetailsUpdateWithWhereUniqueWithoutVendor_refInput | Prisma.ProcessDetailsUpdateWithWhereUniqueWithoutVendor_refInput[]
+  updateMany?: Prisma.ProcessDetailsUpdateManyWithWhereWithoutVendor_refInput | Prisma.ProcessDetailsUpdateManyWithWhereWithoutVendor_refInput[]
+  deleteMany?: Prisma.ProcessDetailsScalarWhereInput | Prisma.ProcessDetailsScalarWhereInput[]
 }
 
 export type ProcessDetailsCreateWithoutCandidate_jobInput = {
@@ -1494,6 +1676,10 @@ export type ProcessDetailsCreateWithoutCandidate_jobInput = {
   refund_date?: Date | string | null
   refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: string | null
   family_contact_phone?: string | null
   candidate_address?: string | null
@@ -1501,6 +1687,7 @@ export type ProcessDetailsCreateWithoutCandidate_jobInput = {
   other_remarks?: string | null
   created_at?: Date | string
   updated_at?: Date | string
+  vendor_ref?: Prisma.VendorCreateNestedOneWithoutProcess_detailsInput
 }
 
 export type ProcessDetailsUncheckedCreateWithoutCandidate_jobInput = {
@@ -1547,6 +1734,11 @@ export type ProcessDetailsUncheckedCreateWithoutCandidate_jobInput = {
   refund_date?: Date | string | null
   refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: string | null
   family_contact_phone?: string | null
   candidate_address?: string | null
@@ -1615,6 +1807,10 @@ export type ProcessDetailsUpdateWithoutCandidate_jobInput = {
   refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1622,6 +1818,7 @@ export type ProcessDetailsUpdateWithoutCandidate_jobInput = {
   other_remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  vendor_ref?: Prisma.VendorUpdateOneWithoutProcess_detailsNestedInput
 }
 
 export type ProcessDetailsUncheckedUpdateWithoutCandidate_jobInput = {
@@ -1668,6 +1865,445 @@ export type ProcessDetailsUncheckedUpdateWithoutCandidate_jobInput = {
   refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  other_remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ProcessDetailsCreateWithoutVendor_refInput = {
+  year_of_selection?: number | null
+  date_of_interview?: Date | string | null
+  date_of_selection?: Date | string | null
+  selection_month?: string | null
+  mode_of_selection?: string | null
+  interview_location?: string | null
+  client_remark?: string | null
+  vendor?: string | null
+  sponsor?: string | null
+  candidate_status?: string | null
+  medical_status?: string | null
+  medical_app_date?: Date | string | null
+  medical_completion_date?: Date | string | null
+  medical_approval_date?: Date | string | null
+  medical_expiry_date?: Date | string | null
+  medical_repeat_date?: Date | string | null
+  courier_sent_date?: Date | string | null
+  courier_received_date?: Date | string | null
+  documents_checklist?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  mofa_number?: string | null
+  mofa_date?: Date | string | null
+  mofa_received_date?: Date | string | null
+  visa_receiving_date?: Date | string | null
+  visa_issue_date?: Date | string | null
+  visa_expiry_date?: Date | string | null
+  vfs_applied_date?: Date | string | null
+  vfs_received_date?: Date | string | null
+  ticket_booking_date?: Date | string | null
+  ticket_confirm_date?: Date | string | null
+  onboarding_city?: string | null
+  exit_paper_date?: Date | string | null
+  deployment_date?: Date | string | null
+  deployment_month?: string | null
+  vendor_service_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  advance_received?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  exit_setting_payment?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  other_setting_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_received_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_receivable_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refund_date?: Date | string | null
+  refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  family_contact_name?: string | null
+  family_contact_phone?: string | null
+  candidate_address?: string | null
+  remarks?: string | null
+  other_remarks?: string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  candidate_job: Prisma.CandidateJobCreateNestedOneWithoutProcess_detailsInput
+}
+
+export type ProcessDetailsUncheckedCreateWithoutVendor_refInput = {
+  id?: number
+  candidate_job_id: number
+  year_of_selection?: number | null
+  date_of_interview?: Date | string | null
+  date_of_selection?: Date | string | null
+  selection_month?: string | null
+  mode_of_selection?: string | null
+  interview_location?: string | null
+  client_remark?: string | null
+  vendor?: string | null
+  sponsor?: string | null
+  candidate_status?: string | null
+  medical_status?: string | null
+  medical_app_date?: Date | string | null
+  medical_completion_date?: Date | string | null
+  medical_approval_date?: Date | string | null
+  medical_expiry_date?: Date | string | null
+  medical_repeat_date?: Date | string | null
+  courier_sent_date?: Date | string | null
+  courier_received_date?: Date | string | null
+  documents_checklist?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  mofa_number?: string | null
+  mofa_date?: Date | string | null
+  mofa_received_date?: Date | string | null
+  visa_receiving_date?: Date | string | null
+  visa_issue_date?: Date | string | null
+  visa_expiry_date?: Date | string | null
+  vfs_applied_date?: Date | string | null
+  vfs_received_date?: Date | string | null
+  ticket_booking_date?: Date | string | null
+  ticket_confirm_date?: Date | string | null
+  onboarding_city?: string | null
+  exit_paper_date?: Date | string | null
+  deployment_date?: Date | string | null
+  deployment_month?: string | null
+  vendor_service_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  advance_received?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  exit_setting_payment?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  other_setting_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_received_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_receivable_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refund_date?: Date | string | null
+  refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  family_contact_name?: string | null
+  family_contact_phone?: string | null
+  candidate_address?: string | null
+  remarks?: string | null
+  other_remarks?: string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type ProcessDetailsCreateOrConnectWithoutVendor_refInput = {
+  where: Prisma.ProcessDetailsWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProcessDetailsCreateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput>
+}
+
+export type ProcessDetailsCreateManyVendor_refInputEnvelope = {
+  data: Prisma.ProcessDetailsCreateManyVendor_refInput | Prisma.ProcessDetailsCreateManyVendor_refInput[]
+  skipDuplicates?: boolean
+}
+
+export type ProcessDetailsUpsertWithWhereUniqueWithoutVendor_refInput = {
+  where: Prisma.ProcessDetailsWhereUniqueInput
+  update: Prisma.XOR<Prisma.ProcessDetailsUpdateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedUpdateWithoutVendor_refInput>
+  create: Prisma.XOR<Prisma.ProcessDetailsCreateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedCreateWithoutVendor_refInput>
+}
+
+export type ProcessDetailsUpdateWithWhereUniqueWithoutVendor_refInput = {
+  where: Prisma.ProcessDetailsWhereUniqueInput
+  data: Prisma.XOR<Prisma.ProcessDetailsUpdateWithoutVendor_refInput, Prisma.ProcessDetailsUncheckedUpdateWithoutVendor_refInput>
+}
+
+export type ProcessDetailsUpdateManyWithWhereWithoutVendor_refInput = {
+  where: Prisma.ProcessDetailsScalarWhereInput
+  data: Prisma.XOR<Prisma.ProcessDetailsUpdateManyMutationInput, Prisma.ProcessDetailsUncheckedUpdateManyWithoutVendor_refInput>
+}
+
+export type ProcessDetailsScalarWhereInput = {
+  AND?: Prisma.ProcessDetailsScalarWhereInput | Prisma.ProcessDetailsScalarWhereInput[]
+  OR?: Prisma.ProcessDetailsScalarWhereInput[]
+  NOT?: Prisma.ProcessDetailsScalarWhereInput | Prisma.ProcessDetailsScalarWhereInput[]
+  id?: Prisma.IntFilter<"ProcessDetails"> | number
+  candidate_job_id?: Prisma.IntFilter<"ProcessDetails"> | number
+  year_of_selection?: Prisma.IntNullableFilter<"ProcessDetails"> | number | null
+  date_of_interview?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  date_of_selection?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  selection_month?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  mode_of_selection?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  interview_location?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  client_remark?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  vendor?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  sponsor?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  candidate_status?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  medical_status?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  medical_app_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  medical_completion_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  medical_approval_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  medical_expiry_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  medical_repeat_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  courier_sent_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  courier_received_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  documents_checklist?: Prisma.JsonNullableFilter<"ProcessDetails">
+  mofa_number?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  mofa_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  mofa_received_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  visa_receiving_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  visa_issue_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  visa_expiry_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  vfs_applied_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  vfs_received_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  ticket_booking_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  ticket_confirm_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  onboarding_city?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  exit_paper_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  deployment_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  deployment_month?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  vendor_service_charge?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  advance_received?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  exit_setting_payment?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  other_setting_charge?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_received_amount?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_receivable_amount?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refund_date?: Prisma.DateTimeNullableFilter<"ProcessDetails"> | Date | string | null
+  refund_amount?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  disc_allot?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  vendor_id?: Prisma.IntNullableFilter<"ProcessDetails"> | number | null
+  accommodation?: Prisma.BoolNullableFilter<"ProcessDetails"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableFilter<"ProcessDetails"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableFilter<"ProcessDetails"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  family_contact_name?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  family_contact_phone?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  candidate_address?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  remarks?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  other_remarks?: Prisma.StringNullableFilter<"ProcessDetails"> | string | null
+  created_at?: Prisma.DateTimeFilter<"ProcessDetails"> | Date | string
+  updated_at?: Prisma.DateTimeFilter<"ProcessDetails"> | Date | string
+}
+
+export type ProcessDetailsCreateManyVendor_refInput = {
+  id?: number
+  candidate_job_id: number
+  year_of_selection?: number | null
+  date_of_interview?: Date | string | null
+  date_of_selection?: Date | string | null
+  selection_month?: string | null
+  mode_of_selection?: string | null
+  interview_location?: string | null
+  client_remark?: string | null
+  vendor?: string | null
+  sponsor?: string | null
+  candidate_status?: string | null
+  medical_status?: string | null
+  medical_app_date?: Date | string | null
+  medical_completion_date?: Date | string | null
+  medical_approval_date?: Date | string | null
+  medical_expiry_date?: Date | string | null
+  medical_repeat_date?: Date | string | null
+  courier_sent_date?: Date | string | null
+  courier_received_date?: Date | string | null
+  documents_checklist?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  mofa_number?: string | null
+  mofa_date?: Date | string | null
+  mofa_received_date?: Date | string | null
+  visa_receiving_date?: Date | string | null
+  visa_issue_date?: Date | string | null
+  visa_expiry_date?: Date | string | null
+  vfs_applied_date?: Date | string | null
+  vfs_received_date?: Date | string | null
+  ticket_booking_date?: Date | string | null
+  ticket_confirm_date?: Date | string | null
+  onboarding_city?: string | null
+  exit_paper_date?: Date | string | null
+  deployment_date?: Date | string | null
+  deployment_month?: string | null
+  vendor_service_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  advance_received?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  exit_setting_payment?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  other_setting_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_received_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_receivable_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refund_date?: Date | string | null
+  refund_amount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  disc_allot?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  family_contact_name?: string | null
+  family_contact_phone?: string | null
+  candidate_address?: string | null
+  remarks?: string | null
+  other_remarks?: string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type ProcessDetailsUpdateWithoutVendor_refInput = {
+  year_of_selection?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  date_of_interview?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  date_of_selection?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  selection_month?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode_of_selection?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interview_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  client_remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sponsor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medical_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medical_app_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_completion_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_approval_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_expiry_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_repeat_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  courier_sent_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  courier_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  documents_checklist?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  mofa_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mofa_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mofa_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_receiving_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_issue_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_expiry_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vfs_applied_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vfs_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ticket_booking_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ticket_confirm_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboarding_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  exit_paper_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deployment_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deployment_month?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_service_charge?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  advance_received?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  exit_setting_payment?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  other_setting_charge?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_received_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_receivable_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  other_remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  candidate_job?: Prisma.CandidateJobUpdateOneRequiredWithoutProcess_detailsNestedInput
+}
+
+export type ProcessDetailsUncheckedUpdateWithoutVendor_refInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  candidate_job_id?: Prisma.IntFieldUpdateOperationsInput | number
+  year_of_selection?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  date_of_interview?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  date_of_selection?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  selection_month?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode_of_selection?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interview_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  client_remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sponsor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medical_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medical_app_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_completion_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_approval_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_expiry_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_repeat_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  courier_sent_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  courier_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  documents_checklist?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  mofa_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mofa_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mofa_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_receiving_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_issue_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_expiry_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vfs_applied_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vfs_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ticket_booking_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ticket_confirm_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboarding_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  exit_paper_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deployment_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deployment_month?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_service_charge?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  advance_received?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  exit_setting_payment?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  other_setting_charge?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_received_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_receivable_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  other_remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ProcessDetailsUncheckedUpdateManyWithoutVendor_refInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  candidate_job_id?: Prisma.IntFieldUpdateOperationsInput | number
+  year_of_selection?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  date_of_interview?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  date_of_selection?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  selection_month?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode_of_selection?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interview_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  client_remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sponsor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medical_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medical_app_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_completion_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_approval_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_expiry_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  medical_repeat_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  courier_sent_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  courier_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  documents_checklist?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  mofa_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mofa_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mofa_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_receiving_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_issue_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  visa_expiry_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vfs_applied_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vfs_received_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ticket_booking_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ticket_confirm_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboarding_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  exit_paper_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deployment_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deployment_month?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_service_charge?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  advance_received?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  exit_setting_payment?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  other_setting_charge?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_received_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  total_receivable_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refund_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refund_amount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  disc_allot?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   family_contact_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   family_contact_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   candidate_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1724,6 +2360,11 @@ export type ProcessDetailsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   refund_date?: boolean
   refund_amount?: boolean
   disc_allot?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   family_contact_name?: boolean
   family_contact_phone?: boolean
   candidate_address?: boolean
@@ -1732,6 +2373,7 @@ export type ProcessDetailsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   created_at?: boolean
   updated_at?: boolean
   candidate_job?: boolean | Prisma.CandidateJobDefaultArgs<ExtArgs>
+  vendor_ref?: boolean | Prisma.ProcessDetails$vendor_refArgs<ExtArgs>
 }, ExtArgs["result"]["processDetails"]>
 
 export type ProcessDetailsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1779,6 +2421,11 @@ export type ProcessDetailsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   refund_date?: boolean
   refund_amount?: boolean
   disc_allot?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   family_contact_name?: boolean
   family_contact_phone?: boolean
   candidate_address?: boolean
@@ -1787,6 +2434,7 @@ export type ProcessDetailsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   created_at?: boolean
   updated_at?: boolean
   candidate_job?: boolean | Prisma.CandidateJobDefaultArgs<ExtArgs>
+  vendor_ref?: boolean | Prisma.ProcessDetails$vendor_refArgs<ExtArgs>
 }, ExtArgs["result"]["processDetails"]>
 
 export type ProcessDetailsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1834,6 +2482,11 @@ export type ProcessDetailsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   refund_date?: boolean
   refund_amount?: boolean
   disc_allot?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   family_contact_name?: boolean
   family_contact_phone?: boolean
   candidate_address?: boolean
@@ -1842,6 +2495,7 @@ export type ProcessDetailsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   created_at?: boolean
   updated_at?: boolean
   candidate_job?: boolean | Prisma.CandidateJobDefaultArgs<ExtArgs>
+  vendor_ref?: boolean | Prisma.ProcessDetails$vendor_refArgs<ExtArgs>
 }, ExtArgs["result"]["processDetails"]>
 
 export type ProcessDetailsSelectScalar = {
@@ -1889,6 +2543,11 @@ export type ProcessDetailsSelectScalar = {
   refund_date?: boolean
   refund_amount?: boolean
   disc_allot?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   family_contact_name?: boolean
   family_contact_phone?: boolean
   candidate_address?: boolean
@@ -1898,21 +2557,25 @@ export type ProcessDetailsSelectScalar = {
   updated_at?: boolean
 }
 
-export type ProcessDetailsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "candidate_job_id" | "year_of_selection" | "date_of_interview" | "date_of_selection" | "selection_month" | "mode_of_selection" | "interview_location" | "client_remark" | "vendor" | "sponsor" | "candidate_status" | "medical_status" | "medical_app_date" | "medical_completion_date" | "medical_approval_date" | "medical_expiry_date" | "medical_repeat_date" | "courier_sent_date" | "courier_received_date" | "documents_checklist" | "mofa_number" | "mofa_date" | "mofa_received_date" | "visa_receiving_date" | "visa_issue_date" | "visa_expiry_date" | "vfs_applied_date" | "vfs_received_date" | "ticket_booking_date" | "ticket_confirm_date" | "onboarding_city" | "exit_paper_date" | "deployment_date" | "deployment_month" | "vendor_service_charge" | "advance_received" | "exit_setting_payment" | "other_setting_charge" | "total_received_amount" | "total_receivable_amount" | "refund_date" | "refund_amount" | "disc_allot" | "family_contact_name" | "family_contact_phone" | "candidate_address" | "remarks" | "other_remarks" | "created_at" | "updated_at", ExtArgs["result"]["processDetails"]>
+export type ProcessDetailsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "candidate_job_id" | "year_of_selection" | "date_of_interview" | "date_of_selection" | "selection_month" | "mode_of_selection" | "interview_location" | "client_remark" | "vendor" | "sponsor" | "candidate_status" | "medical_status" | "medical_app_date" | "medical_completion_date" | "medical_approval_date" | "medical_expiry_date" | "medical_repeat_date" | "courier_sent_date" | "courier_received_date" | "documents_checklist" | "mofa_number" | "mofa_date" | "mofa_received_date" | "visa_receiving_date" | "visa_issue_date" | "visa_expiry_date" | "vfs_applied_date" | "vfs_received_date" | "ticket_booking_date" | "ticket_confirm_date" | "onboarding_city" | "exit_paper_date" | "deployment_date" | "deployment_month" | "vendor_service_charge" | "advance_received" | "exit_setting_payment" | "other_setting_charge" | "total_received_amount" | "total_receivable_amount" | "refund_date" | "refund_amount" | "disc_allot" | "vendor_id" | "accommodation" | "accommodation_cost" | "transportation" | "transportation_cost" | "family_contact_name" | "family_contact_phone" | "candidate_address" | "remarks" | "other_remarks" | "created_at" | "updated_at", ExtArgs["result"]["processDetails"]>
 export type ProcessDetailsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   candidate_job?: boolean | Prisma.CandidateJobDefaultArgs<ExtArgs>
+  vendor_ref?: boolean | Prisma.ProcessDetails$vendor_refArgs<ExtArgs>
 }
 export type ProcessDetailsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   candidate_job?: boolean | Prisma.CandidateJobDefaultArgs<ExtArgs>
+  vendor_ref?: boolean | Prisma.ProcessDetails$vendor_refArgs<ExtArgs>
 }
 export type ProcessDetailsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   candidate_job?: boolean | Prisma.CandidateJobDefaultArgs<ExtArgs>
+  vendor_ref?: boolean | Prisma.ProcessDetails$vendor_refArgs<ExtArgs>
 }
 
 export type $ProcessDetailsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ProcessDetails"
   objects: {
     candidate_job: Prisma.$CandidateJobPayload<ExtArgs>
+    vendor_ref: Prisma.$VendorPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1959,6 +2622,11 @@ export type $ProcessDetailsPayload<ExtArgs extends runtime.Types.Extensions.Inte
     refund_date: Date | null
     refund_amount: runtime.Decimal | null
     disc_allot: runtime.Decimal | null
+    vendor_id: number | null
+    accommodation: boolean | null
+    accommodation_cost: runtime.Decimal | null
+    transportation: boolean | null
+    transportation_cost: runtime.Decimal | null
     family_contact_name: string | null
     family_contact_phone: string | null
     candidate_address: string | null
@@ -2361,6 +3029,7 @@ readonly fields: ProcessDetailsFieldRefs;
 export interface Prisma__ProcessDetailsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   candidate_job<T extends Prisma.CandidateJobDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CandidateJobDefaultArgs<ExtArgs>>): Prisma.Prisma__CandidateJobClient<runtime.Types.Result.GetResult<Prisma.$CandidateJobPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  vendor_ref<T extends Prisma.ProcessDetails$vendor_refArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProcessDetails$vendor_refArgs<ExtArgs>>): Prisma.Prisma__VendorClient<runtime.Types.Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2434,6 +3103,11 @@ export interface ProcessDetailsFieldRefs {
   readonly refund_date: Prisma.FieldRef<"ProcessDetails", 'DateTime'>
   readonly refund_amount: Prisma.FieldRef<"ProcessDetails", 'Decimal'>
   readonly disc_allot: Prisma.FieldRef<"ProcessDetails", 'Decimal'>
+  readonly vendor_id: Prisma.FieldRef<"ProcessDetails", 'Int'>
+  readonly accommodation: Prisma.FieldRef<"ProcessDetails", 'Boolean'>
+  readonly accommodation_cost: Prisma.FieldRef<"ProcessDetails", 'Decimal'>
+  readonly transportation: Prisma.FieldRef<"ProcessDetails", 'Boolean'>
+  readonly transportation_cost: Prisma.FieldRef<"ProcessDetails", 'Decimal'>
   readonly family_contact_name: Prisma.FieldRef<"ProcessDetails", 'String'>
   readonly family_contact_phone: Prisma.FieldRef<"ProcessDetails", 'String'>
   readonly candidate_address: Prisma.FieldRef<"ProcessDetails", 'String'>
@@ -2839,6 +3513,25 @@ export type ProcessDetailsDeleteManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many ProcessDetails to delete.
    */
   limit?: number
+}
+
+/**
+ * ProcessDetails.vendor_ref
+ */
+export type ProcessDetails$vendor_refArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Vendor
+   */
+  select?: Prisma.VendorSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Vendor
+   */
+  omit?: Prisma.VendorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  where?: Prisma.VendorWhereInput
 }
 
 /**

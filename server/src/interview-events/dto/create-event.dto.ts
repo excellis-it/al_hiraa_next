@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsNumber,
@@ -70,4 +71,26 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsNumber()
+  vendor_id?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  accommodation?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  accommodation_cost?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  transportation?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  transportation_cost?: number;
 }

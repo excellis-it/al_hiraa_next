@@ -244,6 +244,8 @@ export type VendorWhereInput = {
   status?: Prisma.StringFilter<"Vendor"> | string
   created_at?: Prisma.DateTimeFilter<"Vendor"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Vendor"> | Date | string
+  interview_events?: Prisma.InterviewEventListRelationFilter
+  process_details?: Prisma.ProcessDetailsListRelationFilter
 }
 
 export type VendorOrderByWithRelationInput = {
@@ -255,6 +257,8 @@ export type VendorOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
+  interview_events?: Prisma.InterviewEventOrderByRelationAggregateInput
+  process_details?: Prisma.ProcessDetailsOrderByRelationAggregateInput
 }
 
 export type VendorWhereUniqueInput = Prisma.AtLeast<{
@@ -269,6 +273,8 @@ export type VendorWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.StringFilter<"Vendor"> | string
   created_at?: Prisma.DateTimeFilter<"Vendor"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Vendor"> | Date | string
+  interview_events?: Prisma.InterviewEventListRelationFilter
+  process_details?: Prisma.ProcessDetailsListRelationFilter
 }, "id">
 
 export type VendorOrderByWithAggregationInput = {
@@ -309,6 +315,8 @@ export type VendorCreateInput = {
   status?: string
   created_at?: Date | string
   updated_at?: Date | string
+  interview_events?: Prisma.InterviewEventCreateNestedManyWithoutVendorInput
+  process_details?: Prisma.ProcessDetailsCreateNestedManyWithoutVendor_refInput
 }
 
 export type VendorUncheckedCreateInput = {
@@ -320,6 +328,8 @@ export type VendorUncheckedCreateInput = {
   status?: string
   created_at?: Date | string
   updated_at?: Date | string
+  interview_events?: Prisma.InterviewEventUncheckedCreateNestedManyWithoutVendorInput
+  process_details?: Prisma.ProcessDetailsUncheckedCreateNestedManyWithoutVendor_refInput
 }
 
 export type VendorUpdateInput = {
@@ -330,6 +340,8 @@ export type VendorUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  interview_events?: Prisma.InterviewEventUpdateManyWithoutVendorNestedInput
+  process_details?: Prisma.ProcessDetailsUpdateManyWithoutVendor_refNestedInput
 }
 
 export type VendorUncheckedUpdateInput = {
@@ -341,6 +353,8 @@ export type VendorUncheckedUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  interview_events?: Prisma.InterviewEventUncheckedUpdateManyWithoutVendorNestedInput
+  process_details?: Prisma.ProcessDetailsUncheckedUpdateManyWithoutVendor_refNestedInput
 }
 
 export type VendorCreateManyInput = {
@@ -373,6 +387,11 @@ export type VendorUncheckedUpdateManyInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type VendorNullableScalarRelationFilter = {
+  is?: Prisma.VendorWhereInput | null
+  isNot?: Prisma.VendorWhereInput | null
 }
 
 export type VendorCountOrderByAggregateInput = {
@@ -418,6 +437,200 @@ export type VendorSumOrderByAggregateInput = {
   service_charge?: Prisma.SortOrder
 }
 
+export type VendorCreateNestedOneWithoutProcess_detailsInput = {
+  create?: Prisma.XOR<Prisma.VendorCreateWithoutProcess_detailsInput, Prisma.VendorUncheckedCreateWithoutProcess_detailsInput>
+  connectOrCreate?: Prisma.VendorCreateOrConnectWithoutProcess_detailsInput
+  connect?: Prisma.VendorWhereUniqueInput
+}
+
+export type VendorUpdateOneWithoutProcess_detailsNestedInput = {
+  create?: Prisma.XOR<Prisma.VendorCreateWithoutProcess_detailsInput, Prisma.VendorUncheckedCreateWithoutProcess_detailsInput>
+  connectOrCreate?: Prisma.VendorCreateOrConnectWithoutProcess_detailsInput
+  upsert?: Prisma.VendorUpsertWithoutProcess_detailsInput
+  disconnect?: Prisma.VendorWhereInput | boolean
+  delete?: Prisma.VendorWhereInput | boolean
+  connect?: Prisma.VendorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.VendorUpdateToOneWithWhereWithoutProcess_detailsInput, Prisma.VendorUpdateWithoutProcess_detailsInput>, Prisma.VendorUncheckedUpdateWithoutProcess_detailsInput>
+}
+
+export type VendorCreateNestedOneWithoutInterview_eventsInput = {
+  create?: Prisma.XOR<Prisma.VendorCreateWithoutInterview_eventsInput, Prisma.VendorUncheckedCreateWithoutInterview_eventsInput>
+  connectOrCreate?: Prisma.VendorCreateOrConnectWithoutInterview_eventsInput
+  connect?: Prisma.VendorWhereUniqueInput
+}
+
+export type VendorUpdateOneWithoutInterview_eventsNestedInput = {
+  create?: Prisma.XOR<Prisma.VendorCreateWithoutInterview_eventsInput, Prisma.VendorUncheckedCreateWithoutInterview_eventsInput>
+  connectOrCreate?: Prisma.VendorCreateOrConnectWithoutInterview_eventsInput
+  upsert?: Prisma.VendorUpsertWithoutInterview_eventsInput
+  disconnect?: Prisma.VendorWhereInput | boolean
+  delete?: Prisma.VendorWhereInput | boolean
+  connect?: Prisma.VendorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.VendorUpdateToOneWithWhereWithoutInterview_eventsInput, Prisma.VendorUpdateWithoutInterview_eventsInput>, Prisma.VendorUncheckedUpdateWithoutInterview_eventsInput>
+}
+
+export type VendorCreateWithoutProcess_detailsInput = {
+  name: string
+  phone?: string | null
+  email?: string | null
+  service_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  interview_events?: Prisma.InterviewEventCreateNestedManyWithoutVendorInput
+}
+
+export type VendorUncheckedCreateWithoutProcess_detailsInput = {
+  id?: number
+  name: string
+  phone?: string | null
+  email?: string | null
+  service_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  interview_events?: Prisma.InterviewEventUncheckedCreateNestedManyWithoutVendorInput
+}
+
+export type VendorCreateOrConnectWithoutProcess_detailsInput = {
+  where: Prisma.VendorWhereUniqueInput
+  create: Prisma.XOR<Prisma.VendorCreateWithoutProcess_detailsInput, Prisma.VendorUncheckedCreateWithoutProcess_detailsInput>
+}
+
+export type VendorUpsertWithoutProcess_detailsInput = {
+  update: Prisma.XOR<Prisma.VendorUpdateWithoutProcess_detailsInput, Prisma.VendorUncheckedUpdateWithoutProcess_detailsInput>
+  create: Prisma.XOR<Prisma.VendorCreateWithoutProcess_detailsInput, Prisma.VendorUncheckedCreateWithoutProcess_detailsInput>
+  where?: Prisma.VendorWhereInput
+}
+
+export type VendorUpdateToOneWithWhereWithoutProcess_detailsInput = {
+  where?: Prisma.VendorWhereInput
+  data: Prisma.XOR<Prisma.VendorUpdateWithoutProcess_detailsInput, Prisma.VendorUncheckedUpdateWithoutProcess_detailsInput>
+}
+
+export type VendorUpdateWithoutProcess_detailsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service_charge?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  interview_events?: Prisma.InterviewEventUpdateManyWithoutVendorNestedInput
+}
+
+export type VendorUncheckedUpdateWithoutProcess_detailsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service_charge?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  interview_events?: Prisma.InterviewEventUncheckedUpdateManyWithoutVendorNestedInput
+}
+
+export type VendorCreateWithoutInterview_eventsInput = {
+  name: string
+  phone?: string | null
+  email?: string | null
+  service_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  process_details?: Prisma.ProcessDetailsCreateNestedManyWithoutVendor_refInput
+}
+
+export type VendorUncheckedCreateWithoutInterview_eventsInput = {
+  id?: number
+  name: string
+  phone?: string | null
+  email?: string | null
+  service_charge?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  process_details?: Prisma.ProcessDetailsUncheckedCreateNestedManyWithoutVendor_refInput
+}
+
+export type VendorCreateOrConnectWithoutInterview_eventsInput = {
+  where: Prisma.VendorWhereUniqueInput
+  create: Prisma.XOR<Prisma.VendorCreateWithoutInterview_eventsInput, Prisma.VendorUncheckedCreateWithoutInterview_eventsInput>
+}
+
+export type VendorUpsertWithoutInterview_eventsInput = {
+  update: Prisma.XOR<Prisma.VendorUpdateWithoutInterview_eventsInput, Prisma.VendorUncheckedUpdateWithoutInterview_eventsInput>
+  create: Prisma.XOR<Prisma.VendorCreateWithoutInterview_eventsInput, Prisma.VendorUncheckedCreateWithoutInterview_eventsInput>
+  where?: Prisma.VendorWhereInput
+}
+
+export type VendorUpdateToOneWithWhereWithoutInterview_eventsInput = {
+  where?: Prisma.VendorWhereInput
+  data: Prisma.XOR<Prisma.VendorUpdateWithoutInterview_eventsInput, Prisma.VendorUncheckedUpdateWithoutInterview_eventsInput>
+}
+
+export type VendorUpdateWithoutInterview_eventsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service_charge?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  process_details?: Prisma.ProcessDetailsUpdateManyWithoutVendor_refNestedInput
+}
+
+export type VendorUncheckedUpdateWithoutInterview_eventsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service_charge?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  process_details?: Prisma.ProcessDetailsUncheckedUpdateManyWithoutVendor_refNestedInput
+}
+
+
+/**
+ * Count Type VendorCountOutputType
+ */
+
+export type VendorCountOutputType = {
+  interview_events: number
+  process_details: number
+}
+
+export type VendorCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  interview_events?: boolean | VendorCountOutputTypeCountInterview_eventsArgs
+  process_details?: boolean | VendorCountOutputTypeCountProcess_detailsArgs
+}
+
+/**
+ * VendorCountOutputType without action
+ */
+export type VendorCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the VendorCountOutputType
+   */
+  select?: Prisma.VendorCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * VendorCountOutputType without action
+ */
+export type VendorCountOutputTypeCountInterview_eventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InterviewEventWhereInput
+}
+
+/**
+ * VendorCountOutputType without action
+ */
+export type VendorCountOutputTypeCountProcess_detailsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProcessDetailsWhereInput
+}
 
 
 export type VendorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -429,6 +642,9 @@ export type VendorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   status?: boolean
   created_at?: boolean
   updated_at?: boolean
+  interview_events?: boolean | Prisma.Vendor$interview_eventsArgs<ExtArgs>
+  process_details?: boolean | Prisma.Vendor$process_detailsArgs<ExtArgs>
+  _count?: boolean | Prisma.VendorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["vendor"]>
 
 export type VendorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -465,10 +681,20 @@ export type VendorSelectScalar = {
 }
 
 export type VendorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "email" | "service_charge" | "status" | "created_at" | "updated_at", ExtArgs["result"]["vendor"]>
+export type VendorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  interview_events?: boolean | Prisma.Vendor$interview_eventsArgs<ExtArgs>
+  process_details?: boolean | Prisma.Vendor$process_detailsArgs<ExtArgs>
+  _count?: boolean | Prisma.VendorCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type VendorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type VendorIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $VendorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Vendor"
-  objects: {}
+  objects: {
+    interview_events: Prisma.$InterviewEventPayload<ExtArgs>[]
+    process_details: Prisma.$ProcessDetailsPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
@@ -872,6 +1098,8 @@ readonly fields: VendorFieldRefs;
  */
 export interface Prisma__VendorClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  interview_events<T extends Prisma.Vendor$interview_eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Vendor$interview_eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InterviewEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  process_details<T extends Prisma.Vendor$process_detailsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Vendor$process_detailsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProcessDetailsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -926,6 +1154,10 @@ export type VendorFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Intern
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  /**
    * Filter, which Vendor to fetch.
    */
   where: Prisma.VendorWhereUniqueInput
@@ -944,6 +1176,10 @@ export type VendorFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  /**
    * Filter, which Vendor to fetch.
    */
   where: Prisma.VendorWhereUniqueInput
@@ -961,6 +1197,10 @@ export type VendorFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Omit specific fields from the Vendor
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
   /**
    * Filter, which Vendor to fetch.
    */
@@ -1010,6 +1250,10 @@ export type VendorFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  /**
    * Filter, which Vendor to fetch.
    */
   where?: Prisma.VendorWhereInput
@@ -1057,6 +1301,10 @@ export type VendorFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the Vendor
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
   /**
    * Filter, which Vendors to fetch.
    */
@@ -1106,6 +1354,10 @@ export type VendorCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  /**
    * The data needed to create a Vendor.
    */
   data: Prisma.XOR<Prisma.VendorCreateInput, Prisma.VendorUncheckedCreateInput>
@@ -1153,6 +1405,10 @@ export type VendorUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Omit specific fields from the Vendor
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
   /**
    * The data needed to update a Vendor.
    */
@@ -1220,6 +1476,10 @@ export type VendorUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  /**
    * The filter to search for the Vendor to update in case it exists.
    */
   where: Prisma.VendorWhereUniqueInput
@@ -1246,6 +1506,10 @@ export type VendorDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  /**
    * Filter which Vendor to delete.
    */
   where: Prisma.VendorWhereUniqueInput
@@ -1266,6 +1530,54 @@ export type VendorDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
 }
 
 /**
+ * Vendor.interview_events
+ */
+export type Vendor$interview_eventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InterviewEvent
+   */
+  select?: Prisma.InterviewEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InterviewEvent
+   */
+  omit?: Prisma.InterviewEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InterviewEventInclude<ExtArgs> | null
+  where?: Prisma.InterviewEventWhereInput
+  orderBy?: Prisma.InterviewEventOrderByWithRelationInput | Prisma.InterviewEventOrderByWithRelationInput[]
+  cursor?: Prisma.InterviewEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InterviewEventScalarFieldEnum | Prisma.InterviewEventScalarFieldEnum[]
+}
+
+/**
+ * Vendor.process_details
+ */
+export type Vendor$process_detailsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProcessDetails
+   */
+  select?: Prisma.ProcessDetailsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProcessDetails
+   */
+  omit?: Prisma.ProcessDetailsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProcessDetailsInclude<ExtArgs> | null
+  where?: Prisma.ProcessDetailsWhereInput
+  orderBy?: Prisma.ProcessDetailsOrderByWithRelationInput | Prisma.ProcessDetailsOrderByWithRelationInput[]
+  cursor?: Prisma.ProcessDetailsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProcessDetailsScalarFieldEnum | Prisma.ProcessDetailsScalarFieldEnum[]
+}
+
+/**
  * Vendor without action
  */
 export type VendorDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1277,4 +1589,8 @@ export type VendorDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the Vendor
    */
   omit?: Prisma.VendorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
 }

@@ -31,6 +31,9 @@ export type InterviewEventAvgAggregateOutputType = {
   job_id: number | null
   capacity: number | null
   candidate_count: number | null
+  vendor_id: number | null
+  accommodation_cost: runtime.Decimal | null
+  transportation_cost: runtime.Decimal | null
 }
 
 export type InterviewEventSumAggregateOutputType = {
@@ -38,6 +41,9 @@ export type InterviewEventSumAggregateOutputType = {
   job_id: number | null
   capacity: number | null
   candidate_count: number | null
+  vendor_id: number | null
+  accommodation_cost: runtime.Decimal | null
+  transportation_cost: runtime.Decimal | null
 }
 
 export type InterviewEventMinAggregateOutputType = {
@@ -54,6 +60,11 @@ export type InterviewEventMinAggregateOutputType = {
   results_timing: $Enums.ResultsTiming | null
   status: $Enums.InterviewEventStatus | null
   notes: string | null
+  vendor_id: number | null
+  accommodation: boolean | null
+  accommodation_cost: runtime.Decimal | null
+  transportation: boolean | null
+  transportation_cost: runtime.Decimal | null
   created_by: string | null
   created_at: Date | null
   updated_at: Date | null
@@ -73,6 +84,11 @@ export type InterviewEventMaxAggregateOutputType = {
   results_timing: $Enums.ResultsTiming | null
   status: $Enums.InterviewEventStatus | null
   notes: string | null
+  vendor_id: number | null
+  accommodation: boolean | null
+  accommodation_cost: runtime.Decimal | null
+  transportation: boolean | null
+  transportation_cost: runtime.Decimal | null
   created_by: string | null
   created_at: Date | null
   updated_at: Date | null
@@ -92,6 +108,11 @@ export type InterviewEventCountAggregateOutputType = {
   results_timing: number
   status: number
   notes: number
+  vendor_id: number
+  accommodation: number
+  accommodation_cost: number
+  transportation: number
+  transportation_cost: number
   created_by: number
   created_at: number
   updated_at: number
@@ -104,6 +125,9 @@ export type InterviewEventAvgAggregateInputType = {
   job_id?: true
   capacity?: true
   candidate_count?: true
+  vendor_id?: true
+  accommodation_cost?: true
+  transportation_cost?: true
 }
 
 export type InterviewEventSumAggregateInputType = {
@@ -111,6 +135,9 @@ export type InterviewEventSumAggregateInputType = {
   job_id?: true
   capacity?: true
   candidate_count?: true
+  vendor_id?: true
+  accommodation_cost?: true
+  transportation_cost?: true
 }
 
 export type InterviewEventMinAggregateInputType = {
@@ -127,6 +154,11 @@ export type InterviewEventMinAggregateInputType = {
   results_timing?: true
   status?: true
   notes?: true
+  vendor_id?: true
+  accommodation?: true
+  accommodation_cost?: true
+  transportation?: true
+  transportation_cost?: true
   created_by?: true
   created_at?: true
   updated_at?: true
@@ -146,6 +178,11 @@ export type InterviewEventMaxAggregateInputType = {
   results_timing?: true
   status?: true
   notes?: true
+  vendor_id?: true
+  accommodation?: true
+  accommodation_cost?: true
+  transportation?: true
+  transportation_cost?: true
   created_by?: true
   created_at?: true
   updated_at?: true
@@ -165,6 +202,11 @@ export type InterviewEventCountAggregateInputType = {
   results_timing?: true
   status?: true
   notes?: true
+  vendor_id?: true
+  accommodation?: true
+  accommodation_cost?: true
+  transportation?: true
+  transportation_cost?: true
   created_by?: true
   created_at?: true
   updated_at?: true
@@ -271,6 +313,11 @@ export type InterviewEventGroupByOutputType = {
   results_timing: $Enums.ResultsTiming
   status: $Enums.InterviewEventStatus
   notes: string | null
+  vendor_id: number | null
+  accommodation: boolean | null
+  accommodation_cost: runtime.Decimal | null
+  transportation: boolean | null
+  transportation_cost: runtime.Decimal | null
   created_by: string
   created_at: Date
   updated_at: Date
@@ -313,10 +360,16 @@ export type InterviewEventWhereInput = {
   results_timing?: Prisma.EnumResultsTimingFilter<"InterviewEvent"> | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFilter<"InterviewEvent"> | $Enums.InterviewEventStatus
   notes?: Prisma.StringNullableFilter<"InterviewEvent"> | string | null
+  vendor_id?: Prisma.IntNullableFilter<"InterviewEvent"> | number | null
+  accommodation?: Prisma.BoolNullableFilter<"InterviewEvent"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableFilter<"InterviewEvent"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFilter<"InterviewEvent"> | string
   created_at?: Prisma.DateTimeFilter<"InterviewEvent"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"InterviewEvent"> | Date | string
   job?: Prisma.XOR<Prisma.JobScalarRelationFilter, Prisma.JobWhereInput>
+  vendor?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
   checkins?: Prisma.InterviewCheckinListRelationFilter
 }
 
@@ -334,10 +387,16 @@ export type InterviewEventOrderByWithRelationInput = {
   results_timing?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  vendor_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
   created_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   job?: Prisma.JobOrderByWithRelationInput
+  vendor?: Prisma.VendorOrderByWithRelationInput
   checkins?: Prisma.InterviewCheckinOrderByRelationAggregateInput
 }
 
@@ -358,10 +417,16 @@ export type InterviewEventWhereUniqueInput = Prisma.AtLeast<{
   results_timing?: Prisma.EnumResultsTimingFilter<"InterviewEvent"> | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFilter<"InterviewEvent"> | $Enums.InterviewEventStatus
   notes?: Prisma.StringNullableFilter<"InterviewEvent"> | string | null
+  vendor_id?: Prisma.IntNullableFilter<"InterviewEvent"> | number | null
+  accommodation?: Prisma.BoolNullableFilter<"InterviewEvent"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableFilter<"InterviewEvent"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFilter<"InterviewEvent"> | string
   created_at?: Prisma.DateTimeFilter<"InterviewEvent"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"InterviewEvent"> | Date | string
   job?: Prisma.XOR<Prisma.JobScalarRelationFilter, Prisma.JobWhereInput>
+  vendor?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
   checkins?: Prisma.InterviewCheckinListRelationFilter
 }, "id">
 
@@ -379,6 +444,11 @@ export type InterviewEventOrderByWithAggregationInput = {
   results_timing?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  vendor_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation?: Prisma.SortOrderInput | Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation?: Prisma.SortOrderInput | Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrderInput | Prisma.SortOrder
   created_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -406,6 +476,11 @@ export type InterviewEventScalarWhereWithAggregatesInput = {
   results_timing?: Prisma.EnumResultsTimingWithAggregatesFilter<"InterviewEvent"> | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusWithAggregatesFilter<"InterviewEvent"> | $Enums.InterviewEventStatus
   notes?: Prisma.StringNullableWithAggregatesFilter<"InterviewEvent"> | string | null
+  vendor_id?: Prisma.IntNullableWithAggregatesFilter<"InterviewEvent"> | number | null
+  accommodation?: Prisma.BoolNullableWithAggregatesFilter<"InterviewEvent"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableWithAggregatesFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableWithAggregatesFilter<"InterviewEvent"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableWithAggregatesFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringWithAggregatesFilter<"InterviewEvent"> | string
   created_at?: Prisma.DateTimeWithAggregatesFilter<"InterviewEvent"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"InterviewEvent"> | Date | string
@@ -423,10 +498,15 @@ export type InterviewEventCreateInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
   job: Prisma.JobCreateNestedOneWithoutInterview_eventsInput
+  vendor?: Prisma.VendorCreateNestedOneWithoutInterview_eventsInput
   checkins?: Prisma.InterviewCheckinCreateNestedManyWithoutInterview_eventInput
 }
 
@@ -444,6 +524,11 @@ export type InterviewEventUncheckedCreateInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
@@ -462,10 +547,15 @@ export type InterviewEventUpdateInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   job?: Prisma.JobUpdateOneRequiredWithoutInterview_eventsNestedInput
+  vendor?: Prisma.VendorUpdateOneWithoutInterview_eventsNestedInput
   checkins?: Prisma.InterviewCheckinUpdateManyWithoutInterview_eventNestedInput
 }
 
@@ -483,6 +573,11 @@ export type InterviewEventUncheckedUpdateInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -503,6 +598,11 @@ export type InterviewEventCreateManyInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
@@ -520,6 +620,10 @@ export type InterviewEventUpdateManyMutationInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -539,6 +643,11 @@ export type InterviewEventUncheckedUpdateManyInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -568,6 +677,11 @@ export type InterviewEventCountOrderByAggregateInput = {
   results_timing?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
   created_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -578,6 +692,9 @@ export type InterviewEventAvgOrderByAggregateInput = {
   job_id?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
   candidate_count?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
 }
 
 export type InterviewEventMaxOrderByAggregateInput = {
@@ -594,6 +711,11 @@ export type InterviewEventMaxOrderByAggregateInput = {
   results_timing?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
   created_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -613,6 +735,11 @@ export type InterviewEventMinOrderByAggregateInput = {
   results_timing?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
   created_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -623,6 +750,9 @@ export type InterviewEventSumOrderByAggregateInput = {
   job_id?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
   candidate_count?: Prisma.SortOrder
+  vendor_id?: Prisma.SortOrder
+  accommodation_cost?: Prisma.SortOrder
+  transportation_cost?: Prisma.SortOrder
 }
 
 export type InterviewEventScalarRelationFilter = {
@@ -672,6 +802,48 @@ export type InterviewEventUncheckedUpdateManyWithoutJobNestedInput = {
   deleteMany?: Prisma.InterviewEventScalarWhereInput | Prisma.InterviewEventScalarWhereInput[]
 }
 
+export type InterviewEventCreateNestedManyWithoutVendorInput = {
+  create?: Prisma.XOR<Prisma.InterviewEventCreateWithoutVendorInput, Prisma.InterviewEventUncheckedCreateWithoutVendorInput> | Prisma.InterviewEventCreateWithoutVendorInput[] | Prisma.InterviewEventUncheckedCreateWithoutVendorInput[]
+  connectOrCreate?: Prisma.InterviewEventCreateOrConnectWithoutVendorInput | Prisma.InterviewEventCreateOrConnectWithoutVendorInput[]
+  createMany?: Prisma.InterviewEventCreateManyVendorInputEnvelope
+  connect?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+}
+
+export type InterviewEventUncheckedCreateNestedManyWithoutVendorInput = {
+  create?: Prisma.XOR<Prisma.InterviewEventCreateWithoutVendorInput, Prisma.InterviewEventUncheckedCreateWithoutVendorInput> | Prisma.InterviewEventCreateWithoutVendorInput[] | Prisma.InterviewEventUncheckedCreateWithoutVendorInput[]
+  connectOrCreate?: Prisma.InterviewEventCreateOrConnectWithoutVendorInput | Prisma.InterviewEventCreateOrConnectWithoutVendorInput[]
+  createMany?: Prisma.InterviewEventCreateManyVendorInputEnvelope
+  connect?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+}
+
+export type InterviewEventUpdateManyWithoutVendorNestedInput = {
+  create?: Prisma.XOR<Prisma.InterviewEventCreateWithoutVendorInput, Prisma.InterviewEventUncheckedCreateWithoutVendorInput> | Prisma.InterviewEventCreateWithoutVendorInput[] | Prisma.InterviewEventUncheckedCreateWithoutVendorInput[]
+  connectOrCreate?: Prisma.InterviewEventCreateOrConnectWithoutVendorInput | Prisma.InterviewEventCreateOrConnectWithoutVendorInput[]
+  upsert?: Prisma.InterviewEventUpsertWithWhereUniqueWithoutVendorInput | Prisma.InterviewEventUpsertWithWhereUniqueWithoutVendorInput[]
+  createMany?: Prisma.InterviewEventCreateManyVendorInputEnvelope
+  set?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  disconnect?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  delete?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  connect?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  update?: Prisma.InterviewEventUpdateWithWhereUniqueWithoutVendorInput | Prisma.InterviewEventUpdateWithWhereUniqueWithoutVendorInput[]
+  updateMany?: Prisma.InterviewEventUpdateManyWithWhereWithoutVendorInput | Prisma.InterviewEventUpdateManyWithWhereWithoutVendorInput[]
+  deleteMany?: Prisma.InterviewEventScalarWhereInput | Prisma.InterviewEventScalarWhereInput[]
+}
+
+export type InterviewEventUncheckedUpdateManyWithoutVendorNestedInput = {
+  create?: Prisma.XOR<Prisma.InterviewEventCreateWithoutVendorInput, Prisma.InterviewEventUncheckedCreateWithoutVendorInput> | Prisma.InterviewEventCreateWithoutVendorInput[] | Prisma.InterviewEventUncheckedCreateWithoutVendorInput[]
+  connectOrCreate?: Prisma.InterviewEventCreateOrConnectWithoutVendorInput | Prisma.InterviewEventCreateOrConnectWithoutVendorInput[]
+  upsert?: Prisma.InterviewEventUpsertWithWhereUniqueWithoutVendorInput | Prisma.InterviewEventUpsertWithWhereUniqueWithoutVendorInput[]
+  createMany?: Prisma.InterviewEventCreateManyVendorInputEnvelope
+  set?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  disconnect?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  delete?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  connect?: Prisma.InterviewEventWhereUniqueInput | Prisma.InterviewEventWhereUniqueInput[]
+  update?: Prisma.InterviewEventUpdateWithWhereUniqueWithoutVendorInput | Prisma.InterviewEventUpdateWithWhereUniqueWithoutVendorInput[]
+  updateMany?: Prisma.InterviewEventUpdateManyWithWhereWithoutVendorInput | Prisma.InterviewEventUpdateManyWithWhereWithoutVendorInput[]
+  deleteMany?: Prisma.InterviewEventScalarWhereInput | Prisma.InterviewEventScalarWhereInput[]
+}
+
 export type EnumResultsTimingFieldUpdateOperationsInput = {
   set?: $Enums.ResultsTiming
 }
@@ -706,9 +878,14 @@ export type InterviewEventCreateWithoutJobInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
+  vendor?: Prisma.VendorCreateNestedOneWithoutInterview_eventsInput
   checkins?: Prisma.InterviewCheckinCreateNestedManyWithoutInterview_eventInput
 }
 
@@ -725,6 +902,11 @@ export type InterviewEventUncheckedCreateWithoutJobInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
@@ -774,9 +956,87 @@ export type InterviewEventScalarWhereInput = {
   results_timing?: Prisma.EnumResultsTimingFilter<"InterviewEvent"> | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFilter<"InterviewEvent"> | $Enums.InterviewEventStatus
   notes?: Prisma.StringNullableFilter<"InterviewEvent"> | string | null
+  vendor_id?: Prisma.IntNullableFilter<"InterviewEvent"> | number | null
+  accommodation?: Prisma.BoolNullableFilter<"InterviewEvent"> | boolean | null
+  accommodation_cost?: Prisma.DecimalNullableFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.BoolNullableFilter<"InterviewEvent"> | boolean | null
+  transportation_cost?: Prisma.DecimalNullableFilter<"InterviewEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFilter<"InterviewEvent"> | string
   created_at?: Prisma.DateTimeFilter<"InterviewEvent"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"InterviewEvent"> | Date | string
+}
+
+export type InterviewEventCreateWithoutVendorInput = {
+  event_date: Date | string
+  venue_name?: string | null
+  venue_address?: string | null
+  venue_phone?: string | null
+  capacity?: number | null
+  interviewer_name?: string | null
+  interview_type?: $Enums.InterviewType | null
+  candidate_count?: number | null
+  results_timing?: $Enums.ResultsTiming
+  status?: $Enums.InterviewEventStatus
+  notes?: string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_by: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  job: Prisma.JobCreateNestedOneWithoutInterview_eventsInput
+  checkins?: Prisma.InterviewCheckinCreateNestedManyWithoutInterview_eventInput
+}
+
+export type InterviewEventUncheckedCreateWithoutVendorInput = {
+  id?: number
+  job_id: number
+  event_date: Date | string
+  venue_name?: string | null
+  venue_address?: string | null
+  venue_phone?: string | null
+  capacity?: number | null
+  interviewer_name?: string | null
+  interview_type?: $Enums.InterviewType | null
+  candidate_count?: number | null
+  results_timing?: $Enums.ResultsTiming
+  status?: $Enums.InterviewEventStatus
+  notes?: string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_by: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  checkins?: Prisma.InterviewCheckinUncheckedCreateNestedManyWithoutInterview_eventInput
+}
+
+export type InterviewEventCreateOrConnectWithoutVendorInput = {
+  where: Prisma.InterviewEventWhereUniqueInput
+  create: Prisma.XOR<Prisma.InterviewEventCreateWithoutVendorInput, Prisma.InterviewEventUncheckedCreateWithoutVendorInput>
+}
+
+export type InterviewEventCreateManyVendorInputEnvelope = {
+  data: Prisma.InterviewEventCreateManyVendorInput | Prisma.InterviewEventCreateManyVendorInput[]
+  skipDuplicates?: boolean
+}
+
+export type InterviewEventUpsertWithWhereUniqueWithoutVendorInput = {
+  where: Prisma.InterviewEventWhereUniqueInput
+  update: Prisma.XOR<Prisma.InterviewEventUpdateWithoutVendorInput, Prisma.InterviewEventUncheckedUpdateWithoutVendorInput>
+  create: Prisma.XOR<Prisma.InterviewEventCreateWithoutVendorInput, Prisma.InterviewEventUncheckedCreateWithoutVendorInput>
+}
+
+export type InterviewEventUpdateWithWhereUniqueWithoutVendorInput = {
+  where: Prisma.InterviewEventWhereUniqueInput
+  data: Prisma.XOR<Prisma.InterviewEventUpdateWithoutVendorInput, Prisma.InterviewEventUncheckedUpdateWithoutVendorInput>
+}
+
+export type InterviewEventUpdateManyWithWhereWithoutVendorInput = {
+  where: Prisma.InterviewEventScalarWhereInput
+  data: Prisma.XOR<Prisma.InterviewEventUpdateManyMutationInput, Prisma.InterviewEventUncheckedUpdateManyWithoutVendorInput>
 }
 
 export type InterviewEventCreateWithoutCheckinsInput = {
@@ -791,10 +1051,15 @@ export type InterviewEventCreateWithoutCheckinsInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
   job: Prisma.JobCreateNestedOneWithoutInterview_eventsInput
+  vendor?: Prisma.VendorCreateNestedOneWithoutInterview_eventsInput
 }
 
 export type InterviewEventUncheckedCreateWithoutCheckinsInput = {
@@ -811,6 +1076,11 @@ export type InterviewEventUncheckedCreateWithoutCheckinsInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
@@ -844,10 +1114,15 @@ export type InterviewEventUpdateWithoutCheckinsInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   job?: Prisma.JobUpdateOneRequiredWithoutInterview_eventsNestedInput
+  vendor?: Prisma.VendorUpdateOneWithoutInterview_eventsNestedInput
 }
 
 export type InterviewEventUncheckedUpdateWithoutCheckinsInput = {
@@ -864,6 +1139,11 @@ export type InterviewEventUncheckedUpdateWithoutCheckinsInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -882,6 +1162,11 @@ export type InterviewEventCreateManyJobInput = {
   results_timing?: $Enums.ResultsTiming
   status?: $Enums.InterviewEventStatus
   notes?: string | null
+  vendor_id?: number | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by: string
   created_at?: Date | string
   updated_at?: Date | string
@@ -899,9 +1184,14 @@ export type InterviewEventUpdateWithoutJobInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  vendor?: Prisma.VendorUpdateOneWithoutInterview_eventsNestedInput
   checkins?: Prisma.InterviewCheckinUpdateManyWithoutInterview_eventNestedInput
 }
 
@@ -918,6 +1208,11 @@ export type InterviewEventUncheckedUpdateWithoutJobInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -937,6 +1232,104 @@ export type InterviewEventUncheckedUpdateManyWithoutJobInput = {
   results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
   status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendor_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_by?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InterviewEventCreateManyVendorInput = {
+  id?: number
+  job_id: number
+  event_date: Date | string
+  venue_name?: string | null
+  venue_address?: string | null
+  venue_phone?: string | null
+  capacity?: number | null
+  interviewer_name?: string | null
+  interview_type?: $Enums.InterviewType | null
+  candidate_count?: number | null
+  results_timing?: $Enums.ResultsTiming
+  status?: $Enums.InterviewEventStatus
+  notes?: string | null
+  accommodation?: boolean | null
+  accommodation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: boolean | null
+  transportation_cost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_by: string
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type InterviewEventUpdateWithoutVendorInput = {
+  event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  venue_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  venue_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  venue_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  interviewer_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interview_type?: Prisma.NullableEnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType | null
+  candidate_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
+  status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_by?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  job?: Prisma.JobUpdateOneRequiredWithoutInterview_eventsNestedInput
+  checkins?: Prisma.InterviewCheckinUpdateManyWithoutInterview_eventNestedInput
+}
+
+export type InterviewEventUncheckedUpdateWithoutVendorInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  job_id?: Prisma.IntFieldUpdateOperationsInput | number
+  event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  venue_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  venue_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  venue_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  interviewer_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interview_type?: Prisma.NullableEnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType | null
+  candidate_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
+  status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_by?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkins?: Prisma.InterviewCheckinUncheckedUpdateManyWithoutInterview_eventNestedInput
+}
+
+export type InterviewEventUncheckedUpdateManyWithoutVendorInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  job_id?: Prisma.IntFieldUpdateOperationsInput | number
+  event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  venue_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  venue_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  venue_phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  interviewer_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  interview_type?: Prisma.NullableEnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType | null
+  candidate_count?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  results_timing?: Prisma.EnumResultsTimingFieldUpdateOperationsInput | $Enums.ResultsTiming
+  status?: Prisma.EnumInterviewEventStatusFieldUpdateOperationsInput | $Enums.InterviewEventStatus
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accommodation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  accommodation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  transportation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  transportation_cost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   created_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -987,10 +1380,16 @@ export type InterviewEventSelect<ExtArgs extends runtime.Types.Extensions.Intern
   results_timing?: boolean
   status?: boolean
   notes?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   created_by?: boolean
   created_at?: boolean
   updated_at?: boolean
   job?: boolean | Prisma.JobDefaultArgs<ExtArgs>
+  vendor?: boolean | Prisma.InterviewEvent$vendorArgs<ExtArgs>
   checkins?: boolean | Prisma.InterviewEvent$checkinsArgs<ExtArgs>
   _count?: boolean | Prisma.InterviewEventCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["interviewEvent"]>
@@ -1009,10 +1408,16 @@ export type InterviewEventSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   results_timing?: boolean
   status?: boolean
   notes?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   created_by?: boolean
   created_at?: boolean
   updated_at?: boolean
   job?: boolean | Prisma.JobDefaultArgs<ExtArgs>
+  vendor?: boolean | Prisma.InterviewEvent$vendorArgs<ExtArgs>
 }, ExtArgs["result"]["interviewEvent"]>
 
 export type InterviewEventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1029,10 +1434,16 @@ export type InterviewEventSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   results_timing?: boolean
   status?: boolean
   notes?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   created_by?: boolean
   created_at?: boolean
   updated_at?: boolean
   job?: boolean | Prisma.JobDefaultArgs<ExtArgs>
+  vendor?: boolean | Prisma.InterviewEvent$vendorArgs<ExtArgs>
 }, ExtArgs["result"]["interviewEvent"]>
 
 export type InterviewEventSelectScalar = {
@@ -1049,28 +1460,37 @@ export type InterviewEventSelectScalar = {
   results_timing?: boolean
   status?: boolean
   notes?: boolean
+  vendor_id?: boolean
+  accommodation?: boolean
+  accommodation_cost?: boolean
+  transportation?: boolean
+  transportation_cost?: boolean
   created_by?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type InterviewEventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "job_id" | "event_date" | "venue_name" | "venue_address" | "venue_phone" | "capacity" | "interviewer_name" | "interview_type" | "candidate_count" | "results_timing" | "status" | "notes" | "created_by" | "created_at" | "updated_at", ExtArgs["result"]["interviewEvent"]>
+export type InterviewEventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "job_id" | "event_date" | "venue_name" | "venue_address" | "venue_phone" | "capacity" | "interviewer_name" | "interview_type" | "candidate_count" | "results_timing" | "status" | "notes" | "vendor_id" | "accommodation" | "accommodation_cost" | "transportation" | "transportation_cost" | "created_by" | "created_at" | "updated_at", ExtArgs["result"]["interviewEvent"]>
 export type InterviewEventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   job?: boolean | Prisma.JobDefaultArgs<ExtArgs>
+  vendor?: boolean | Prisma.InterviewEvent$vendorArgs<ExtArgs>
   checkins?: boolean | Prisma.InterviewEvent$checkinsArgs<ExtArgs>
   _count?: boolean | Prisma.InterviewEventCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type InterviewEventIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   job?: boolean | Prisma.JobDefaultArgs<ExtArgs>
+  vendor?: boolean | Prisma.InterviewEvent$vendorArgs<ExtArgs>
 }
 export type InterviewEventIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   job?: boolean | Prisma.JobDefaultArgs<ExtArgs>
+  vendor?: boolean | Prisma.InterviewEvent$vendorArgs<ExtArgs>
 }
 
 export type $InterviewEventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "InterviewEvent"
   objects: {
     job: Prisma.$JobPayload<ExtArgs>
+    vendor: Prisma.$VendorPayload<ExtArgs> | null
     checkins: Prisma.$InterviewCheckinPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1087,6 +1507,11 @@ export type $InterviewEventPayload<ExtArgs extends runtime.Types.Extensions.Inte
     results_timing: $Enums.ResultsTiming
     status: $Enums.InterviewEventStatus
     notes: string | null
+    vendor_id: number | null
+    accommodation: boolean | null
+    accommodation_cost: runtime.Decimal | null
+    transportation: boolean | null
+    transportation_cost: runtime.Decimal | null
     created_by: string
     created_at: Date
     updated_at: Date
@@ -1485,6 +1910,7 @@ readonly fields: InterviewEventFieldRefs;
 export interface Prisma__InterviewEventClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   job<T extends Prisma.JobDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.JobDefaultArgs<ExtArgs>>): Prisma.Prisma__JobClient<runtime.Types.Result.GetResult<Prisma.$JobPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  vendor<T extends Prisma.InterviewEvent$vendorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewEvent$vendorArgs<ExtArgs>>): Prisma.Prisma__VendorClient<runtime.Types.Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   checkins<T extends Prisma.InterviewEvent$checkinsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewEvent$checkinsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InterviewCheckinPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1528,6 +1954,11 @@ export interface InterviewEventFieldRefs {
   readonly results_timing: Prisma.FieldRef<"InterviewEvent", 'ResultsTiming'>
   readonly status: Prisma.FieldRef<"InterviewEvent", 'InterviewEventStatus'>
   readonly notes: Prisma.FieldRef<"InterviewEvent", 'String'>
+  readonly vendor_id: Prisma.FieldRef<"InterviewEvent", 'Int'>
+  readonly accommodation: Prisma.FieldRef<"InterviewEvent", 'Boolean'>
+  readonly accommodation_cost: Prisma.FieldRef<"InterviewEvent", 'Decimal'>
+  readonly transportation: Prisma.FieldRef<"InterviewEvent", 'Boolean'>
+  readonly transportation_cost: Prisma.FieldRef<"InterviewEvent", 'Decimal'>
   readonly created_by: Prisma.FieldRef<"InterviewEvent", 'String'>
   readonly created_at: Prisma.FieldRef<"InterviewEvent", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"InterviewEvent", 'DateTime'>
@@ -1929,6 +2360,25 @@ export type InterviewEventDeleteManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many InterviewEvents to delete.
    */
   limit?: number
+}
+
+/**
+ * InterviewEvent.vendor
+ */
+export type InterviewEvent$vendorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Vendor
+   */
+  select?: Prisma.VendorSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Vendor
+   */
+  omit?: Prisma.VendorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VendorInclude<ExtArgs> | null
+  where?: Prisma.VendorWhereInput
 }
 
 /**

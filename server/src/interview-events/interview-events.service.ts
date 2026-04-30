@@ -66,6 +66,7 @@ export class InterviewEventsService {
             },
           },
         },
+        vendor: { select: { id: true, name: true, service_charge: true } },
         checkins: {
           include: {
             candidate_job: {
@@ -113,6 +114,11 @@ export class InterviewEventsService {
     if (dto.interview_type !== undefined) data.interview_type = dto.interview_type;
     if (dto.results_timing !== undefined) data.results_timing = dto.results_timing;
     if (dto.notes !== undefined) data.notes = dto.notes;
+    if (dto.vendor_id !== undefined) data.vendor_id = dto.vendor_id || null;
+    if (dto.accommodation !== undefined) data.accommodation = dto.accommodation;
+    if (dto.accommodation_cost !== undefined) data.accommodation_cost = dto.accommodation_cost;
+    if (dto.transportation !== undefined) data.transportation = dto.transportation;
+    if (dto.transportation_cost !== undefined) data.transportation_cost = dto.transportation_cost;
 
     return this.prisma.interviewEvent.create({
       data,
@@ -144,6 +150,11 @@ export class InterviewEventsService {
     if (dto.results_timing !== undefined) data.results_timing = dto.results_timing;
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.notes !== undefined) data.notes = dto.notes;
+    if (dto.vendor_id !== undefined) data.vendor_id = dto.vendor_id || null;
+    if (dto.accommodation !== undefined) data.accommodation = dto.accommodation;
+    if (dto.accommodation_cost !== undefined) data.accommodation_cost = dto.accommodation_cost;
+    if (dto.transportation !== undefined) data.transportation = dto.transportation;
+    if (dto.transportation_cost !== undefined) data.transportation_cost = dto.transportation_cost;
 
     return this.prisma.interviewEvent.update({
       where: { id },

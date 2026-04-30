@@ -628,6 +628,7 @@ export default function InterviewEventDetail() {
     try {
       await updateCheckin({
         id: editCheckinId,
+        event_id: eventId,
         checkin_status: checkinForm.checkin_status,
         interview_status: checkinForm.interview_status,
         result: checkinForm.result,

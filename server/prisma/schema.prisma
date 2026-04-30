@@ -497,6 +497,13 @@ model ProcessDetails {
   refund_amount            Decimal?  @db.Decimal(12, 2)
   disc_allot               Decimal?  @db.Decimal(12, 2)
 
+  // Vendor & logistics
+  vendor_id                Int?
+  accommodation            Boolean?
+  accommodation_cost       Decimal?  @db.Decimal(10, 2)
+  transportation           Boolean?
+  transportation_cost      Decimal?  @db.Decimal(10, 2)
+
   // Family contact
   family_contact_name      String?   @db.VarChar(200)
   family_contact_phone     String?   @db.VarChar(20)
@@ -508,6 +515,7 @@ model ProcessDetails {
   updated_at               DateTime  @updatedAt
 
   candidate_job CandidateJob @relation(fields: [candidate_job_id], references: [id])
+  vendor_ref    Vendor?      @relation(fields: [vendor_id], references: [id])
 
   @@index([candidate_status])
   @@index([medical_status])
@@ -624,6 +632,9 @@ model Vendor {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
+  interview_events InterviewEvent[]
+  process_details  ProcessDetails[]
+
   @@map("vendors")
 }
 
@@ -674,11 +685,20 @@ model InterviewEvent {
   results_timing  ResultsTiming        @default(same_day)
   status          InterviewEventStatus @default(scheduled)
   notes           String?
+
+  // Vendor & logistics
+  vendor_id           Int?
+  accommodation       Boolean?
+  accommodation_cost  Decimal? @db.Decimal(10, 2)
+  transportation      Boolean?
+  transportation_cost Decimal? @db.Decimal(10, 2)
+
   created_by      String
   created_at      DateTime             @default(now())
   updated_at      DateTime             @updatedAt
 
   job      Job               @relation(fields: [job_id], references: [id])
+  vendor   Vendor?           @relation(fields: [vendor_id], references: [id])
   checkins InterviewCheckin[]
 
   @@index([job_id])

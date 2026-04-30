@@ -27,7 +27,10 @@ export const interviewEventsApi = apiSlice.injectEndpoints({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['InterviewEvents'],
+      invalidatesTags: (_result, _error, { id }) => [
+        'InterviewEvents',
+        { type: 'InterviewEvents' as const, id },
+      ],
     }),
     addCandidatesToEvent: builder.mutation({
       query: ({ id, candidate_job_ids }: { id: number; candidate_job_ids: number[] }) => ({
@@ -47,12 +50,15 @@ export const interviewEventsApi = apiSlice.injectEndpoints({
       ],
     }),
     updateCheckin: builder.mutation({
-      query: ({ id, ...body }) => ({
+      query: ({ id, event_id, ...body }) => ({
         url: `/interview-checkins/${id}`,
         method: 'PUT',
         body,
       }),
-      invalidatesTags: [{ type: 'InterviewCheckins' }],
+      invalidatesTags: (_result, _error, { event_id }) => [
+        { type: 'InterviewCheckins' as const, id: event_id },
+        'InterviewEvents',
+      ],
     }),
     getEventStatusCounts: builder.query<
       { lined_up: number; appeared: number; selected: number; rejected: number; on_hold: number },
