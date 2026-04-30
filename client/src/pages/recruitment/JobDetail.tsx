@@ -346,7 +346,7 @@ export default function JobDetail() {
           {job.service_fee && (
             <div className="bg-amber-50 rounded-xl p-3">
               <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
-                <DollarSign size={10} /> Service Fee
+                ₹ Service Fee
               </p>
               <p className="text-sm font-bold text-amber-700">₹{Number(job.service_fee).toLocaleString('en-IN')}</p>
               <p className="text-[10px] text-amber-400 mt-0.5">per candidate</p>

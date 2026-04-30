@@ -92,7 +92,7 @@ const MENU: MenuSection[] = [
       {
         label: 'Overview',
         path: '/finance/overview',
-        icon: <DollarSign size={16} />,
+        icon: '₹',
         roles: ['process_manager', 'manager', 'admin'],
       },
       {

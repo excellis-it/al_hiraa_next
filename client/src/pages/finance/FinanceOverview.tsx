@@ -154,7 +154,7 @@ export default function FinanceOverview() {
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Collected</p>
               <p className="text-2xl font-bold text-emerald-600 mt-1">{formatINR(overview.total_collected)}</p>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center"><DollarSign size={20} className="text-emerald-600" /></div>
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center">₹</div>
           </div>
         </div>
         <div className="stat-card">

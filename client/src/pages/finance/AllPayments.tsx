@@ -108,7 +108,7 @@ function GroupPayModal({ group, onClose, onSuccess }: { group: any; onClose: () 
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
-              <DollarSign size={16} className="text-emerald-500" /> Record Payment
+              ₹ Record Payment
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">
               {group.candidate_name} · {group.job_title}
@@ -507,7 +507,7 @@ export default function AllPayments() {
                                 onClick={e => { e.stopPropagation(); setQuickPay(g); }}
                                 className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
                               >
-                                <DollarSign size={11} /> Pay
+                                ₹ Pay
                               </button>
                             )}
                             {g.candidate_job_id && (
@@ -557,7 +557,7 @@ export default function AllPayments() {
                                   onClick={() => setQuickPay(g)}
                                   className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2 py-0.5 rounded-lg transition-colors"
                                 >
-                                  <DollarSign size={10} /> Pay
+                                 ₹ Pay
                                 </button>
                               )}
                             </td>
