@@ -78,6 +78,11 @@ export type CallLog = Prisma.CallLogModel
  */
 export type Associate = Prisma.AssociateModel
 /**
+ * Model Vendor
+ * 
+ */
+export type Vendor = Prisma.VendorModel
+/**
  * Model Referrer
  * 
  */

@@ -27,6 +27,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { DeploymentsModule } from './deployments/deployments.module';
 import { ProcessDetailsModule } from './process-details/process-details.module';
 import { ReferrersModule } from './referrers/referrers.module';
+import { VendorsModule } from './vendors/vendors.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ReferrersModule } from './referrers/referrers.module';
     DeploymentsModule,
     ProcessDetailsModule,
     ReferrersModule,
+    VendorsModule,
   ],
   providers: [
     {

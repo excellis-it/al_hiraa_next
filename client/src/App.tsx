@@ -28,6 +28,7 @@ import AssociateDetail from './pages/associates/AssociateDetail';
 import AnalyticsDashboard from './pages/analytics/AnalyticsDashboard';
 import DeployedCandidates from './pages/deployed/DeployedCandidates';
 import ProcessModule from './pages/process-module/ProcessModule';
+import VendorList from './pages/admin/VendorList';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -215,6 +216,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="admin/vendors"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <VendorList />
             </ProtectedRoute>
           }
         />

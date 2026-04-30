@@ -63,6 +63,7 @@ export const ModelName = {
   Payment: 'Payment',
   CallLog: 'CallLog',
   Associate: 'Associate',
+  Vendor: 'Vendor',
   Referrer: 'Referrer',
   AssociateCommission: 'AssociateCommission',
   InterviewEvent: 'InterviewEvent',
@@ -406,6 +407,20 @@ export const AssociateScalarFieldEnum = {
 } as const
 
 export type AssociateScalarFieldEnum = (typeof AssociateScalarFieldEnum)[keyof typeof AssociateScalarFieldEnum]
+
+
+export const VendorScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  phone: 'phone',
+  email: 'email',
+  service_charge: 'service_charge',
+  status: 'status',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type VendorScalarFieldEnum = (typeof VendorScalarFieldEnum)[keyof typeof VendorScalarFieldEnum]
 
 
 export const ReferrerScalarFieldEnum = {

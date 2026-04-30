@@ -19,6 +19,7 @@ import {
   BarChart2,
   Plane,
   FileCheck,
+  Store,
 } from 'lucide-react';
 import type { RootState } from '../../store/store';
 
@@ -162,6 +163,12 @@ const MENU: MenuSection[] = [
         label: 'Message Templates',
         path: '/admin/message-templates',
         icon: <MessageSquare size={16} />,
+        roles: ['admin'],
+      },
+      {
+        label: 'Vendors',
+        path: '/admin/vendors',
+        icon: <Store size={16} />,
         roles: ['admin'],
       },
       {

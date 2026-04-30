@@ -396,6 +396,7 @@ export const ModelName = {
   Payment: 'Payment',
   CallLog: 'CallLog',
   Associate: 'Associate',
+  Vendor: 'Vendor',
   Referrer: 'Referrer',
   AssociateCommission: 'AssociateCommission',
   InterviewEvent: 'InterviewEvent',
@@ -426,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "candidate" | "company" | "job" | "jobPosition" | "jobInterviewDate" | "candidateJob" | "processDetails" | "processTracking" | "payment" | "callLog" | "associate" | "referrer" | "associateCommission" | "interviewEvent" | "interviewCheckin" | "dropout" | "feeChangeRequest" | "activityLog" | "trade" | "state" | "city" | "source" | "interviewVenue" | "messageTemplate" | "notification" | "deployment"
+    modelProps: "user" | "candidate" | "company" | "job" | "jobPosition" | "jobInterviewDate" | "candidateJob" | "processDetails" | "processTracking" | "payment" | "callLog" | "associate" | "vendor" | "referrer" | "associateCommission" | "interviewEvent" | "interviewCheckin" | "dropout" | "feeChangeRequest" | "activityLog" | "trade" | "state" | "city" | "source" | "interviewVenue" | "messageTemplate" | "notification" | "deployment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1315,6 +1316,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AssociateCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AssociateCountAggregateOutputType> | number
+        }
+      }
+    }
+    Vendor: {
+      payload: Prisma.$VendorPayload<ExtArgs>
+      fields: Prisma.VendorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.VendorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.VendorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>
+        }
+        findFirst: {
+          args: Prisma.VendorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.VendorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>
+        }
+        findMany: {
+          args: Prisma.VendorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>[]
+        }
+        create: {
+          args: Prisma.VendorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>
+        }
+        createMany: {
+          args: Prisma.VendorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.VendorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>[]
+        }
+        delete: {
+          args: Prisma.VendorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>
+        }
+        update: {
+          args: Prisma.VendorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>
+        }
+        deleteMany: {
+          args: Prisma.VendorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.VendorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.VendorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>[]
+        }
+        upsert: {
+          args: Prisma.VendorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VendorPayload>
+        }
+        aggregate: {
+          args: Prisma.VendorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateVendor>
+        }
+        groupBy: {
+          args: Prisma.VendorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VendorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.VendorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VendorCountAggregateOutputType> | number
         }
       }
     }
@@ -2779,6 +2854,20 @@ export const AssociateScalarFieldEnum = {
 export type AssociateScalarFieldEnum = (typeof AssociateScalarFieldEnum)[keyof typeof AssociateScalarFieldEnum]
 
 
+export const VendorScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  phone: 'phone',
+  email: 'email',
+  service_charge: 'service_charge',
+  status: 'status',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type VendorScalarFieldEnum = (typeof VendorScalarFieldEnum)[keyof typeof VendorScalarFieldEnum]
+
+
 export const ReferrerScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -3659,6 +3748,7 @@ export type GlobalOmitConfig = {
   payment?: Prisma.PaymentOmit
   callLog?: Prisma.CallLogOmit
   associate?: Prisma.AssociateOmit
+  vendor?: Prisma.VendorOmit
   referrer?: Prisma.ReferrerOmit
   associateCommission?: Prisma.AssociateCommissionOmit
   interviewEvent?: Prisma.InterviewEventOmit

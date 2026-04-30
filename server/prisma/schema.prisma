@@ -614,6 +614,19 @@ model Associate {
   @@map("associates")
 }
 
+model Vendor {
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(200)
+  phone          String?  @db.VarChar(20)
+  email          String?  @db.VarChar(255)
+  service_charge Decimal  @default(0) @db.Decimal(10, 2)
+  status         String   @default("active") @db.VarChar(20)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@map("vendors")
+}
+
 model Referrer {
   id         Int         @id @default(autoincrement())
   name       String      @db.VarChar(200)
