@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'alhiraa-api',
       cwd: '/var/www/al_hiraa_next/server',
-      script: 'dist/main.js',
+      script: 'dist/src/main.js',
       instances: 1,
       exec_mode: 'fork',
       env: {
