@@ -1151,7 +1151,7 @@ export default function CandidateList() {
     if (!exportRows.length) return;
     const headers = COLUMNS.map((c) => c.label).join(',');
     const csv = headers + '\n' + exportRows.map(buildCsvRow).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

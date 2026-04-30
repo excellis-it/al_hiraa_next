@@ -55,6 +55,7 @@ export type AssociateMinAggregateOutputType = {
   bank_name: string | null
   bank_account_number: string | null
   bank_ifsc: string | null
+  notes: string | null
   total_commission_earned: runtime.Decimal | null
   total_commission_paid: runtime.Decimal | null
   created_at: Date | null
@@ -76,6 +77,7 @@ export type AssociateMaxAggregateOutputType = {
   bank_name: string | null
   bank_account_number: string | null
   bank_ifsc: string | null
+  notes: string | null
   total_commission_earned: runtime.Decimal | null
   total_commission_paid: runtime.Decimal | null
   created_at: Date | null
@@ -97,6 +99,7 @@ export type AssociateCountAggregateOutputType = {
   bank_name: number
   bank_account_number: number
   bank_ifsc: number
+  notes: number
   total_commission_earned: number
   total_commission_paid: number
   created_at: number
@@ -134,6 +137,7 @@ export type AssociateMinAggregateInputType = {
   bank_name?: true
   bank_account_number?: true
   bank_ifsc?: true
+  notes?: true
   total_commission_earned?: true
   total_commission_paid?: true
   created_at?: true
@@ -155,6 +159,7 @@ export type AssociateMaxAggregateInputType = {
   bank_name?: true
   bank_account_number?: true
   bank_ifsc?: true
+  notes?: true
   total_commission_earned?: true
   total_commission_paid?: true
   created_at?: true
@@ -176,6 +181,7 @@ export type AssociateCountAggregateInputType = {
   bank_name?: true
   bank_account_number?: true
   bank_ifsc?: true
+  notes?: true
   total_commission_earned?: true
   total_commission_paid?: true
   created_at?: true
@@ -272,7 +278,7 @@ export type AssociateGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 export type AssociateGroupByOutputType = {
   id: number
   full_name: string
-  phone: string
+  phone: string | null
   email: string | null
   location_state: string | null
   location_city: string | null
@@ -284,6 +290,7 @@ export type AssociateGroupByOutputType = {
   bank_name: string | null
   bank_account_number: string | null
   bank_ifsc: string | null
+  notes: string | null
   total_commission_earned: runtime.Decimal
   total_commission_paid: runtime.Decimal
   created_at: Date
@@ -316,7 +323,7 @@ export type AssociateWhereInput = {
   NOT?: Prisma.AssociateWhereInput | Prisma.AssociateWhereInput[]
   id?: Prisma.IntFilter<"Associate"> | number
   full_name?: Prisma.StringFilter<"Associate"> | string
-  phone?: Prisma.StringFilter<"Associate"> | string
+  phone?: Prisma.StringNullableFilter<"Associate"> | string | null
   email?: Prisma.StringNullableFilter<"Associate"> | string | null
   location_state?: Prisma.StringNullableFilter<"Associate"> | string | null
   location_city?: Prisma.StringNullableFilter<"Associate"> | string | null
@@ -328,6 +335,7 @@ export type AssociateWhereInput = {
   bank_name?: Prisma.StringNullableFilter<"Associate"> | string | null
   bank_account_number?: Prisma.StringNullableFilter<"Associate"> | string | null
   bank_ifsc?: Prisma.StringNullableFilter<"Associate"> | string | null
+  notes?: Prisma.StringNullableFilter<"Associate"> | string | null
   total_commission_earned?: Prisma.DecimalFilter<"Associate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFilter<"Associate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFilter<"Associate"> | Date | string
@@ -339,7 +347,7 @@ export type AssociateWhereInput = {
 export type AssociateOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   full_name?: Prisma.SortOrder
-  phone?: Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   location_state?: Prisma.SortOrderInput | Prisma.SortOrder
   location_city?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -351,6 +359,7 @@ export type AssociateOrderByWithRelationInput = {
   bank_name?: Prisma.SortOrderInput | Prisma.SortOrder
   bank_account_number?: Prisma.SortOrderInput | Prisma.SortOrder
   bank_ifsc?: Prisma.SortOrderInput | Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   total_commission_earned?: Prisma.SortOrder
   total_commission_paid?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -377,6 +386,7 @@ export type AssociateWhereUniqueInput = Prisma.AtLeast<{
   bank_name?: Prisma.StringNullableFilter<"Associate"> | string | null
   bank_account_number?: Prisma.StringNullableFilter<"Associate"> | string | null
   bank_ifsc?: Prisma.StringNullableFilter<"Associate"> | string | null
+  notes?: Prisma.StringNullableFilter<"Associate"> | string | null
   total_commission_earned?: Prisma.DecimalFilter<"Associate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFilter<"Associate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFilter<"Associate"> | Date | string
@@ -388,7 +398,7 @@ export type AssociateWhereUniqueInput = Prisma.AtLeast<{
 export type AssociateOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   full_name?: Prisma.SortOrder
-  phone?: Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   location_state?: Prisma.SortOrderInput | Prisma.SortOrder
   location_city?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -400,6 +410,7 @@ export type AssociateOrderByWithAggregationInput = {
   bank_name?: Prisma.SortOrderInput | Prisma.SortOrder
   bank_account_number?: Prisma.SortOrderInput | Prisma.SortOrder
   bank_ifsc?: Prisma.SortOrderInput | Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   total_commission_earned?: Prisma.SortOrder
   total_commission_paid?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -417,7 +428,7 @@ export type AssociateScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AssociateScalarWhereWithAggregatesInput | Prisma.AssociateScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Associate"> | number
   full_name?: Prisma.StringWithAggregatesFilter<"Associate"> | string
-  phone?: Prisma.StringWithAggregatesFilter<"Associate"> | string
+  phone?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
   email?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
   location_state?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
   location_city?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
@@ -429,6 +440,7 @@ export type AssociateScalarWhereWithAggregatesInput = {
   bank_name?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
   bank_account_number?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
   bank_ifsc?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
+  notes?: Prisma.StringNullableWithAggregatesFilter<"Associate"> | string | null
   total_commission_earned?: Prisma.DecimalWithAggregatesFilter<"Associate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalWithAggregatesFilter<"Associate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeWithAggregatesFilter<"Associate"> | Date | string
@@ -437,7 +449,7 @@ export type AssociateScalarWhereWithAggregatesInput = {
 
 export type AssociateCreateInput = {
   full_name: string
-  phone: string
+  phone?: string | null
   email?: string | null
   location_state?: string | null
   location_city?: string | null
@@ -449,6 +461,7 @@ export type AssociateCreateInput = {
   bank_name?: string | null
   bank_account_number?: string | null
   bank_ifsc?: string | null
+  notes?: string | null
   total_commission_earned?: runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
@@ -460,7 +473,7 @@ export type AssociateCreateInput = {
 export type AssociateUncheckedCreateInput = {
   id?: number
   full_name: string
-  phone: string
+  phone?: string | null
   email?: string | null
   location_state?: string | null
   location_city?: string | null
@@ -472,6 +485,7 @@ export type AssociateUncheckedCreateInput = {
   bank_name?: string | null
   bank_account_number?: string | null
   bank_ifsc?: string | null
+  notes?: string | null
   total_commission_earned?: runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
@@ -482,7 +496,7 @@ export type AssociateUncheckedCreateInput = {
 
 export type AssociateUpdateInput = {
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -494,6 +508,7 @@ export type AssociateUpdateInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -505,7 +520,7 @@ export type AssociateUpdateInput = {
 export type AssociateUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -517,6 +532,7 @@ export type AssociateUncheckedUpdateInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -528,7 +544,7 @@ export type AssociateUncheckedUpdateInput = {
 export type AssociateCreateManyInput = {
   id?: number
   full_name: string
-  phone: string
+  phone?: string | null
   email?: string | null
   location_state?: string | null
   location_city?: string | null
@@ -540,6 +556,7 @@ export type AssociateCreateManyInput = {
   bank_name?: string | null
   bank_account_number?: string | null
   bank_ifsc?: string | null
+  notes?: string | null
   total_commission_earned?: runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
@@ -548,7 +565,7 @@ export type AssociateCreateManyInput = {
 
 export type AssociateUpdateManyMutationInput = {
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -560,6 +577,7 @@ export type AssociateUpdateManyMutationInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -569,7 +587,7 @@ export type AssociateUpdateManyMutationInput = {
 export type AssociateUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -581,6 +599,7 @@ export type AssociateUncheckedUpdateManyInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -607,6 +626,7 @@ export type AssociateCountOrderByAggregateInput = {
   bank_name?: Prisma.SortOrder
   bank_account_number?: Prisma.SortOrder
   bank_ifsc?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   total_commission_earned?: Prisma.SortOrder
   total_commission_paid?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -635,6 +655,7 @@ export type AssociateMaxOrderByAggregateInput = {
   bank_name?: Prisma.SortOrder
   bank_account_number?: Prisma.SortOrder
   bank_ifsc?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   total_commission_earned?: Prisma.SortOrder
   total_commission_paid?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -656,6 +677,7 @@ export type AssociateMinOrderByAggregateInput = {
   bank_name?: Prisma.SortOrder
   bank_account_number?: Prisma.SortOrder
   bank_ifsc?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   total_commission_earned?: Prisma.SortOrder
   total_commission_paid?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -710,7 +732,7 @@ export type AssociateUpdateOneRequiredWithoutCommissionsNestedInput = {
 
 export type AssociateCreateWithoutCandidatesInput = {
   full_name: string
-  phone: string
+  phone?: string | null
   email?: string | null
   location_state?: string | null
   location_city?: string | null
@@ -722,6 +744,7 @@ export type AssociateCreateWithoutCandidatesInput = {
   bank_name?: string | null
   bank_account_number?: string | null
   bank_ifsc?: string | null
+  notes?: string | null
   total_commission_earned?: runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
@@ -732,7 +755,7 @@ export type AssociateCreateWithoutCandidatesInput = {
 export type AssociateUncheckedCreateWithoutCandidatesInput = {
   id?: number
   full_name: string
-  phone: string
+  phone?: string | null
   email?: string | null
   location_state?: string | null
   location_city?: string | null
@@ -744,6 +767,7 @@ export type AssociateUncheckedCreateWithoutCandidatesInput = {
   bank_name?: string | null
   bank_account_number?: string | null
   bank_ifsc?: string | null
+  notes?: string | null
   total_commission_earned?: runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
@@ -769,7 +793,7 @@ export type AssociateUpdateToOneWithWhereWithoutCandidatesInput = {
 
 export type AssociateUpdateWithoutCandidatesInput = {
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -781,6 +805,7 @@ export type AssociateUpdateWithoutCandidatesInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -791,7 +816,7 @@ export type AssociateUpdateWithoutCandidatesInput = {
 export type AssociateUncheckedUpdateWithoutCandidatesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -803,6 +828,7 @@ export type AssociateUncheckedUpdateWithoutCandidatesInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -812,7 +838,7 @@ export type AssociateUncheckedUpdateWithoutCandidatesInput = {
 
 export type AssociateCreateWithoutCommissionsInput = {
   full_name: string
-  phone: string
+  phone?: string | null
   email?: string | null
   location_state?: string | null
   location_city?: string | null
@@ -824,6 +850,7 @@ export type AssociateCreateWithoutCommissionsInput = {
   bank_name?: string | null
   bank_account_number?: string | null
   bank_ifsc?: string | null
+  notes?: string | null
   total_commission_earned?: runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
@@ -834,7 +861,7 @@ export type AssociateCreateWithoutCommissionsInput = {
 export type AssociateUncheckedCreateWithoutCommissionsInput = {
   id?: number
   full_name: string
-  phone: string
+  phone?: string | null
   email?: string | null
   location_state?: string | null
   location_city?: string | null
@@ -846,6 +873,7 @@ export type AssociateUncheckedCreateWithoutCommissionsInput = {
   bank_name?: string | null
   bank_account_number?: string | null
   bank_ifsc?: string | null
+  notes?: string | null
   total_commission_earned?: runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
@@ -871,7 +899,7 @@ export type AssociateUpdateToOneWithWhereWithoutCommissionsInput = {
 
 export type AssociateUpdateWithoutCommissionsInput = {
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -883,6 +911,7 @@ export type AssociateUpdateWithoutCommissionsInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -893,7 +922,7 @@ export type AssociateUpdateWithoutCommissionsInput = {
 export type AssociateUncheckedUpdateWithoutCommissionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   full_name?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -905,6 +934,7 @@ export type AssociateUncheckedUpdateWithoutCommissionsInput = {
   bank_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_account_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bank_ifsc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   total_commission_earned?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   total_commission_paid?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -967,6 +997,7 @@ export type AssociateSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   bank_name?: boolean
   bank_account_number?: boolean
   bank_ifsc?: boolean
+  notes?: boolean
   total_commission_earned?: boolean
   total_commission_paid?: boolean
   created_at?: boolean
@@ -991,6 +1022,7 @@ export type AssociateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   bank_name?: boolean
   bank_account_number?: boolean
   bank_ifsc?: boolean
+  notes?: boolean
   total_commission_earned?: boolean
   total_commission_paid?: boolean
   created_at?: boolean
@@ -1012,6 +1044,7 @@ export type AssociateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   bank_name?: boolean
   bank_account_number?: boolean
   bank_ifsc?: boolean
+  notes?: boolean
   total_commission_earned?: boolean
   total_commission_paid?: boolean
   created_at?: boolean
@@ -1033,13 +1066,14 @@ export type AssociateSelectScalar = {
   bank_name?: boolean
   bank_account_number?: boolean
   bank_ifsc?: boolean
+  notes?: boolean
   total_commission_earned?: boolean
   total_commission_paid?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type AssociateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "full_name" | "phone" | "email" | "location_state" | "location_city" | "commission_rate" | "commission_type" | "status" | "password_hash" | "bank_account_name" | "bank_name" | "bank_account_number" | "bank_ifsc" | "total_commission_earned" | "total_commission_paid" | "created_at" | "updated_at", ExtArgs["result"]["associate"]>
+export type AssociateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "full_name" | "phone" | "email" | "location_state" | "location_city" | "commission_rate" | "commission_type" | "status" | "password_hash" | "bank_account_name" | "bank_name" | "bank_account_number" | "bank_ifsc" | "notes" | "total_commission_earned" | "total_commission_paid" | "created_at" | "updated_at", ExtArgs["result"]["associate"]>
 export type AssociateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   candidates?: boolean | Prisma.Associate$candidatesArgs<ExtArgs>
   commissions?: boolean | Prisma.Associate$commissionsArgs<ExtArgs>
@@ -1057,7 +1091,7 @@ export type $AssociatePayload<ExtArgs extends runtime.Types.Extensions.InternalA
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     full_name: string
-    phone: string
+    phone: string | null
     email: string | null
     location_state: string | null
     location_city: string | null
@@ -1069,6 +1103,7 @@ export type $AssociatePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     bank_name: string | null
     bank_account_number: string | null
     bank_ifsc: string | null
+    notes: string | null
     total_commission_earned: runtime.Decimal
     total_commission_paid: runtime.Decimal
     created_at: Date
@@ -1512,6 +1547,7 @@ export interface AssociateFieldRefs {
   readonly bank_name: Prisma.FieldRef<"Associate", 'String'>
   readonly bank_account_number: Prisma.FieldRef<"Associate", 'String'>
   readonly bank_ifsc: Prisma.FieldRef<"Associate", 'String'>
+  readonly notes: Prisma.FieldRef<"Associate", 'String'>
   readonly total_commission_earned: Prisma.FieldRef<"Associate", 'Decimal'>
   readonly total_commission_paid: Prisma.FieldRef<"Associate", 'Decimal'>
   readonly created_at: Prisma.FieldRef<"Associate", 'DateTime'>

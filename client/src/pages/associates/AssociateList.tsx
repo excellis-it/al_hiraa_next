@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { UserCheck, Plus, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Select from '../../components/ui/Select';
 import {
   useGetAssociatesQuery,
@@ -47,7 +48,7 @@ function AssociateModal({ mode, initial, onClose, onSave, saving }: ModalProps) 
   const [form, setForm] = useState<AssociateFormData>(
     initial
       ? {
-          name: initial.name ?? '',
+          name: initial.full_name ?? initial.name ?? '',
           phone: initial.phone ?? '',
           email: initial.email ?? '',
           commission_rate: initial.commission_rate?.toString() ?? '',
@@ -178,29 +179,37 @@ export default function AssociateList() {
 
   const associates: any[] = data?.associates || data?.data || data || [];
 
+  const buildPayload = (formData: AssociateFormData) => ({
+    name:            formData.name,
+    phone:           formData.phone   || undefined,
+    email:           formData.email   || undefined,
+    notes:           formData.notes   || undefined,
+    status:          formData.status  || 'active',
+    commission_rate: formData.commission_rate ? parseFloat(formData.commission_rate) : undefined,
+  });
+
   const handleCreate = async (formData: AssociateFormData) => {
     try {
-      await createAssociate({
-        ...formData,
-        commission_rate: formData.commission_rate ? parseFloat(formData.commission_rate) : null,
-      }).unwrap();
+      await createAssociate(buildPayload(formData)).unwrap();
       setShowCreateModal(false);
-    } catch {
-      // error handled silently; backend validation errors can be added here
+    } catch (err: any) {
+      const msg = err?.data?.message;
+      if (Array.isArray(msg)) toast.error(msg[0]);
+      else if (typeof msg === 'string') toast.error(msg);
+      else toast.error('Failed to create associate');
     }
   };
 
   const handleUpdate = async (formData: AssociateFormData) => {
     if (!editTarget) return;
     try {
-      await updateAssociate({
-        id: editTarget.id,
-        ...formData,
-        commission_rate: formData.commission_rate ? parseFloat(formData.commission_rate) : null,
-      }).unwrap();
+      await updateAssociate({ id: editTarget.id, ...buildPayload(formData) }).unwrap();
       setEditTarget(null);
-    } catch {
-      // error handled silently
+    } catch (err: any) {
+      const msg = err?.data?.message;
+      if (Array.isArray(msg)) toast.error(msg[0]);
+      else if (typeof msg === 'string') toast.error(msg);
+      else toast.error('Failed to update associate');
     }
   };
 
@@ -252,9 +261,9 @@ export default function AssociateList() {
                       >
                         <span className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 flex-shrink-0">
-                            {(a.name ?? '?')[0]?.toUpperCase()}
+                            {(a.full_name ?? a.name ?? '?')[0]?.toUpperCase()}
                           </div>
-                          {a.name ?? '—'}
+                          {a.full_name ?? a.name ?? '—'}
                         </span>
                       </button>
                     </td>

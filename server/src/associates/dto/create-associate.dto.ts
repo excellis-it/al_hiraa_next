@@ -4,8 +4,8 @@ import {
   IsOptional,
   IsEmail,
   IsNumber,
+  IsIn,
   Min,
-  Max,
 } from 'class-validator';
 
 export class CreateAssociateDto {
@@ -13,9 +13,9 @@ export class CreateAssociateDto {
   @IsNotEmpty()
   name: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  phone: string;
+  phone?: string;
 
   @IsOptional()
   @IsEmail()
@@ -24,10 +24,13 @@ export class CreateAssociateDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Max(100)
   commission_rate?: number;
 
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsIn(['active', 'inactive'])
+  status?: string;
 }

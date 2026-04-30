@@ -9,6 +9,7 @@
 
 import { useMemo, useState } from 'react';
 import { Download, Upload, X, CheckCircle2, RotateCcw, AlertTriangle, UserPlus } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import Select from '../../../components/ui/Select';
 import { useBatchImportToInterviewMutation, useGetCandidatesQuery } from '../../../store/api/candidatesApi';
 import { useGetAssociatesQuery } from '../../../store/api/associatesApi';
@@ -183,6 +184,12 @@ export default function ImportCandidatesModal({
       // Validate required fields
       if (!row.full_name?.trim()) row._error = 'missing full_name';
       else if (!row.passport_no?.trim()) row._error = 'missing passport_no';
+      else if (!row.whatsapp_no?.trim()) row._error = 'missing whatsapp_no';
+      else if (row.associate_name?.trim()) {
+        const assocLower = row.associate_name.trim().toLowerCase();
+        const found = associates.some((a: any) => (a.full_name || '').toLowerCase() === assocLower);
+        if (!found) row._error = `associate "${row.associate_name}" not found in master list`;
+      }
       return row as ParsedRow;
     });
     setRows(parsed);
@@ -190,17 +197,56 @@ export default function ImportCandidatesModal({
   };
 
   const downloadTemplate = () => {
-    const header = EXPECTED_COLUMNS.join(',');
-    const sample =
-      'John Doe,L1234567,9876543210,,1995-05-20,male,ecr,ITI,3 years,,Rafi Khan,';
-    const csv = `${header}\n${sample}`;
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'interview-candidates-template.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    const GENDER_OPTS = ['male', 'female', 'other'];
+    const ECR_OPTS    = ['ecr', 'non_ecr'];
+    const EDU_OPTS    = ['8th Pass', '10th Pass', '12th Pass', 'Diploma', 'ITI', 'Bachelors', 'Masters', 'Other'];
+    const EXP_OPTS    = ['Fresher', '<1 yr', '1-3 yrs', '3-5 yrs', '5-10 yrs', '10+ yrs'];
+    const ASSOC_OPTS  = associates.map((a: any) => a.full_name || '').filter(Boolean);
+
+    const wb = XLSX.utils.book_new();
+
+    // ── Sheet 2: Valid Options (must be added first for cell-range references) ──
+    // Columns: A=gender  B=ecr_type  C=education  D=experience  E=associate_name
+    const maxLen = Math.max(GENDER_OPTS.length, ECR_OPTS.length, EDU_OPTS.length, EXP_OPTS.length, ASSOC_OPTS.length, 1);
+    const optRows: any[][] = [['gender', 'ecr_type', 'education', 'experience', 'associate_name']];
+    for (let i = 0; i < maxLen; i++) {
+      optRows.push([GENDER_OPTS[i] ?? '', ECR_OPTS[i] ?? '', EDU_OPTS[i] ?? '', EXP_OPTS[i] ?? '', ASSOC_OPTS[i] ?? '']);
+    }
+    const optWs = XLSX.utils.aoa_to_sheet(optRows);
+    optWs['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 26 }];
+    XLSX.utils.book_append_sheet(wb, optWs, 'Valid Options');
+
+    // ── Sheet 1: Template ────────────────────────────────────────────────────────
+    // Columns: A=full_name B=passport_no C=whatsapp_no D=alternate_contact E=dob
+    //          F=gender    G=ecr_type    H=education   I=indian_experience  J=abroad_experience
+    //          K=associate_name  L=referrer_name
+    const s1 = ['John Doe',   'L1234567', '9876543210', '',           '1995-05-20', 'male',   'ecr',     'ITI',       '3-5 yrs', '',        ASSOC_OPTS[0] ?? '', ''];
+    const s2 = ['James Bond', 'L7654321', '8765432109', '9123456789', '1990-03-15', 'female', 'non_ecr', 'Bachelors', '1-3 yrs', '3-5 yrs', ASSOC_OPTS[1] ?? '', ''];
+    const tplWs = XLSX.utils.aoa_to_sheet([[...EXPECTED_COLUMNS], s1, s2]);
+    tplWs['!cols'] = [
+      { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
+      { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
+      { wch: 24 }, { wch: 24 },
+    ];
+
+    // Real Excel dropdown validation — uses !dataValidation (SheetJS CE 0.18 feature)
+    // Short lists → inline quoted string; long lists → cell range on Valid Options sheet
+    const eduEnd   = EDU_OPTS.length + 1;   // row number of last education option
+    const expEnd   = EXP_OPTS.length + 1;   // row number of last experience option
+    const assocEnd = ASSOC_OPTS.length > 0 ? ASSOC_OPTS.length + 1 : 2;
+    (tplWs as any)['!dataValidation'] = {
+      'F2:F1000': { type: 'list', formula1: '"male,female,other"' },
+      'G2:G1000': { type: 'list', formula1: '"ecr,non_ecr"' },
+      'H2:H1000': { type: 'list', formula1: `'Valid Options'!$C$2:$C$${eduEnd}` },
+      'I2:I1000': { type: 'list', formula1: `'Valid Options'!$D$2:$D$${expEnd}` },
+      'J2:J1000': { type: 'list', formula1: `'Valid Options'!$D$2:$D$${expEnd}` },
+      ...(ASSOC_OPTS.length > 0
+        ? { 'K2:K1000': { type: 'list', formula1: `'Valid Options'!$E$2:$E$${assocEnd}` } }
+        : {}),
+    };
+
+    XLSX.utils.book_append_sheet(wb, tplWs, 'Template');
+    XLSX.writeFile(wb, 'interview-candidates-template.xlsx');
   };
 
   const rowStatus = (r: ParsedRow): 'invalid' | 'in_event' | 'existing' | 'new' => {
@@ -313,13 +359,13 @@ export default function ImportCandidatesModal({
                   {EXPECTED_COLUMNS.join(', ')}
                 </p>
                 <p className="text-[10px] text-blue-500 mt-1.5">
-                  <strong>full_name</strong> and <strong>passport_no</strong> are required · passport is the primary key · associate_name is matched against master list
+                  <strong>full_name</strong>, <strong>passport_no</strong> and <strong>whatsapp_no</strong> are required · passport is the primary key · associate_name must match master list exactly
                 </p>
                 <button
                   onClick={downloadTemplate}
                   className="mt-2 text-xs font-medium text-blue-600 hover:underline flex items-center gap-1"
                 >
-                  <Download size={11} /> Download template
+                  <Download size={11} /> Download Excel template (see "Valid Options" sheet for dropdowns)
                 </button>
               </div>
               <input

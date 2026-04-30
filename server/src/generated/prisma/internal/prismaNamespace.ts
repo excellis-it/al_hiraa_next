@@ -2769,6 +2769,7 @@ export const AssociateScalarFieldEnum = {
   bank_name: 'bank_name',
   bank_account_number: 'bank_account_number',
   bank_ifsc: 'bank_ifsc',
+  notes: 'notes',
   total_commission_earned: 'total_commission_earned',
   total_commission_paid: 'total_commission_paid',
   created_at: 'created_at',

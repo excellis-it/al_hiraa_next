@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssociateDto } from './dto/create-associate.dto';
 import { UpdateAssociateDto } from './dto/update-associate.dto';
@@ -119,30 +120,46 @@ export class AssociatesService {
   async create(dto: CreateAssociateDto) {
     const data: any = {
       full_name: dto.name,
-      phone: dto.phone,
       password_hash: '',
+      commission_rate: dto.commission_rate ?? 5000,
     };
 
-    if (dto.email !== undefined) data.email = dto.email;
-    if (dto.commission_rate !== undefined) data.commission_rate = dto.commission_rate;
+    if (dto.phone)  data.phone  = dto.phone;
+    if (dto.email)  data.email  = dto.email;
+    if (dto.notes)  data.notes  = dto.notes;
+    if (dto.status) data.status = dto.status;
 
-    return this.prisma.associate.create({ data });
+    try {
+      return await this.prisma.associate.create({ data });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        const field = (e.meta?.target as string[])?.includes('email') ? 'Email' : 'Phone number';
+        throw new ConflictException(`${field} is already registered to another associate`);
+      }
+      throw e;
+    }
   }
 
   async update(id: number, dto: UpdateAssociateDto) {
     await this.findOne(id);
 
     const data: any = {};
-    if (dto.name !== undefined) data.full_name = dto.name;
-    if (dto.phone !== undefined) data.phone = dto.phone;
-    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.name)                          data.full_name       = dto.name;
+    if (dto.phone)                         data.phone           = dto.phone;
+    if (dto.email)                         data.email           = dto.email;
     if (dto.commission_rate !== undefined) data.commission_rate = dto.commission_rate;
-    if (dto.notes !== undefined) data.notes = dto.notes;
+    if (dto.notes)                         data.notes           = dto.notes;
+    if (dto.status)                        data.status          = dto.status;
 
-    return this.prisma.associate.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await this.prisma.associate.update({ where: { id }, data });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        const field = (e.meta?.target as string[])?.includes('email') ? 'Email' : 'Phone number';
+        throw new ConflictException(`${field} is already registered to another associate`);
+      }
+      throw e;
+    }
   }
 
   async createCommission(dto: CreateCommissionDto, _userId: string) {
