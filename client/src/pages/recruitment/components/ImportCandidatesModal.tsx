@@ -182,13 +182,23 @@ export default function ImportCandidatesModal({
       headers.forEach((h, i) => {
         row[h] = cellStr(cols[i]).trim();
       });
-      if (!row.full_name?.trim())      row._error = 'missing full_name';
-      else if (!row.passport_no?.trim()) row._error = 'missing passport_no';
-      else if (!row.whatsapp_no?.trim()) row._error = 'missing whatsapp_no';
-      else if (row.associate_name?.trim()) {
-        const assocLower = row.associate_name.trim().toLowerCase();
-        const found = associates.some((a: any) => (a.full_name || '').toLowerCase() === assocLower);
-        if (!found) row._error = `associate "${row.associate_name}" not found in master list`;
+      if (!row.full_name?.trim()) {
+        row._error = 'missing full_name';
+      } else if (!row.passport_no?.trim()) {
+        row._error = 'missing passport_no';
+      } else if (!row.whatsapp_no?.trim()) {
+        row._error = 'missing whatsapp_no';
+      } else {
+        // Validate 10-digit Indian mobile; accept raw 10-digit or 91-prefixed 12-digit
+        const digits = row.whatsapp_no.replace(/\D/g, '');
+        const last10 = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+        if (last10.length !== 10) {
+          row._error = `phone "${row.whatsapp_no}" must be a 10-digit mobile number`;
+        } else if (row.associate_name?.trim()) {
+          const assocLower = row.associate_name.trim().toLowerCase();
+          const found = associates.some((a: any) => (a.full_name || '').toLowerCase() === assocLower);
+          if (!found) row._error = `associate "${row.associate_name}" not found in master list`;
+        }
       }
       return row as ParsedRow;
     });

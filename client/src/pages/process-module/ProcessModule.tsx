@@ -47,7 +47,7 @@ const PIPELINE_STAGES = [
   { key: 'selection', num: 1, label: 'Selection Offer', subtitle: 'Interview → Selection → Offer',         icon: BadgeCheck  },
   { key: 'documents', num: 2, label: 'Documents',        subtitle: 'Passport, photos, certificates',        icon: FileText    },
   { key: 'medical',   num: 3, label: 'Medical',          subtitle: 'Application → Completion → Approval',   icon: Stethoscope },
-  { key: 'payment',   num: 4, label: 'Payment',          subtitle: 'Up to 4 installments',                  icon: DollarSign  },
+  { key: 'payment',   num: 4, label: 'Payment',          subtitle: 'Up to 4 installments',                  icon: '₹'  },
   { key: 'visa',      num: 5, label: 'Visa & MOFA',      subtitle: 'Courier → Visa → MOFA → VFS',           icon: Globe       },
   { key: 'flight',    num: 6, label: 'Flight',           subtitle: 'Booking → Confirmation → Departure',    icon: Plane       },
 ];
@@ -363,7 +363,7 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
           )}
 
           {/* Payment */}
-          <StageBtn stageKey="payment" label="Payment" subtitle="Up to 4 installments" num={4} Icon={DollarSign} />
+          <StageBtn stageKey="payment" label="Payment" subtitle="Up to 4 installments" num={4} Icon={'₹'} />
           {open.has('payment') && (
             <div className="px-5 py-3 bg-white border-b border-gray-100">
               {payments.length > 0 && (
@@ -777,7 +777,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
             const INST_COLORS = ['bg-amber-100 text-amber-700','bg-blue-100 text-blue-700','bg-violet-100 text-violet-700'];
 
             return (
-              <EditSec title="Payment" icon={DollarSign} color="amber"
+              <EditSec title="Payment" icon={'₹'} color="amber"
                 locked={!isFit} lockReason="Medical status must be Fit to record payments">
 
                 {/* Header labels */}

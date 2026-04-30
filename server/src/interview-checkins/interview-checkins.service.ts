@@ -16,7 +16,6 @@ export class InterviewCheckinsService {
             candidate: {
               select: {
                 id: true,
-                candidate_code: true,
                 full_name: true,
                 passport_no: true,
                 whatsapp_no: true,
@@ -84,7 +83,6 @@ export class InterviewCheckinsService {
               candidate: {
                 select: {
                   id: true,
-                  candidate_code: true,
                   full_name: true,
                   passport_no: true,
                   whatsapp_no: true,
@@ -146,7 +144,7 @@ export class InterviewCheckinsService {
           }
 
           // Notify process managers and admins
-          const candidateName = updated.candidate_job?.candidate?.full_name || 'A candidate';
+          const candidateName = (updated as any).candidate_job?.candidate?.full_name || 'A candidate';
           const managers = await tx.user.findMany({
             where: { role: { in: ['process_manager', 'manager', 'admin'] as any }, is_active: true },
             select: { id: true },

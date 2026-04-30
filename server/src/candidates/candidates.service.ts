@@ -868,8 +868,21 @@ export class CandidatesService {
     }
     const passport_no = row.passport_no.trim();
     const rawWhatsapp = row.whatsapp_no?.trim() || '';
-    const whatsapp_no =
-      rawWhatsapp || `IMPORT-${passport_no.replace(/\s/g, '')}`;
+
+    // Normalize to +91XXXXXXXXXX; accept 10-digit or 91-prefixed 12-digit inputs
+    let whatsapp_no: string;
+    if (rawWhatsapp) {
+      const digits = rawWhatsapp.replace(/\D/g, '');
+      const last10 = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+      if (last10.length !== 10) {
+        throw new BadRequestException(
+          `Phone "${rawWhatsapp}" must be a 10-digit Indian mobile number`,
+        );
+      }
+      whatsapp_no = `+91${last10}`;
+    } else {
+      whatsapp_no = `IMPORT-${passport_no.replace(/\s/g, '')}`;
+    }
 
     const existing = await this.prisma.candidate.findUnique({
       where: { passport_no },
@@ -879,7 +892,7 @@ export class CandidatesService {
       // Fill only missing fields; never overwrite.
       const patch: any = {};
       if (!existing.whatsapp_no?.startsWith('IMPORT-') && rawWhatsapp && !existing.whatsapp_no) {
-        patch.whatsapp_no = rawWhatsapp;
+        patch.whatsapp_no = whatsapp_no;
       }
       if (!existing.full_name && row.full_name) patch.full_name = row.full_name;
       if (!existing.dob && row.dob) patch.dob = new Date(row.dob);
@@ -909,10 +922,10 @@ export class CandidatesService {
       return { candidate: existing, wasExisting: true };
     }
 
-    // Check phone uniqueness if a real phone was supplied.
+    // Check phone uniqueness using the normalized +91 number.
     if (rawWhatsapp) {
       const phoneExists = await this.prisma.candidate.findUnique({
-        where: { whatsapp_no: rawWhatsapp },
+        where: { whatsapp_no },
       });
       if (phoneExists) {
         throw new ConflictException(
@@ -990,9 +1003,15 @@ export class CandidatesService {
             data: {
               candidate_id: candidate.id,
               job_id: event.job_id,
+              trade_id: dto.trade_id,
               status: InterestStatus.lined_up,
               assigned_to: userId,
             },
+          });
+        } else if (!candidateJob.trade_id) {
+          candidateJob = await this.prisma.candidateJob.update({
+            where: { id: candidateJob.id },
+            data: { trade_id: dto.trade_id },
           });
         }
 
