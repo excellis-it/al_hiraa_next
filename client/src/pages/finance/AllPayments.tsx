@@ -50,166 +50,298 @@ const PAYMENT_METHODS = [
   { value: 'cheque', label: 'Cheque' },
 ];
 
-interface QuickPayForm {
-  amount_paid: string;
-  payment_method: string;
-  receipt_number: string;
-  paid_date: string;
-  notes: string;
-}
+type InstRow = { id: number; amount: string; discount: string; date: string; method: string };
 
-function QuickPayModal({ payment, onClose, onSuccess }: { payment: any; onClose: () => void; onSuccess: () => void }) {
-  const [form, setForm] = useState<QuickPayForm>({
-    amount_paid: String(Number(payment.amount_due) - Number(payment.amount_paid || 0)),
-    payment_method: 'cash',
-    receipt_number: '',
-    paid_date: new Date().toISOString().split('T')[0],
-    notes: '',
+function GroupPayModal({ group, onClose, onSuccess }: { group: any; onClose: () => void; onSuccess: () => void }) {
+  const [rows, setRows] = useState<InstRow[]>(() =>
+    group.installments.map((p: any) => ({
+      id:       p.id,
+      amount:   String(Number(p.amount_due) || ''),
+      discount: String(Number(p.fee_waiver_amount) || ''),
+      date:     p.paid_date ? p.paid_date.substring(0, 10) : '',
+      method:   p.payment_method || '',
+    }))
+  );
+  const [saving, setSaving] = useState(false);
+  const [recordPayment] = useRecordPaymentMutation();
+
+  const setRow = (i: number, patch: Partial<InstRow>) =>
+    setRows(rs => rs.map((r, idx) => idx === i ? { ...r, ...patch } : r));
+
+  const computed = rows.map(r => {
+    const amt  = parseFloat(r.amount)   || 0;
+    const disc = parseFloat(r.discount) || 0;
+    return { amt, disc, net: Math.max(0, amt - disc) };
   });
-  const [recordPayment, { isLoading }] = useRecordPaymentMutation();
 
-  const remaining = Number(payment.amount_due) - Number(payment.amount_paid || 0);
+  const subTotal      = computed.reduce((s, c) => s + c.amt,  0);
+  const totalDiscount = computed.reduce((s, c) => s + c.disc, 0);
+  const totalPayable  = Math.max(0, subTotal - totalDiscount);
+  const totalPaid     = computed.reduce((s, c, i) => s + (rows[i].date ? c.net : 0), 0);
+  const balance       = Math.max(0, totalPayable - totalPaid);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const amt = parseFloat(form.amount_paid);
-    if (!amt || amt <= 0) { toast.error('Enter a valid amount'); return; }
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      await recordPayment({
-        id: payment.id,
-        amount_paid: amt,
-        payment_method: form.payment_method || undefined,
-        receipt_number: form.receipt_number || undefined,
-        paid_date: form.paid_date || undefined,
-        notes: form.notes || undefined,
-      }).unwrap();
-      toast.success(`Payment of ₹${amt.toLocaleString('en-IN')} recorded`);
+      await Promise.all(rows.map((row, i) =>
+        recordPayment({
+          id:                row.id,
+          amount_due:        computed[i].amt,
+          fee_waiver_amount: computed[i].disc,
+          ...(row.date   ? { paid_date:      row.date   } : {}),
+          ...(row.method ? { payment_method: row.method } : {}),
+        }).unwrap()
+      ));
+      toast.success('Payments saved');
       onSuccess();
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to record payment');
+      toast.error(err?.data?.message || 'Failed to save payments');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl">
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
               <DollarSign size={16} className="text-emerald-500" /> Record Payment
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              {payment.candidate_name} · Instalment #{payment.installment_number}
+              {group.candidate_name} · {group.job_title}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-            <X size={16} />
-          </button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
         </div>
 
-        {/* Summary bar */}
-        <div className="mx-6 mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-4 text-xs">
-          <div>
-            <p className="text-gray-400">Total Due</p>
-            <p className="font-bold text-gray-800">{formatINR(payment.amount_due)}</p>
+        <div className="p-6 space-y-4">
+          {/* Column headers */}
+          <div className="grid grid-cols-[32px_1fr_1fr_80px_1fr_1fr] gap-2 px-1">
+            <div />
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Amount (₹)</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Discount (₹)</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Net</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Date Paid</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Method</p>
           </div>
-          <div className="w-px h-8 bg-gray-200" />
-          <div>
-            <p className="text-gray-400">Already Paid</p>
-            <p className="font-bold text-emerald-700">{formatINR(payment.amount_paid)}</p>
-          </div>
-          <div className="w-px h-8 bg-gray-200" />
-          <div>
-            <p className="text-gray-400">Remaining</p>
-            <p className={`font-bold ${remaining > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>{formatINR(remaining)}</p>
-          </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="form-label">Amount to Record (₹) <span className="text-red-500">*</span></label>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={form.amount_paid}
-              onChange={e => setForm(f => ({ ...f, amount_paid: e.target.value }))}
-              className="form-input"
-              placeholder="Enter amount"
-            />
+          {/* Installment rows */}
+          {rows.map((row, i) => {
+            const c = computed[i];
+            const isPaid = !!row.date;
+            return (
+              <div
+                key={row.id}
+                className={`grid grid-cols-[32px_1fr_1fr_80px_1fr_1fr] gap-2 items-center rounded-xl px-2 py-1.5 transition-colors ${isPaid ? 'bg-emerald-50/60' : ''}`}
+              >
+                <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold ${INST_COLORS[i % INST_COLORS.length]}`}>
+                  #{i + 1}
+                </span>
+                <input
+                  type="number" min="0" step="1"
+                  value={row.amount}
+                  onChange={e => setRow(i, { amount: e.target.value })}
+                  className="form-input text-sm"
+                  placeholder="0"
+                />
+                <input
+                  type="number" min="0" step="1"
+                  value={row.discount}
+                  onChange={e => setRow(i, { discount: e.target.value })}
+                  className="form-input text-sm"
+                  placeholder="0"
+                />
+                <div className="text-sm font-bold text-gray-700">₹{c.net.toLocaleString('en-IN')}</div>
+                <input
+                  type="date"
+                  value={row.date}
+                  onChange={e => setRow(i, { date: e.target.value })}
+                  className="form-input text-sm"
+                />
+                <select
+                  value={row.method}
+                  onChange={e => setRow(i, { method: e.target.value })}
+                  className="form-input text-sm"
+                >
+                  <option value="">—</option>
+                  {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+            );
+          })}
+
+          {/* Summary bar */}
+          <div className="grid grid-cols-4 gap-3 mt-2 pt-3 border-t border-gray-100">
+            {[
+              { label: 'Sub Total',       value: subTotal,      cls: 'text-gray-700' },
+              { label: 'Total Discount',  value: totalDiscount, cls: 'text-red-500'   },
+              { label: 'Total Payable',   value: totalPayable,  cls: 'text-gray-900 font-bold' },
+              { label: 'Total Paid',      value: totalPaid,     cls: 'text-emerald-600' },
+            ].map(({ label, value, cls }) => (
+              <div key={label} className="bg-gray-50 rounded-xl px-3 py-2 text-center">
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{label}</p>
+                <p className={`text-sm font-bold mt-0.5 ${cls}`}>₹{value.toLocaleString('en-IN')}</p>
+              </div>
+            ))}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="form-label">Payment Method</label>
-              <Select value={form.payment_method} onChange={e => setForm(f => ({ ...f, payment_method: e.target.value }))}>
-                <option value="">Select</option>
-                {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </Select>
-            </div>
-            <div>
-              <label className="form-label">Paid Date</label>
-              <input
-                type="date"
-                value={form.paid_date}
-                onChange={e => setForm(f => ({ ...f, paid_date: e.target.value }))}
-                className="form-input"
-              />
-            </div>
+
+          {/* Balance strip */}
+          <div className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold ${balance === 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
+            <span>Balance Due</span>
+            <span>{balance === 0 ? 'Nil — Fully Paid' : `₹${balance.toLocaleString('en-IN')}`}</span>
           </div>
-          <div>
-            <label className="form-label">Receipt / Reference No.</label>
-            <input
-              type="text"
-              value={form.receipt_number}
-              onChange={e => setForm(f => ({ ...f, receipt_number: e.target.value }))}
-              className="form-input"
-              placeholder="Optional"
-            />
-          </div>
-          <div>
-            <label className="form-label">Notes</label>
-            <textarea
-              value={form.notes}
-              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              className="form-input resize-none"
-              rows={2}
-              placeholder="Optional"
-            />
-          </div>
+
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
-            <button type="submit" disabled={isLoading} className="btn-primary flex-1 justify-center">
-              {isLoading
+            <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center">
+              {saving
                 ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                : <><CheckCircle2 size={14} /> Record</>
+                : <><CheckCircle2 size={14} /> Save All</>
               }
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
 }
 
+const INST_COLORS = [
+  'bg-amber-100 text-amber-700',
+  'bg-blue-100 text-blue-700',
+  'bg-violet-100 text-violet-700',
+  'bg-teal-100 text-teal-700',
+];
+
+function groupByProcess(payments: any[]): any[] {
+  const map = new Map<number, any>();
+  for (const p of payments) {
+    const key = p.candidate_job_id ?? p.id;
+    if (!map.has(key)) {
+      map.set(key, {
+        candidate_job_id: p.candidate_job_id,
+        candidate_name:   p.candidate_name,
+        passport_no:      p.passport_no,
+        whatsapp_no:      p.whatsapp_no,
+        job_title:        p.job_title,
+        company_name:     p.company_name,
+        installments:     [],
+      });
+    }
+    map.get(key).installments.push(p);
+  }
+  return Array.from(map.values()).map(g => {
+    const insts = g.installments.sort((a: any, b: any) => (a.installment_number ?? 0) - (b.installment_number ?? 0));
+    const subTotal      = insts.reduce((s: number, p: any) => s + Number(p.amount_due        || 0), 0);
+    const totalDiscount = insts.reduce((s: number, p: any) => s + Number(p.fee_waiver_amount || 0), 0);
+    const totalPaid     = insts.reduce((s: number, p: any) => s + Number(p.amount_paid       || 0), 0);
+    const netTotal      = Math.max(0, subTotal - totalDiscount);
+    const balance       = Math.max(0, netTotal - totalPaid);
+    const allPaid   = insts.every((p: any) => p.status === 'paid');
+    const anyPaid   = insts.some((p: any)  => Number(p.amount_paid) > 0);
+    const anyOverdue= insts.some((p: any)  => isOverdue(p.due_date) && p.status !== 'paid');
+    const groupStatus = allPaid ? 'paid' : anyOverdue ? 'overdue' : anyPaid ? 'partial' : 'pending';
+    return { ...g, installments: insts, subTotal, totalDiscount, totalPaid, netTotal, balance, groupStatus };
+  });
+}
+
+function GroupStatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case 'paid':    return <span className="badge-green">Fully Paid</span>;
+    case 'partial': return <span className="badge-blue">Partial</span>;
+    case 'overdue': return <span className="badge-red">Overdue</span>;
+    default:        return <span className="badge-orange">Pending</span>;
+  }
+}
+
 const PAGE_SIZE = 20;
+
+function printPayments(groups: any[]) {
+  const fmt = (n: number) => `₹${Number(n).toLocaleString('en-IN')}`;
+  const rows = groups.map(g => `
+    <tr style="background:#f8fafc;font-weight:600">
+      <td>${g.candidate_name}</td>
+      <td>${g.passport_no || '—'}</td>
+      <td>${g.job_title} / ${g.company_name}</td>
+      <td>${g.installments.length}</td>
+      <td>${fmt(g.subTotal)}</td>
+      <td style="color:#ef4444">${g.totalDiscount > 0 ? '−' + fmt(g.totalDiscount) : '—'}</td>
+      <td style="font-weight:700">${fmt(g.netTotal)}</td>
+      <td style="color:#059669">${fmt(g.totalPaid)}</td>
+      <td style="color:${g.balance > 0 ? '#d97706' : '#059669'}">${g.balance > 0 ? fmt(g.balance) : 'Nil'}</td>
+      <td>${g.groupStatus.toUpperCase()}</td>
+    </tr>
+    ${g.installments.map((p: any, i: number) => {
+      const w = Number(p.fee_waiver_amount || 0);
+      const net = Math.max(0, Number(p.amount_due || 0) - w);
+      return `<tr style="font-size:11px;color:#6b7280">
+        <td colspan="3" style="padding-left:24px;font-style:italic">Installment #${i + 1}</td>
+        <td>#${p.installment_number}</td>
+        <td>${fmt(p.amount_due)}</td>
+        <td style="color:#ef4444">${w > 0 ? '−' + fmt(w) : '—'}</td>
+        <td>${fmt(net)}</td>
+        <td style="color:#059669">${fmt(p.amount_paid)}</td>
+        <td>${p.paid_date ? new Date(p.paid_date).toLocaleDateString('en-IN') : '—'}</td>
+        <td>${p.payment_method || '—'}</td>
+      </tr>`;
+    }).join('')}
+  `).join('');
+
+  const win = window.open('', '_blank');
+  if (!win) return;
+  win.document.write(`<!DOCTYPE html><html><head><title>Payment Report</title>
+    <style>body{font-family:sans-serif;padding:24px;font-size:13px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#1e40af;color:#fff;padding:8px 10px;text-align:left;font-size:11px}
+    td{padding:6px 10px;border-bottom:1px solid #e5e7eb}
+    h2{margin-bottom:16px;color:#1e293b}
+    @media print{body{padding:8px}}</style></head>
+  <body><h2>All Payments — ${new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</h2>
+  <table><thead><tr>
+    <th>Candidate</th><th>Passport</th><th>Job / Company</th><th>Insts</th>
+    <th>Sub Total</th><th>Discount</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th>
+  </tr></thead><tbody>${rows}</tbody></table>
+  <script>window.onload=()=>window.print()</script></body></html>`);
+  win.document.close();
+}
 
 export default function AllPayments() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [page, setPage] = useState(1);
-  const [quickPay, setQuickPay] = useState<any | null>(null);
+  const [quickPay, setQuickPay] = useState<any | null>(null); // stores entire group
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
-  const params: Record<string, any> = { page, limit: PAGE_SIZE };
+  // Fetch all at once (server handles search only); grouping/filtering/pagination done client-side
+  const params: Record<string, any> = { page: 1, limit: 500 };
   if (search) params.search = search;
-  if (statusFilter !== 'all') params.status = statusFilter;
-  if (overdueOnly) params.overdue_only = true;
 
   const { data, isLoading, refetch } = useGetAllPaymentsQuery(params);
 
-  const payments: any[] = (data as any)?.data || (data as any)?.payments || [];
-  const total: number = (data as any)?.meta?.total || (data as any)?.total || payments.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rawPayments: any[] = (data as any)?.data || (data as any)?.payments || [];
+  const allGroups = groupByProcess(rawPayments);
+
+  // Client-side group filtering
+  const filteredGroups = allGroups.filter(g => {
+    if (overdueOnly) return g.groupStatus === 'overdue';
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'paid') return g.groupStatus === 'paid';
+    if (statusFilter === 'pending') return g.groupStatus === 'pending' || g.groupStatus === 'partial';
+    if (statusFilter === 'overdue') return g.groupStatus === 'overdue';
+    return true;
+  });
+
+  // Client-side pagination on groups
+  const totalGroups = filteredGroups.length;
+  const totalPages = Math.max(1, Math.ceil(totalGroups / PAGE_SIZE));
+  const groups = filteredGroups.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const toggleExpand = (cjId: number) =>
+    setExpanded(s => { const n = new Set(s); n.has(cjId) ? n.delete(cjId) : n.add(cjId); return n; });
 
   return (
     <div className="space-y-5">
@@ -217,31 +349,47 @@ export default function AllPayments() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">All Payments</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Search by name, passport, phone · click Pay to record</p>
+          <p className="text-sm text-gray-400 mt-0.5">One row per candidate process · click row to see installments</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              const rows = payments.map(p => ({
-                Candidate: p.candidate_name, Passport: p.passport_no || '', Phone: p.whatsapp_no || '',
-                Job: p.job_title, Company: p.company_name,
-                'Installment': p.installment_number, 'Due': p.amount_due, 'Paid': p.amount_paid,
-                'Due Date': formatDate(p.due_date), 'Paid Date': formatDate(p.paid_date),
-                Method: p.payment_method || '', Status: p.status,
-              }));
+              const rows: any[] = [];
+              filteredGroups.forEach(g => {
+                rows.push({
+                  Candidate: g.candidate_name, Passport: g.passport_no || '', Phone: g.whatsapp_no || '',
+                  Job: g.job_title, Company: g.company_name,
+                  Installment: '', 'Sub Total': g.subTotal, Discount: g.totalDiscount,
+                  'Net Total': g.netTotal, Paid: g.totalPaid, Balance: g.balance, Status: g.groupStatus,
+                  'Paid Date': '', Method: '',
+                });
+                g.installments.forEach((p: any) => {
+                  const w = Number(p.fee_waiver_amount || 0);
+                  rows.push({
+                    Candidate: '', Passport: '', Phone: '', Job: '', Company: '',
+                    Installment: `#${p.installment_number}`,
+                    'Sub Total': p.amount_due, Discount: w,
+                    'Net Total': Math.max(0, Number(p.amount_due) - w),
+                    Paid: p.amount_paid, Balance: Math.max(0, Math.max(0, Number(p.amount_due) - w) - Number(p.amount_paid || 0)),
+                    Status: p.status,
+                    'Paid Date': p.paid_date ? formatDate(p.paid_date) : '',
+                    Method: p.payment_method || '',
+                  });
+                });
+              });
               const ws = XLSX.utils.json_to_sheet(rows);
               const wb = XLSX.utils.book_new();
               XLSX.utils.book_append_sheet(wb, ws, 'Payments');
               XLSX.writeFile(wb, `payments-${new Date().toISOString().substring(0, 10)}.xlsx`);
             }}
-            disabled={payments.length === 0}
+            disabled={filteredGroups.length === 0}
             className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl hover:bg-emerald-100 transition-colors disabled:opacity-40"
           >
             <FileSpreadsheet size={14} /> Excel
           </button>
           <button
-            onClick={() => window.print()}
-            disabled={payments.length === 0}
+            onClick={() => printPayments(filteredGroups)}
+            disabled={filteredGroups.length === 0}
             className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-2 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-40"
           >
             <FileText size={14} /> PDF
@@ -265,7 +413,7 @@ export default function AllPayments() {
           <Filter size={15} className="text-gray-400" />
           <Select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
             <option value="all">All Statuses</option>
-            <option value="pending">Pending</option>
+            {/* <option value="pending">Pending</option> */}
             <option value="paid">Paid</option>
             <option value="overdue">Overdue</option>
           </Select>
@@ -286,76 +434,139 @@ export default function AllPayments() {
           <div className="flex items-center justify-center h-48">
             <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
           </div>
-        ) : payments.length > 0 ? (
+        ) : groups.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr>
                   <th className="table-th">Candidate</th>
                   <th className="table-th">Job</th>
-                  <th className="table-th">Inst #</th>
-                  <th className="table-th">Amount Due</th>
+                  <th className="table-th">Installments</th>
+                  <th className="table-th">Sub Total</th>
+                  <th className="table-th">Discount</th>
+                  <th className="table-th">Total</th>
                   <th className="table-th">Paid</th>
-                  <th className="table-th">Due Date</th>
-                  <th className="table-th">Method</th>
+                  <th className="table-th">Balance</th>
                   <th className="table-th">Status</th>
                   <th className="table-th">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p: any, i: number) => (
-                  <tr key={p.id ?? i} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="table-td">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 flex-shrink-0">
-                          {(p.candidate_name ?? '?')[0]?.toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-800 text-sm">{p.candidate_name ?? '—'}</p>
-                          <p className="text-xs text-gray-400">
-                            {[p.passport_no, p.whatsapp_no].filter(Boolean).join(' · ') || '—'}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="table-td text-gray-500 text-xs">
-                      <div>{p.job_title ?? '—'}</div>
-                      <div className="text-gray-300 text-[10px]">{p.company_name ?? ''}</div>
-                    </td>
-                    <td className="table-td text-center">
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
-                        {p.installment_number ?? '—'}
-                      </span>
-                    </td>
-                    <td className="table-td font-semibold text-gray-800">{formatINR(p.amount_due)}</td>
-                    <td className="table-td font-semibold text-emerald-700">{formatINR(p.amount_paid)}</td>
-                    <td className={`table-td font-medium ${isOverdue(p.due_date) && p.status !== 'paid' ? 'text-red-600' : 'text-gray-600'}`}>
-                      {formatDate(p.due_date)}
-                    </td>
-                    <td className="table-td"><MethodBadge method={p.payment_method} /></td>
-                    <td className="table-td"><StatusBadge status={p.status} /></td>
-                    <td className="table-td">
-                      <div className="flex items-center gap-2">
-                        {p.status !== 'paid' && (
-                          <button
-                            onClick={() => setQuickPay(p)}
-                            className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
-                          >
-                            <DollarSign size={11} /> Pay
-                          </button>
-                        )}
-                        {p.candidate_job_id && (
-                          <Link
-                            to={`/process/${p.candidate_job_id}`}
-                            className="text-xs font-semibold text-blue-600 hover:text-blue-800 whitespace-nowrap"
-                          >
-                            View →
-                          </Link>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {groups.map((g: any) => {
+                  const isOpen = expanded.has(g.candidate_job_id);
+                  const unpaidInsts = g.installments.filter((p: any) => p.status !== 'paid');
+                  return (
+                    <>
+                      {/* Group summary row */}
+                      <tr
+                        key={`g-${g.candidate_job_id}`}
+                        onClick={() => toggleExpand(g.candidate_job_id)}
+                        className="hover:bg-blue-50/30 transition-colors cursor-pointer"
+                      >
+                        <td className="table-td">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
+                              {(g.candidate_name ?? '?')[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-800 text-sm">{g.candidate_name ?? '—'}</p>
+                              <p className="text-xs text-gray-400">
+                                {[g.passport_no, g.whatsapp_no].filter(Boolean).join(' · ') || '—'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="table-td text-gray-500 text-xs">
+                          <div>{g.job_title ?? '—'}</div>
+                          <div className="text-gray-300 text-[10px]">{g.company_name ?? ''}</div>
+                        </td>
+                        <td className="table-td">
+                          <div className="flex flex-wrap gap-1">
+                            {g.installments.map((p: any, i: number) => (
+                              <span key={p.id} className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${INST_COLORS[i % INST_COLORS.length]}`}>
+                                #{p.installment_number} {formatINR(p.amount_due)}
+                                {p.status === 'paid' && <CheckCircle2 size={9} />}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="table-td font-semibold text-gray-700">{formatINR(g.subTotal)}</td>
+                        <td className="table-td font-semibold text-red-500">
+                          {g.totalDiscount > 0 ? `−${formatINR(g.totalDiscount)}` : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="table-td font-bold text-gray-900">{formatINR(g.netTotal)}</td>
+                        <td className="table-td font-semibold text-emerald-700">{formatINR(g.totalPaid)}</td>
+                        <td className="table-td font-semibold text-amber-700">
+                          {g.balance > 0 ? formatINR(g.balance) : <span className="text-emerald-600">Nil</span>}
+                        </td>
+                        <td className="table-td"><GroupStatusBadge status={g.groupStatus} /></td>
+                        <td className="table-td">
+                          <div className="flex items-center gap-2">
+                            {unpaidInsts.length > 0 && (
+                              <button
+                                onClick={e => { e.stopPropagation(); setQuickPay(g); }}
+                                className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                <DollarSign size={11} /> Pay
+                              </button>
+                            )}
+                            {g.candidate_job_id && (
+                              <Link
+                                to={`/process/${g.candidate_job_id}`}
+                                onClick={e => e.stopPropagation()}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                              >
+                                View →
+                              </Link>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Expanded installment sub-rows */}
+                      {isOpen && g.installments.map((p: any, i: number) => {
+                        const instWaiver  = Number(p.fee_waiver_amount || 0);
+                        const instNet     = Math.max(0, Number(p.amount_due || 0) - instWaiver);
+                        const instBalance = Math.max(0, instNet - Number(p.amount_paid || 0));
+                        return (
+                          <tr key={`i-${p.id}`} className="bg-gray-50/60 border-t border-gray-100">
+                            <td colSpan={2} className="px-4 py-2 pl-16 text-xs text-gray-400 italic">
+                              Installment #{p.installment_number}
+                            </td>
+                            <td className="px-4 py-2">
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${INST_COLORS[i % INST_COLORS.length]}`}>
+                                #{p.installment_number}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-xs font-semibold text-gray-700">{formatINR(p.amount_due)}</td>
+                            <td className="px-4 py-2 text-xs font-semibold text-red-400">
+                              {instWaiver > 0 ? `−${formatINR(instWaiver)}` : <span className="text-gray-300">—</span>}
+                            </td>
+                            <td className="px-4 py-2 text-xs font-semibold text-gray-700">{formatINR(instNet)}</td>
+                            <td className="px-4 py-2 text-xs font-semibold text-emerald-700">
+                              {formatINR(p.amount_paid)}
+                              {p.paid_date && <div className="text-[10px] text-gray-400 font-normal">{formatDate(p.paid_date)}</div>}
+                            </td>
+                            <td className="px-4 py-2 text-xs font-semibold text-amber-700">
+                              {instBalance > 0 ? formatINR(instBalance) : <span className="text-emerald-600 text-[10px]">Nil</span>}
+                            </td>
+                            <td className="px-4 py-2"><MethodBadge method={p.payment_method} /></td>
+                            <td className="px-4 py-2">
+                              {p.status !== 'paid' && (
+                                <button
+                                  onClick={() => setQuickPay(g)}
+                                  className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2 py-0.5 rounded-lg transition-colors"
+                                >
+                                  <DollarSign size={10} /> Pay
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -368,7 +579,7 @@ export default function AllPayments() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-1">
           <p className="text-sm text-gray-400">
-            Showing {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+            Showing {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, totalGroups)} of {totalGroups} groups
           </p>
           <div className="flex gap-1">
             <button
@@ -403,10 +614,10 @@ export default function AllPayments() {
         </div>
       )}
 
-      {/* Quick-Pay Modal */}
+      {/* Group Pay Modal */}
       {quickPay && (
-        <QuickPayModal
-          payment={quickPay}
+        <GroupPayModal
+          group={quickPay}
           onClose={() => setQuickPay(null)}
           onSuccess={() => { setQuickPay(null); refetch(); }}
         />

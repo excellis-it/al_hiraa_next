@@ -440,7 +440,7 @@ export default function CandidateForm() {
   };
 
   // Generate CV (draft from current form values)
-  const handleGenerateCV = () => {
+  const handleGenerateCV = async () => {
     const vals = watch() as any;
     const fullWA = `${vals.whatsapp_code || contactCode}${vals.whatsapp_no || contactNumber}`;
     const assocObj = associates.find((a: any) => a.id === Number(vals.associate_id));
@@ -480,7 +480,7 @@ export default function CandidateForm() {
       referred_by:      vals.referred_by,
       remarks:          vals.remarks,
     };
-    generateCandidateCV(cvData);
+    await generateCandidateCV(cvData);
     toast.success('CV downloaded');
   };
 

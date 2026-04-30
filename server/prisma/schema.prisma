@@ -272,6 +272,7 @@ model Candidate {
   external_only         Boolean          @default(false)
   remarks               String?
   registered_by         String
+  updated_by            String?
   year_sequence         Int?
   created_at            DateTime         @default(now())
   updated_at            DateTime         @updatedAt

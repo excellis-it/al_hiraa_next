@@ -29,6 +29,16 @@ export class FinanceController {
     });
   }
 
+  @Get('report')
+  @Roles(UserRole.process_manager)
+  getReport(
+    @Query('from_date') from_date?: string,
+    @Query('to_date')   to_date?: string,
+    @Query('search')    search?: string,
+  ) {
+    return this.financeService.getReport({ from_date, to_date, search });
+  }
+
   @Get('payments')
   @Roles(UserRole.process_manager)
   getAllPayments(
@@ -39,6 +49,8 @@ export class FinanceController {
     @Query('candidate_name') candidate_name?: string,
     @Query('search') search?: string,
     @Query('overdue_only') overdue_only?: string,
+    @Query('from_date') from_date?: string,
+    @Query('to_date') to_date?: string,
   ) {
     return this.financeService.getAllPayments({
       page: page ? +page : 1,
@@ -46,6 +58,8 @@ export class FinanceController {
       status,
       search: search || candidate_name,
       overdue_only: overdue_only === 'true',
+      from_date,
+      to_date,
     });
   }
 

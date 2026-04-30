@@ -151,6 +151,7 @@ export const CandidateScalarFieldEnum = {
   external_only: 'external_only',
   remarks: 'remarks',
   registered_by: 'registered_by',
+  updated_by: 'updated_by',
   year_sequence: 'year_sequence',
   created_at: 'created_at',
   updated_at: 'updated_at'

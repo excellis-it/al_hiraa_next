@@ -20,6 +20,19 @@ export class CreatePaymentDto {
   due_date: string;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  fee_waiver_amount?: number;
+
+  @IsOptional()
+  @IsDateString()
+  paid_date?: string;
+
+  @IsOptional()
+  @IsString()
+  payment_method?: string;
+
+  @IsOptional()
   @IsString()
   notes?: string;
 }

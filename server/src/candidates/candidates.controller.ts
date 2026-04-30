@@ -133,8 +133,9 @@ export class CandidatesController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: Partial<CreateCandidateDto>,
+    @CurrentUser('id') userId: string,
   ) {
-    return this.candidatesService.update(id, dto);
+    return this.candidatesService.update(id, dto, userId);
   }
 
   @Post('phones-check')

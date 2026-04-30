@@ -92,6 +92,7 @@ export type CandidateMinAggregateOutputType = {
   external_only: boolean | null
   remarks: string | null
   registered_by: string | null
+  updated_by: string | null
   year_sequence: number | null
   created_at: Date | null
   updated_at: Date | null
@@ -135,6 +136,7 @@ export type CandidateMaxAggregateOutputType = {
   external_only: boolean | null
   remarks: string | null
   registered_by: string | null
+  updated_by: string | null
   year_sequence: number | null
   created_at: Date | null
   updated_at: Date | null
@@ -180,6 +182,7 @@ export type CandidateCountAggregateOutputType = {
   external_only: number
   remarks: number
   registered_by: number
+  updated_by: number
   year_sequence: number
   created_at: number
   updated_at: number
@@ -253,6 +256,7 @@ export type CandidateMinAggregateInputType = {
   external_only?: true
   remarks?: true
   registered_by?: true
+  updated_by?: true
   year_sequence?: true
   created_at?: true
   updated_at?: true
@@ -296,6 +300,7 @@ export type CandidateMaxAggregateInputType = {
   external_only?: true
   remarks?: true
   registered_by?: true
+  updated_by?: true
   year_sequence?: true
   created_at?: true
   updated_at?: true
@@ -341,6 +346,7 @@ export type CandidateCountAggregateInputType = {
   external_only?: true
   remarks?: true
   registered_by?: true
+  updated_by?: true
   year_sequence?: true
   created_at?: true
   updated_at?: true
@@ -473,6 +479,7 @@ export type CandidateGroupByOutputType = {
   external_only: boolean
   remarks: string | null
   registered_by: string
+  updated_by: string | null
   year_sequence: number | null
   created_at: Date
   updated_at: Date
@@ -541,6 +548,7 @@ export type CandidateWhereInput = {
   external_only?: Prisma.BoolFilter<"Candidate"> | boolean
   remarks?: Prisma.StringNullableFilter<"Candidate"> | string | null
   registered_by?: Prisma.StringFilter<"Candidate"> | string
+  updated_by?: Prisma.StringNullableFilter<"Candidate"> | string | null
   year_sequence?: Prisma.IntNullableFilter<"Candidate"> | number | null
   created_at?: Prisma.DateTimeFilter<"Candidate"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Candidate"> | Date | string
@@ -596,6 +604,7 @@ export type CandidateOrderByWithRelationInput = {
   external_only?: Prisma.SortOrder
   remarks?: Prisma.SortOrderInput | Prisma.SortOrder
   registered_by?: Prisma.SortOrder
+  updated_by?: Prisma.SortOrderInput | Prisma.SortOrder
   year_sequence?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -654,6 +663,7 @@ export type CandidateWhereUniqueInput = Prisma.AtLeast<{
   external_only?: Prisma.BoolFilter<"Candidate"> | boolean
   remarks?: Prisma.StringNullableFilter<"Candidate"> | string | null
   registered_by?: Prisma.StringFilter<"Candidate"> | string
+  updated_by?: Prisma.StringNullableFilter<"Candidate"> | string | null
   year_sequence?: Prisma.IntNullableFilter<"Candidate"> | number | null
   created_at?: Prisma.DateTimeFilter<"Candidate"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Candidate"> | Date | string
@@ -709,6 +719,7 @@ export type CandidateOrderByWithAggregationInput = {
   external_only?: Prisma.SortOrder
   remarks?: Prisma.SortOrderInput | Prisma.SortOrder
   registered_by?: Prisma.SortOrder
+  updated_by?: Prisma.SortOrderInput | Prisma.SortOrder
   year_sequence?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -762,6 +773,7 @@ export type CandidateScalarWhereWithAggregatesInput = {
   external_only?: Prisma.BoolWithAggregatesFilter<"Candidate"> | boolean
   remarks?: Prisma.StringNullableWithAggregatesFilter<"Candidate"> | string | null
   registered_by?: Prisma.StringWithAggregatesFilter<"Candidate"> | string
+  updated_by?: Prisma.StringNullableWithAggregatesFilter<"Candidate"> | string | null
   year_sequence?: Prisma.IntNullableWithAggregatesFilter<"Candidate"> | number | null
   created_at?: Prisma.DateTimeWithAggregatesFilter<"Candidate"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"Candidate"> | Date | string
@@ -798,6 +810,7 @@ export type CandidateCreateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -853,6 +866,7 @@ export type CandidateUncheckedCreateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -891,6 +905,7 @@ export type CandidateUpdateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -946,6 +961,7 @@ export type CandidateUncheckedUpdateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -993,6 +1009,7 @@ export type CandidateCreateManyInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -1029,6 +1046,7 @@ export type CandidateUpdateManyMutationInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1074,6 +1092,7 @@ export type CandidateUncheckedUpdateManyInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1127,6 +1146,7 @@ export type CandidateCountOrderByAggregateInput = {
   external_only?: Prisma.SortOrder
   remarks?: Prisma.SortOrder
   registered_by?: Prisma.SortOrder
+  updated_by?: Prisma.SortOrder
   year_sequence?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -1184,6 +1204,7 @@ export type CandidateMaxOrderByAggregateInput = {
   external_only?: Prisma.SortOrder
   remarks?: Prisma.SortOrder
   registered_by?: Prisma.SortOrder
+  updated_by?: Prisma.SortOrder
   year_sequence?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -1227,6 +1248,7 @@ export type CandidateMinOrderByAggregateInput = {
   external_only?: Prisma.SortOrder
   remarks?: Prisma.SortOrder
   registered_by?: Prisma.SortOrder
+  updated_by?: Prisma.SortOrder
   year_sequence?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
@@ -1722,6 +1744,7 @@ export type CandidateCreateWithoutCandidate_jobsInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -1776,6 +1799,7 @@ export type CandidateUncheckedCreateWithoutCandidate_jobsInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -1829,6 +1853,7 @@ export type CandidateUpdateWithoutCandidate_jobsInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1883,6 +1908,7 @@ export type CandidateUncheckedUpdateWithoutCandidate_jobsInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1920,6 +1946,7 @@ export type CandidateCreateWithoutAssociateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -1973,6 +2000,7 @@ export type CandidateUncheckedCreateWithoutAssociateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2049,6 +2077,7 @@ export type CandidateScalarWhereInput = {
   external_only?: Prisma.BoolFilter<"Candidate"> | boolean
   remarks?: Prisma.StringNullableFilter<"Candidate"> | string | null
   registered_by?: Prisma.StringFilter<"Candidate"> | string
+  updated_by?: Prisma.StringNullableFilter<"Candidate"> | string | null
   year_sequence?: Prisma.IntNullableFilter<"Candidate"> | number | null
   created_at?: Prisma.DateTimeFilter<"Candidate"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Candidate"> | Date | string
@@ -2085,6 +2114,7 @@ export type CandidateCreateWithoutReferrerInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2138,6 +2168,7 @@ export type CandidateUncheckedCreateWithoutReferrerInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2202,6 +2233,7 @@ export type CandidateCreateWithoutPosition_1Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2255,6 +2287,7 @@ export type CandidateUncheckedCreateWithoutPosition_1Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2303,6 +2336,7 @@ export type CandidateCreateWithoutPosition_2Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2356,6 +2390,7 @@ export type CandidateUncheckedCreateWithoutPosition_2Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2404,6 +2439,7 @@ export type CandidateCreateWithoutPosition_3Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2457,6 +2493,7 @@ export type CandidateUncheckedCreateWithoutPosition_3Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2553,6 +2590,7 @@ export type CandidateCreateWithoutStateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2606,6 +2644,7 @@ export type CandidateUncheckedCreateWithoutStateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2670,6 +2709,7 @@ export type CandidateCreateWithoutCityInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2723,6 +2763,7 @@ export type CandidateUncheckedCreateWithoutCityInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2787,6 +2828,7 @@ export type CandidateCreateWithoutSourceInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2840,6 +2882,7 @@ export type CandidateUncheckedCreateWithoutSourceInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2904,6 +2947,7 @@ export type CandidateCreateWithoutDeploymentsInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -2958,6 +3002,7 @@ export type CandidateUncheckedCreateWithoutDeploymentsInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -3011,6 +3056,7 @@ export type CandidateUpdateWithoutDeploymentsInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3065,6 +3111,7 @@ export type CandidateUncheckedUpdateWithoutDeploymentsInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3110,6 +3157,7 @@ export type CandidateCreateManyAssociateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -3146,6 +3194,7 @@ export type CandidateUpdateWithoutAssociateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3199,6 +3248,7 @@ export type CandidateUncheckedUpdateWithoutAssociateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3245,6 +3295,7 @@ export type CandidateUncheckedUpdateManyWithoutAssociateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3289,6 +3340,7 @@ export type CandidateCreateManyReferrerInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -3325,6 +3377,7 @@ export type CandidateUpdateWithoutReferrerInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3378,6 +3431,7 @@ export type CandidateUncheckedUpdateWithoutReferrerInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3424,6 +3478,7 @@ export type CandidateUncheckedUpdateManyWithoutReferrerInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3468,6 +3523,7 @@ export type CandidateCreateManyPosition_1Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -3512,6 +3568,7 @@ export type CandidateCreateManyPosition_2Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -3556,6 +3613,7 @@ export type CandidateCreateManyPosition_3Input = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -3592,6 +3650,7 @@ export type CandidateUpdateWithoutPosition_1Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3645,6 +3704,7 @@ export type CandidateUncheckedUpdateWithoutPosition_1Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3691,6 +3751,7 @@ export type CandidateUncheckedUpdateManyWithoutPosition_1Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3727,6 +3788,7 @@ export type CandidateUpdateWithoutPosition_2Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3780,6 +3842,7 @@ export type CandidateUncheckedUpdateWithoutPosition_2Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3826,6 +3889,7 @@ export type CandidateUncheckedUpdateManyWithoutPosition_2Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3862,6 +3926,7 @@ export type CandidateUpdateWithoutPosition_3Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3915,6 +3980,7 @@ export type CandidateUncheckedUpdateWithoutPosition_3Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3961,6 +4027,7 @@ export type CandidateUncheckedUpdateManyWithoutPosition_3Input = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4005,6 +4072,7 @@ export type CandidateCreateManyStateInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -4041,6 +4109,7 @@ export type CandidateUpdateWithoutStateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4094,6 +4163,7 @@ export type CandidateUncheckedUpdateWithoutStateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4140,6 +4210,7 @@ export type CandidateUncheckedUpdateManyWithoutStateInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4184,6 +4255,7 @@ export type CandidateCreateManyCityInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -4220,6 +4292,7 @@ export type CandidateUpdateWithoutCityInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4273,6 +4346,7 @@ export type CandidateUncheckedUpdateWithoutCityInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4319,6 +4393,7 @@ export type CandidateUncheckedUpdateManyWithoutCityInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4363,6 +4438,7 @@ export type CandidateCreateManySourceInput = {
   external_only?: boolean
   remarks?: string | null
   registered_by: string
+  updated_by?: string | null
   year_sequence?: number | null
   created_at?: Date | string
   updated_at?: Date | string
@@ -4399,6 +4475,7 @@ export type CandidateUpdateWithoutSourceInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4452,6 +4529,7 @@ export type CandidateUncheckedUpdateWithoutSourceInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4498,6 +4576,7 @@ export type CandidateUncheckedUpdateManyWithoutSourceInput = {
   external_only?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   registered_by?: Prisma.StringFieldUpdateOperationsInput | string
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   year_sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4583,6 +4662,7 @@ export type CandidateSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   external_only?: boolean
   remarks?: boolean
   registered_by?: boolean
+  updated_by?: boolean
   year_sequence?: boolean
   created_at?: boolean
   updated_at?: boolean
@@ -4639,6 +4719,7 @@ export type CandidateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   external_only?: boolean
   remarks?: boolean
   registered_by?: boolean
+  updated_by?: boolean
   year_sequence?: boolean
   created_at?: boolean
   updated_at?: boolean
@@ -4692,6 +4773,7 @@ export type CandidateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   external_only?: boolean
   remarks?: boolean
   registered_by?: boolean
+  updated_by?: boolean
   year_sequence?: boolean
   created_at?: boolean
   updated_at?: boolean
@@ -4745,12 +4827,13 @@ export type CandidateSelectScalar = {
   external_only?: boolean
   remarks?: boolean
   registered_by?: boolean
+  updated_by?: boolean
   year_sequence?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type CandidateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "full_name" | "dob" | "whatsapp_no" | "alternate_contact" | "email" | "gender" | "passport_no" | "ecr_type" | "state_id" | "city_id" | "religion" | "education" | "education_other" | "position_1_id" | "position_2_id" | "position_3_id" | "indian_experience" | "abroad_experience" | "indian_driving_license" | "gulf_driving_license" | "english_speaking" | "arabic_speaking" | "gulf_return" | "gulf_return_details" | "registration_mode" | "source_id" | "referred_by" | "associate_id" | "referrer_id" | "cv_url" | "photo_url" | "status" | "completion_status" | "is_no_show" | "no_show_count" | "external_only" | "remarks" | "registered_by" | "year_sequence" | "created_at" | "updated_at", ExtArgs["result"]["candidate"]>
+export type CandidateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "full_name" | "dob" | "whatsapp_no" | "alternate_contact" | "email" | "gender" | "passport_no" | "ecr_type" | "state_id" | "city_id" | "religion" | "education" | "education_other" | "position_1_id" | "position_2_id" | "position_3_id" | "indian_experience" | "abroad_experience" | "indian_driving_license" | "gulf_driving_license" | "english_speaking" | "arabic_speaking" | "gulf_return" | "gulf_return_details" | "registration_mode" | "source_id" | "referred_by" | "associate_id" | "referrer_id" | "cv_url" | "photo_url" | "status" | "completion_status" | "is_no_show" | "no_show_count" | "external_only" | "remarks" | "registered_by" | "updated_by" | "year_sequence" | "created_at" | "updated_at", ExtArgs["result"]["candidate"]>
 export type CandidateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   state?: boolean | Prisma.Candidate$stateArgs<ExtArgs>
   city?: boolean | Prisma.Candidate$cityArgs<ExtArgs>
@@ -4839,6 +4922,7 @@ export type $CandidatePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     external_only: boolean
     remarks: string | null
     registered_by: string
+    updated_by: string | null
     year_sequence: number | null
     created_at: Date
     updated_at: Date
@@ -5314,6 +5398,7 @@ export interface CandidateFieldRefs {
   readonly external_only: Prisma.FieldRef<"Candidate", 'Boolean'>
   readonly remarks: Prisma.FieldRef<"Candidate", 'String'>
   readonly registered_by: Prisma.FieldRef<"Candidate", 'String'>
+  readonly updated_by: Prisma.FieldRef<"Candidate", 'String'>
   readonly year_sequence: Prisma.FieldRef<"Candidate", 'Int'>
   readonly created_at: Prisma.FieldRef<"Candidate", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"Candidate", 'DateTime'>

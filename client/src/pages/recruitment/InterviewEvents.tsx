@@ -95,11 +95,33 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const { data: tradesData } = useGetTradesQuery(true);
   const { data: venuesData } = useGetVenuesQuery(undefined);
   const { data: usersData } = useGetUsersQuery(undefined);
+  const { data: companyJobsData } = useGetJobsQuery(
+    { company_id: company_id ? +company_id : undefined, limit: 200 } as any,
+    { skip: !company_id }
+  );
   const companies: any[] = companiesData?.data || [];
-  const trades: any[] = (tradesData as any[]) || [];
+  const allTrades: any[] = (tradesData as any[]) || [];
   const venues: any[] = (venuesData as any[]) || [];
   const users: any[] = (usersData as any)?.data ?? (Array.isArray(usersData) ? usersData : []);
   const currency = COUNTRY_CURRENCY[country] || '';
+
+  // Filter trades: if a company is selected, show trades used by that company first (then remaining)
+  const trades: any[] = (() => {
+    if (!company_id || !companyJobsData) return allTrades;
+    const companyJobs: any[] = companyJobsData?.data || [];
+    const usedTradeIds = new Set<number>();
+    for (const job of companyJobs) {
+      if (job.positions) {
+        for (const pos of job.positions) {
+          if (pos.trade?.id) usedTradeIds.add(pos.trade.id);
+        }
+      }
+    }
+    if (usedTradeIds.size === 0) return allTrades;
+    const companyTrades = allTrades.filter(t => usedTradeIds.has(t.id));
+    const otherTrades = allTrades.filter(t => !usedTradeIds.has(t.id));
+    return [...companyTrades, ...otherTrades];
+  })();
 
   const handleCompanyChange = (cid: string) => {
     setCompanyId(cid);
@@ -250,7 +272,16 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                   <div className="grid grid-cols-3 gap-3">
                     <Select label="Trade *" value={pos.trade_id} onChange={e => updatePosition(pos.id, 'trade_id', e.target.value)} className="col-span-2">
                       <option value="">Select trade</option>
-                      {trades.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      {company_id && companyJobsData ? (() => {
+                        const companyJobs: any[] = (companyJobsData as any)?.data || [];
+                        const usedIds = new Set(companyJobs.flatMap((j: any) => (j.positions || []).map((p: any) => p.trade?.id).filter(Boolean)));
+                        const cTrades = allTrades.filter(t => usedIds.has(t.id));
+                        const oTrades = allTrades.filter(t => !usedIds.has(t.id));
+                        return <>
+                          {cTrades.length > 0 && <optgroup label="— Previously used for this company —">{cTrades.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>}
+                          {oTrades.length > 0 && <optgroup label="— All other trades —">{oTrades.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>}
+                        </>;
+                      })() : trades.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </Select>
                     <div>
                       <label className={lbl}>Quantity *</label>

@@ -239,10 +239,13 @@ export class CandidatesService {
 
     const candidateIds = candidates.map((c) => c.id);
 
-    // Batch: resolve registered_by user names
-    const registeredByIds = [...new Set(candidates.map((c) => c.registered_by).filter(Boolean))];
+    // Batch: resolve registered_by and updated_by user names
+    const allUserIds = [...new Set([
+      ...candidates.map((c) => c.registered_by),
+      ...candidates.map((c) => (c as any).updated_by),
+    ].filter(Boolean))];
     const registeredByUsers = await this.prisma.user.findMany({
-      where: { id: { in: registeredByIds } },
+      where: { id: { in: allUserIds } },
       select: { id: true, full_name: true },
     });
     const userMap = new Map(registeredByUsers.map((u) => [u.id, u.full_name]));
@@ -253,14 +256,19 @@ export class CandidatesService {
       select: {
         outcome: true,
         call_timestamp: true,
+        caller: { select: { full_name: true } },
         candidate_job: { select: { candidate_id: true } },
       },
       orderBy: { call_timestamp: 'desc' },
     });
     const lastCallMap = new Map<number, string>();
+    const lastCallByMap = new Map<number, string>();
     for (const log of latestCallLogs) {
       const candId = log.candidate_job.candidate_id;
-      if (!lastCallMap.has(candId)) lastCallMap.set(candId, log.outcome);
+      if (!lastCallMap.has(candId)) {
+        lastCallMap.set(candId, log.outcome);
+        lastCallByMap.set(candId, log.caller?.full_name ?? '');
+      }
     }
 
     // Batch: latest interview result per candidate
@@ -287,7 +295,9 @@ export class CandidatesService {
         ...c,
         candidate_code: this.formatCandidateCode(c.id, c.created_at, c.year_sequence),
         registered_by_name: userMap.get(c.registered_by) || c.registered_by,
+        updated_by_name: (c as any).updated_by ? (userMap.get((c as any).updated_by) || (c as any).updated_by) : null,
         last_call_status: lastCallMap.get(c.id) || null,
+        last_call_by: lastCallByMap.get(c.id) || null,
         interview_status: lastInterviewMap.get(c.id) || null,
       })),
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
@@ -334,7 +344,7 @@ export class CandidatesService {
     };
   }
 
-  async update(id: number, data: Partial<CreateCandidateDto>) {
+  async update(id: number, data: Partial<CreateCandidateDto>, userId?: string) {
     await this.findOne(id);
 
     // If updating passport or phone, check duplicates
@@ -358,6 +368,7 @@ export class CandidatesService {
 
     const updateData: any = { ...data, completion_status };
     if (data.dob) updateData.dob = new Date(data.dob);
+    if (userId) updateData.updated_by = userId;
 
     const candidate = await this.prisma.candidate.update({
       where: { id },

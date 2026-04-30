@@ -26,7 +26,8 @@ const COLUMNS = [
   { key: 'status',               label: 'Status',          width: 100, sticky: false },
   { key: 'last_call_status',     label: 'Last Call',       width: 90,  sticky: false },
   { key: 'created_at',           label: 'Date Registered', width: 130, sticky: false },
-  { key: 'updated_at',           label: 'Last Updated',    width: 120, sticky: false },
+  { key: 'updated_by_name',      label: 'Last Updated By', width: 140, sticky: false },
+  { key: 'last_call_by',         label: 'Last Call By',    width: 130, sticky: false },
   { key: 'registered_by_name',   label: 'Entered By',      width: 120, sticky: false },
   { key: 'full_name',            label: 'Full Name',       width: 180, sticky: false },
   { key: 'gender',               label: 'Gender',          width: 80,  sticky: false },
@@ -52,8 +53,13 @@ const COLUMNS = [
   { key: 'english_speaking',     label: 'English',         width: 100, sticky: false },
   { key: 'arabic_speaking',      label: 'Arabic',          width: 75,  sticky: false },
   { key: 'gulf_return',          label: 'Gulf Return',     width: 90,  sticky: false },
+  { key: 'gulf_return_details',  label: 'Gulf Details',    width: 160, sticky: false },
   { key: 'indian_experience',    label: 'Indian Exp.',     width: 150, sticky: false },
   { key: 'abroad_experience',    label: 'Abroad Exp.',     width: 150, sticky: false },
+  { key: 'whatsapp_no',          label: 'WhatsApp No',     width: 130, sticky: false },
+  { key: 'alternate_contact',    label: 'Alt. Contact',    width: 130, sticky: false },
+  { key: 'completion_status',    label: 'Completion',      width: 100, sticky: false },
+  { key: 'interview_status',     label: 'Interview Status',width: 130, sticky: false },
   { key: 'remarks',              label: 'Remarks',         width: 200, sticky: false },
 ];
 
@@ -142,7 +148,12 @@ function CellValue({ col, row, onCallLogClick }: { col: string; row: any; onCall
       );
     case 'interview_status': return <InterviewBadge value={row.interview_status} />;
     case 'created_at': return <span className="text-[11px] text-gray-400 whitespace-nowrap tabular-nums">{fmtDate(row.created_at)}</span>;
-    case 'updated_at': return <span className="text-[11px] text-gray-400 whitespace-nowrap tabular-nums">{fmtDate(row.updated_at)}</span>;
+    case 'updated_by_name': return (
+      <div className="flex flex-col leading-tight">
+        <span className="text-[11px] font-medium text-gray-700 whitespace-nowrap truncate max-w-[130px]">{row.updated_by_name || '—'}</span>
+        {row.updated_at && <span className="text-[10px] text-gray-400 tabular-nums">{fmtDate(row.updated_at)}</span>}
+      </div>
+    );
     case 'dob': return <span className="text-[11px] text-gray-500 whitespace-nowrap tabular-nums">{fmtDate(row.dob)}</span>;
     case 'age': {
       const age = calcAge(row.dob);
@@ -232,6 +243,12 @@ function CellValue({ col, row, onCallLogClick }: { col: string; row: any; onCall
     case 'remarks':
       return row.remarks
         ? <span className="text-[11px] text-gray-500 line-clamp-1">{row.remarks}</span>
+        : <span className="text-gray-300 text-xs">—</span>;
+    case 'last_call_by':
+      return <span className="text-[11px] text-gray-600">{row.last_call_by || <span className="text-gray-300">—</span>}</span>;
+    case 'gulf_return_details':
+      return row.gulf_return_details
+        ? <span className="text-[11px] text-gray-500 line-clamp-1">{row.gulf_return_details}</span>
         : <span className="text-gray-300 text-xs">—</span>;
     case 'registered_by_name':
       return <span className="text-[11px] text-gray-600">{row.registered_by_name || <span className="text-gray-300">—</span>}</span>;
@@ -1124,7 +1141,8 @@ export default function CandidateList() {
       else if (col.key === 'source') val = row.source?.name;
       else if (col.key === 'associate') val = row.associate?.full_name;
       else if (col.key === 'age') val = calcAge(row.dob);
-      else if (['created_at', 'updated_at', 'dob'].includes(col.key)) val = val ? new Date(val).toLocaleDateString('en-IN') : '';
+      else if (['created_at', 'dob'].includes(col.key)) val = val ? new Date(val).toLocaleDateString('en-IN') : '';
+      else if (col.key === 'updated_by_name') val = row.updated_by_name || '';
       if (val === null || val === undefined) val = '';
       return `"${String(val).replace(/"/g, '""')}"`;
     }).join(',');

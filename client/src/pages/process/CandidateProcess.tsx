@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle2, Clock, AlertCircle, PauseCircle, Circle, Chevr
 import Select from '../../components/ui/Select';
 import type { RootState } from '../../store/store';
 import { useGetProcessStepsQuery, useUpdateProcessStepMutation } from '../../store/api/processTrackingApi';
-import { useGetPaymentsQuery, useGetPaymentSummaryQuery, useCreatePaymentMutation, useRecordPaymentMutation } from '../../store/api/paymentsApi';
+import { useGetPaymentsQuery, useCreatePaymentMutation, useRecordPaymentMutation } from '../../store/api/paymentsApi';
 
 const STEP_LABELS: Record<number, string> = {
   1: 'Document Collection',
@@ -133,7 +133,6 @@ export default function CandidateProcess() {
 
   const { data: stepsData, isLoading: stepsLoading } = useGetProcessStepsQuery(candidateJobIdNum);
   const { data: paymentsData, isLoading: paymentsLoading } = useGetPaymentsQuery(candidateJobIdNum);
-  const { data: summaryData } = useGetPaymentSummaryQuery(candidateJobIdNum);
   const [updateProcessStep, { isLoading: updatingStep }] = useUpdateProcessStepMutation();
   const [createPayment, { isLoading: creatingPayment }] = useCreatePaymentMutation();
   const [recordPayment, { isLoading: recordingPayment }] = useRecordPaymentMutation();
@@ -162,7 +161,8 @@ export default function CandidateProcess() {
   const isManagerOrAbove = user && ['manager', 'admin'].includes(user.role);
 
   const steps: any[] = Array.isArray(stepsData) ? stepsData : (stepsData as any)?.steps ?? [];
-  const payments: any[] = Array.isArray(paymentsData) ? paymentsData : (paymentsData as any)?.payments ?? [];
+  const payments: any[] = (paymentsData as any)?.payments ?? (Array.isArray(paymentsData) ? paymentsData : []);
+  const summary: any = (paymentsData as any)?.summary ?? null;
 
   function getStepForm(stepId: number, step: any): StepUpdateForm {
     return stepForms[stepId] ?? {
@@ -234,7 +234,6 @@ export default function CandidateProcess() {
     }
   }
 
-  const summary = summaryData as any;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -454,23 +453,33 @@ export default function CandidateProcess() {
             <div className="card p-5 mb-4">
               <h2 className="text-base font-bold text-gray-800 mb-4">Payment Summary</h2>
               {summary ? (
-                <div className="space-y-3">
+                <div className="space-y-0">
                   <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                    <span className="text-xs text-gray-500 font-medium">Total Fee</span>
-                    <span className="text-sm font-bold text-gray-800">
-                      {formatCurrency(summary.total_fee)}
-                    </span>
+                    <span className="text-xs text-gray-500 font-medium">Sub Total</span>
+                    <span className="text-sm font-semibold text-gray-700">{formatCurrency(summary.sub_total)}</span>
+                  </div>
+                  {Number(summary.total_discount ?? summary.discount) > 0 && (
+                    <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                      <span className="text-xs text-gray-500 font-medium">Total Discount</span>
+                      <span className="text-sm font-semibold text-red-500">
+                        −{formatCurrency(summary.total_discount ?? summary.discount)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-gray-50 px-2 rounded-lg">
+                    <span className="text-xs text-gray-800 font-bold">Total Payable</span>
+                    <span className="text-sm font-bold text-gray-900">{formatCurrency(summary.net_total)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-gray-50">
                     <span className="text-xs text-gray-500 font-medium">Total Paid</span>
-                    <span className="text-sm font-bold text-green-600">
-                      {formatCurrency(summary.total_paid)}
-                    </span>
+                    <span className="text-sm font-bold text-emerald-600">{formatCurrency(summary.total_paid)}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-xs text-gray-500 font-medium">Balance Due</span>
-                    <span className="text-sm font-bold text-red-600">
-                      {formatCurrency(summary.balance_due)}
+                  <div className={`flex justify-between items-center py-2 px-2 rounded-lg ${summary.balance_due > 0 ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+                    <span className={`text-xs font-bold ${summary.balance_due > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                      Balance Due
+                    </span>
+                    <span className={`text-sm font-bold ${summary.balance_due > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                      {summary.balance_due > 0 ? formatCurrency(summary.balance_due) : 'Nil — Fully Paid'}
                     </span>
                   </div>
                 </div>
@@ -479,68 +488,48 @@ export default function CandidateProcess() {
               )}
             </div>
 
-            {/* Installments */}
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold text-gray-800">Installments</h2>
-                {isManagerOrAbove && (
-                  <button
-                    onClick={() => setShowAddInstallment(true)}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
-                  >
-                    <Plus size={13} /> Add
-                  </button>
-                )}
+            {/* Installment History */}
+            {payments.length > 0 && (
+              <div className="card p-5">
+                <h2 className="text-sm font-bold text-gray-800 mb-3">Payment History</h2>
+                <div className="space-y-2">
+                  {payments.map((pmt: any, idx: number) => {
+                    const waiver  = Number(pmt.fee_waiver_amount ?? 0);
+                    const due     = Number(pmt.amount_due ?? 0);
+                    const net     = Math.max(0, due - waiver);
+                    const paid    = Number(pmt.amount_paid ?? 0);
+                    const isPaid  = pmt.status === 'paid';
+                    return (
+                      <div
+                        key={pmt.id}
+                        className={`rounded-xl p-3 border ${isPaid ? 'bg-emerald-50/60 border-emerald-100' : 'bg-gray-50 border-gray-100'}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-gray-700">Installment #{idx + 1}</span>
+                          {paymentStatusBadge(pmt.status)}
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500">
+                          <span>Amount: <span className="font-semibold text-gray-700">{formatCurrency(due)}</span></span>
+                          {waiver > 0 && (
+                            <span>Discount: <span className="font-semibold text-red-500">−{formatCurrency(waiver)}</span></span>
+                          )}
+                          <span>Net: <span className="font-semibold text-gray-800">{formatCurrency(net)}</span></span>
+                          <span className={isPaid ? 'text-emerald-600' : 'text-amber-600'}>
+                            Paid: <span className="font-semibold">{formatCurrency(paid)}</span>
+                          </span>
+                          {pmt.paid_date && (
+                            <span>Date: <span className="font-semibold text-gray-700">{formatDate(pmt.paid_date)}</span></span>
+                          )}
+                          {pmt.payment_method && (
+                            <span>Method: <span className="font-semibold text-gray-700 capitalize">{pmt.payment_method.replace('_', ' ')}</span></span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-
-              {paymentsLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-                </div>
-              ) : payments.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-4">No installments yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {payments.map((pmt: any, idx: number) => (
-                    <div
-                      key={pmt.id}
-                      className="bg-gray-50 rounded-xl p-3 border border-gray-100"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-gray-600">
-                          Installment #{idx + 1}
-                        </span>
-                        {paymentStatusBadge(pmt.status)}
-                      </div>
-                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-500 mb-2">
-                        <span>Due: {formatCurrency(pmt.amount_due)}</span>
-                        <span>Paid: {formatCurrency(pmt.amount_paid)}</span>
-                        <span>Due Date: {formatDate(pmt.due_date)}</span>
-                        {pmt.payment_date && (
-                          <span>Paid On: {formatDate(pmt.payment_date)}</span>
-                        )}
-                      </div>
-                      {pmt.status !== 'paid' && (
-                        <button
-                          onClick={() => {
-                            setRecordingPaymentId(pmt.id);
-                            setRecordPaymentForm({
-                              amount_paid: String(pmt.amount_due - (pmt.amount_paid ?? 0)),
-                              payment_date: new Date().toISOString().split('T')[0],
-                              payment_method: 'cash',
-                              reference: '',
-                            });
-                          }}
-                          className="w-full text-xs btn-primary justify-center mt-1 py-1.5"
-                        >
-                          Record Payment
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       )}

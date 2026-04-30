@@ -1,11 +1,10 @@
 import { useState, useMemo, useRef } from 'react';
-import { Link } from 'react-router';
 import {
-  Search, Upload, Download, X, ChevronDown, ChevronRight,
+  Search, Upload, Download, X, ChevronDown,
   CheckCircle2, Clock, Zap, FileSpreadsheet,
   UserPlus, DollarSign, Plane, FileText, Stethoscope,
   Globe, BadgeCheck, Info, Plus, Users, CalendarDays,
-  ArrowRight, CheckSquare, Square, Loader2, Eye,
+  ArrowRight, Loader2, Eye, Lock,
 } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import {
@@ -17,6 +16,7 @@ import {
 } from '../../store/api/processDetailsApi';
 import { useGetInterviewEventsQuery, useGetInterviewEventQuery } from '../../store/api/interviewEventsApi';
 import { useGetPipelineQuery } from '../../store/api/pipelineApi';
+import { useCreatePaymentMutation, useRecordPaymentMutation } from '../../store/api/paymentsApi';
 import * as XLSX from 'xlsx';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -132,39 +132,6 @@ function docsCount(record: any): { submitted: number; total: number } {
   return { submitted, total: DOCS_CHECKLIST.length };
 }
 
-// ── Chip ──────────────────────────────────────────────────────────────────────
-
-type ChipType = 'normal' | 'warn' | 'auto' | 'bad' | 'filled';
-function Chip({ label, type = 'normal', value }: { label: string; type?: ChipType; value?: string | null }) {
-  const styles: Record<ChipType, string> = {
-    normal: 'bg-white border-gray-200 text-gray-600',
-    filled: 'bg-white border-emerald-300 text-emerald-700',
-    warn:   'bg-amber-50 border-amber-300 text-amber-700',
-    auto:   'bg-emerald-50 border-emerald-300 text-emerald-700',
-    bad:    'bg-red-50 border-red-300 text-red-600',
-  };
-  return (
-    <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border font-medium ${styles[type]}`}>
-      {type === 'auto' && <Zap size={9} />}
-      {type === 'bad' && <X size={9} />}
-      {label}{value ? `: ${value}` : ''}
-    </span>
-  );
-}
-
-// ── StageDots ──────────────────────────────────────────────────────────────────
-
-function StageDots({ record }: { record: any }) {
-  const cur = PIPELINE_STAGES.findIndex(s => s.key === computeStage(record));
-  return (
-    <div className="flex items-center gap-0.5">
-      {PIPELINE_STAGES.map((s, i) => (
-        <div key={s.key} title={s.label}
-          className={`w-2 h-2 rounded-full ${i < cur ? 'bg-emerald-400' : i === cur ? 'bg-amber-500' : 'bg-gray-200'}`} />
-      ))}
-    </div>
-  );
-}
 
 // ── View Details Drawer ────────────────────────────────────────────────────────
 
@@ -478,17 +445,36 @@ const EDIT_SEC_COLORS: Record<string, { border: string; icon: string; label: str
   gray:    { border: 'border-l-gray-400',    icon: 'text-gray-400',    label: 'text-gray-600'    },
 };
 
-function EditSec({ title, icon: Icon, color = 'blue', children }: {
+function EditSec({ title, icon: Icon, color = 'blue', children, locked, lockReason }: {
   title: string; icon: React.ElementType; color?: string; children: React.ReactNode;
+  locked?: boolean; lockReason?: string;
 }) {
   const c = EDIT_SEC_COLORS[color] || EDIT_SEC_COLORS.blue;
   return (
-    <div className={`bg-white rounded-2xl border border-gray-100 border-l-4 ${c.border} shadow-sm overflow-hidden`}>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-50">
-        <Icon size={14} className={c.icon} />
-        <span className={`text-xs font-bold uppercase tracking-wider ${c.label}`}>{title}</span>
+    <div className={`bg-white rounded-2xl border border-gray-100 border-l-4 ${locked ? 'border-l-gray-300' : c.border} shadow-sm overflow-hidden`}>
+      <div className={`flex items-center gap-2 px-4 py-3 border-b border-gray-50 ${locked ? 'bg-gray-50' : ''}`}>
+        {locked ? <Lock size={13} className="text-gray-400" /> : <Icon size={14} className={c.icon} />}
+        <span className={`text-xs font-bold uppercase tracking-wider ${locked ? 'text-gray-400' : c.label}`}>{title}</span>
+        {locked && (
+          <span className="ml-auto text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <Lock size={9} />
+            {lockReason || 'Medical must be Fit to unlock'}
+          </span>
+        )}
       </div>
-      <div className="px-4 py-3">{children}</div>
+      <div className={`px-4 py-3 relative ${locked ? 'pointer-events-none select-none' : ''}`}>
+        {locked && (
+          <div className="absolute inset-0 bg-gray-50/80 backdrop-blur-[1px] rounded-b-2xl z-10 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                <Lock size={18} className="text-gray-400" />
+              </div>
+              <p className="text-xs font-semibold text-gray-500">{lockReason || 'Requires Medical Status: Fit'}</p>
+            </div>
+          </div>
+        )}
+        {children}
+      </div>
     </div>
   );
 }
@@ -516,8 +502,12 @@ function MoneyInp({ label, value, onChange }: { label: string; value: string; on
 
 // ── Edit Drawer ────────────────────────────────────────────────────────────────
 
+type PayRow = { id: number | null; amount: string; discount: string; date: string; method: string };
+
 function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => void }) {
   const [updateDetails, { isLoading }] = useUpdateProcessDetailsMutation();
+  const [createPayment] = useCreatePaymentMutation();
+  const [recordPayment] = useRecordPaymentMutation();
   const cj   = record.candidate_job;
   const cand = cj?.candidate;
   const job  = cj?.job;
@@ -571,6 +561,20 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
   );
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [payRows, setPayRows] = useState<PayRow[]>(() => {
+    const existing: any[] = cj?.payments || [];
+    return [1, 2, 3].map(n => {
+      const p = existing.find((x: any) => x.installment_number === n);
+      const amt = Number(p?.amount_due || 0) || Number(p?.amount_paid || 0);
+      return {
+        id:       p?.id ?? null,
+        amount:   amt > 0 ? String(amt) : '',
+        discount: p?.fee_waiver_amount ? String(Number(p.fee_waiver_amount)) : '',
+        date:     p?.paid_date?.substring(0, 10) || '',
+        method:   p?.payment_method || '',
+      };
+    });
+  });
 
   const set = (k: string, v: string) => setForm(f => {
     const next: any = { ...f, [k]: v };
@@ -605,12 +609,48 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
 
   const handleSave = async () => {
     setSaveError(null);
-    const payload: any = { ...form, documents_checklist: docs };
+    const computedSubTotal = payRows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+    const payload: any = { ...form, documents_checklist: docs, total_receivable_amount: computedSubTotal || form.total_receivable_amount };
     if (payload.deployment_date) payload.candidate_status = 'deployed';
     const result = await updateDetails({ candidateJobId: record.candidate_job_id, ...payload });
     if ('error' in result) {
       setSaveError('Save failed. Please check your inputs and try again.');
       return;
+    }
+    // Save payment installments
+    for (let i = 0; i < payRows.length; i++) {
+      const row      = payRows[i];
+      if (!row.amount) continue;
+      const amount   = parseFloat(row.amount);
+      if (isNaN(amount) || amount <= 0) continue;
+      const discount = parseFloat(row.discount) || 0;
+      const netAmt   = Math.max(0, amount - discount);
+      const installmentNum = i + 1;
+      try {
+        let payId = row.id;
+        if (!payId) {
+          const res = await createPayment({
+            candidate_job_id:   record.candidate_job_id,
+            installment_number: installmentNum,
+            total_fee:          amount,
+            amount_due:         amount,
+            fee_waiver_amount:  discount,
+            due_date:           row.date || new Date().toISOString().substring(0, 10),
+            ...(row.date   ? { paid_date: row.date, payment_method: row.method } : {}),
+          }).unwrap();
+          payId = res.id;
+        }
+        if (payId) {
+          await recordPayment({
+            id:                payId,
+            amount_due:        amount,
+            amount_paid:       row.date ? netAmt : 0,
+            fee_waiver_amount: discount,
+            ...(row.date   ? { paid_date:      row.date   } : {}),
+            ...(row.method ? { payment_method: row.method } : {}),
+          }).unwrap();
+        }
+      } catch { /* ignore individual payment errors — main save succeeded */ }
     }
     onClose();
   };
@@ -722,16 +762,113 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
           </EditSec>
 
           {/* Payment */}
-          <EditSec title="Payment" icon={DollarSign} color="amber">
-            <div className="grid grid-cols-3 gap-3">
-              <MoneyInp label="Total Fee" value={String(form.total_receivable_amount)} onChange={v=>set('total_receivable_amount',v)} />
-              <MoneyInp label="Discount" value={String(form.disc_allot)} onChange={v=>set('disc_allot',v)} />
-              <MoneyInp label="Advance" value={String(form.advance_received)} onChange={v=>set('advance_received',v)} />
-            </div>
-          </EditSec>
+          {(() => {
+            const isFit       = form.medical_status === 'fit';
+            const subTotal    = payRows.reduce((s, r) => s + (parseFloat(r.amount)    || 0), 0);
+            const totalDisc   = payRows.reduce((s, r) => s + (parseFloat(r.discount)  || 0), 0);
+            const netTotal    = Math.max(0, subTotal - totalDisc);
+            const totalPaid   = payRows.reduce((s, r) => {
+              if (!r.date) return s;
+              const amt  = parseFloat(r.amount)   || 0;
+              const disc = parseFloat(r.discount) || 0;
+              return s + Math.max(0, amt - disc);
+            }, 0);
+            const balance     = Math.max(0, netTotal - totalPaid);
+            const INST_COLORS = ['bg-amber-100 text-amber-700','bg-blue-100 text-blue-700','bg-violet-100 text-violet-700'];
+
+            return (
+              <EditSec title="Payment" icon={DollarSign} color="amber"
+                locked={!isFit} lockReason="Medical status must be Fit to record payments">
+
+                {/* Header labels */}
+                <div className="grid grid-cols-[28px_1fr_1fr_1fr_1fr_1fr] gap-2 mb-1">
+                  <div />
+                  {['Amount (₹)','Discount (₹)','Net','Date Paid','Method'].map(h => (
+                    <div key={h} className="text-[9px] font-bold text-gray-400 uppercase">{h}</div>
+                  ))}
+                </div>
+
+                {/* Installment rows */}
+                <div className="space-y-2">
+                  {payRows.map((row, i) => {
+                    const amt  = parseFloat(row.amount)   || 0;
+                    const disc = parseFloat(row.discount) || 0;
+                    const net  = Math.max(0, amt - disc);
+                    const paid = !!row.date;
+                    return (
+                      <div key={i} className={`grid grid-cols-[28px_1fr_1fr_1fr_1fr_1fr] gap-2 items-center p-2 rounded-xl ${paid ? 'bg-emerald-50/60' : 'bg-gray-50'}`}>
+                        <div className={`text-[10px] font-bold px-1.5 py-1 rounded-lg text-center ${INST_COLORS[i]}`}>#{i+1}</div>
+                        <input
+                          type="text" inputMode="decimal" placeholder="0"
+                          value={row.amount}
+                          onChange={e => setPayRows(prev => prev.map((r, idx) => idx === i ? { ...r, amount: e.target.value.replace(/[^0-9.]/g, '') } : r))}
+                          className={`${MONEY_CLS} px-2 py-1.5 text-sm`}
+                        />
+                        <input
+                          type="text" inputMode="decimal" placeholder="0"
+                          value={row.discount}
+                          onChange={e => setPayRows(prev => prev.map((r, idx) => idx === i ? { ...r, discount: e.target.value.replace(/[^0-9.]/g, '') } : r))}
+                          className={`${MONEY_CLS} px-2 py-1.5 text-sm border-red-200`}
+                        />
+                        {/* Net — auto */}
+                        <div className={`${MONEY_CLS} px-2 py-1.5 text-sm font-bold ${net > 0 ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 text-gray-400'} cursor-default`}>
+                          {net > 0 ? `₹${net.toLocaleString('en-IN')}` : '—'}
+                        </div>
+                        <input
+                          type="date"
+                          value={row.date}
+                          onChange={e => setPayRows(prev => prev.map((r, idx) => idx === i ? { ...r, date: e.target.value } : r))}
+                          className={`${inp} ${paid ? 'border-emerald-300 bg-emerald-50' : ''}`}
+                        />
+                        <select
+                          value={row.method}
+                          onChange={e => setPayRows(prev => prev.map((r, idx) => idx === i ? { ...r, method: e.target.value } : r))}
+                          className={inp}
+                        >
+                          <option value="">—</option>
+                          <option value="cash">Cash</option>
+                          <option value="bank_transfer">Bank Transfer</option>
+                          <option value="upi">UPI</option>
+                          <option value="cheque">Cheque</option>
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Summary */}
+                <div className="border-t border-gray-100 mt-4 pt-3 grid grid-cols-4 gap-3">
+                  {[
+                    { label: 'Sub Total',       val: subTotal,  cls: 'text-gray-700',    bg: 'bg-gray-50' },
+                    { label: 'Total Discount',  val: totalDisc, cls: 'text-red-600',     bg: 'bg-red-50'  },
+                    { label: 'Total Payable',   val: netTotal,  cls: 'text-gray-900',    bg: 'bg-white',  bold: true },
+                    { label: 'Total Paid',      val: totalPaid, cls: 'text-emerald-700', bg: 'bg-emerald-50' },
+                  ].map(({ label, val, cls, bg, bold }) => (
+                    <div key={label}>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{label}</p>
+                      <div className={`${MONEY_CLS} px-2.5 py-2 ${bg} ${cls} ${bold ? 'font-bold border-gray-300' : ''} cursor-default text-sm`}>
+                        ₹{val.toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Balance due */}
+                <div className={`mt-2 flex items-center justify-between px-3 py-2 rounded-xl ${balance > 0 ? 'bg-amber-50 border border-amber-200' : 'bg-emerald-50 border border-emerald-200'}`}>
+                  <span className={`text-xs font-bold ${balance > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    Balance Due
+                  </span>
+                  <span className={`text-sm font-bold ${balance > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    {balance > 0 ? `₹${balance.toLocaleString('en-IN')}` : 'Nil — Fully Paid'}
+                  </span>
+                </div>
+              </EditSec>
+            );
+          })()}
 
           {/* Visa & MOFA */}
-          <EditSec title="Visa & MOFA" icon={Globe} color="indigo">
+          <EditSec title="Visa & MOFA" icon={Globe} color="indigo"
+            locked={form.medical_status !== 'fit'} lockReason="Medical status must be Fit to fill Visa details">
             <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Visa Issue</label><input type="date" value={form.visa_issue_date} onChange={e=>set('visa_issue_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Visa Expiry</label><input type="date" value={form.visa_expiry_date} onChange={e=>set('visa_expiry_date',e.target.value)} className={inp} /></div>
@@ -745,7 +882,8 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
           </EditSec>
 
           {/* Flight */}
-          <EditSec title="Flight & Deployment" icon={Plane} color="sky">
+          <EditSec title="Flight & Deployment" icon={Plane} color="sky"
+            locked={form.medical_status !== 'fit'} lockReason="Medical status must be Fit to fill Flight details">
             <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Booking Date</label><input type="date" value={form.ticket_booking_date} onChange={e=>set('ticket_booking_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Confirm Date</label><input type="date" value={form.ticket_confirm_date} onChange={e=>set('ticket_confirm_date',e.target.value)} className={inp} /></div>
@@ -838,9 +976,13 @@ function AddToProcessModal({
   const handleBatchAdd = async () => {
     if (!selectedCheckins.size) return;
     const ids = Array.from(selectedCheckins);
-    await batchFromInterview({ candidate_job_ids: ids, initial_data: { date_of_interview: interview?.event_date, interview_location: interview?.venue_name, candidate_status: 'selected' } });
-    setBatchResult(`${ids.length} candidate${ids.length > 1 ? 's' : ''} added to process`);
-    setSelectedCheckins(new Set());
+    try {
+      await batchFromInterview({ candidate_job_ids: ids, initial_data: { date_of_interview: interview?.event_date, interview_location: interview?.venue_name, candidate_status: 'selected' } }).unwrap();
+      setBatchResult(`${ids.length} candidate${ids.length > 1 ? 's' : ''} added to process`);
+      setSelectedCheckins(new Set());
+    } catch (err: any) {
+      setBatchResult(`Error: ${err?.data?.message || 'Failed to add candidates. Please try again.'}`);
+    }
   };
 
   const handleIndividualAdd = async () => {
@@ -902,9 +1044,9 @@ function AddToProcessModal({
               {!interview ? (
                 <p className="text-sm text-gray-400 text-center py-8">Select an interview card first.</p>
               ) : batchResult ? (
-                <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                  <CheckCircle2 size={18} className="text-emerald-600" />
-                  <p className="font-semibold text-emerald-700 text-sm">{batchResult}</p>
+                <div className={`flex items-center gap-3 p-4 rounded-xl border ${batchResult.startsWith('Error') ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                  <CheckCircle2 size={18} className={batchResult.startsWith('Error') ? 'text-red-500' : 'text-emerald-600'} />
+                  <p className={`font-semibold text-sm ${batchResult.startsWith('Error') ? 'text-red-700' : 'text-emerald-700'}`}>{batchResult}</p>
                 </div>
               ) : checkins.length === 0 && pipelineFallback.length === 0 ? (
                 <div className="text-center py-8 space-y-2">
@@ -1044,10 +1186,13 @@ function AddToProcessModal({
               <UserPlus size={12} />{adding ? 'Adding…' : 'Add to Process'}
             </button>
           )}
-          {(batchResult || csvResult || indivOk) && (
+          {((batchResult && !batchResult.startsWith('Error')) || csvResult || indivOk) && (
             <button onClick={() => { setBatchResult(null); setCsvResult(null); setIndivOk(false); onDone(); onClose(); }} className="btn-primary text-xs flex items-center gap-1.5">
               <CheckCircle2 size={12} />Done
             </button>
+          )}
+          {batchResult?.startsWith('Error') && (
+            <button onClick={() => setBatchResult(null)} className="btn-secondary text-xs">Try Again</button>
           )}
         </div>
       </div>

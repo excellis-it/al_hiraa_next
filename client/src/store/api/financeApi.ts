@@ -9,6 +9,13 @@ export const financeApi = apiSlice.injectEndpoints({
       }),
       providesTags: ['Finance'],
     }),
+    getFinanceReport: builder.query({
+      query: (params?: { from_date?: string; to_date?: string; search?: string }) => ({
+        url: '/finance/report',
+        params,
+      }),
+      providesTags: ['Finance'],
+    }),
     getAllPayments: builder.query({
       query: (params?: Record<string, any>) => ({
         url: '/finance/payments',
@@ -25,6 +32,7 @@ export const financeApi = apiSlice.injectEndpoints({
 
 export const {
   useGetFinanceOverviewQuery,
+  useGetFinanceReportQuery,
   useGetAllPaymentsQuery,
   useGetPaymentsByCandidateQuery,
 } = financeApi;

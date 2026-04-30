@@ -40,7 +40,7 @@ const DATE_PRESETS = [
   { value: 'yesterday', label: 'Yesterday' },
   { value: 'this_week', label: 'This Week' },
   { value: 'this_month', label: 'This Month' },
-  { value: 'this_quarter', label: 'This Quarter' },
+  // { value: 'this_quarter', label: 'This Quarter' },
   { value: '6_months', label: 'Last 6 Months' },
   { value: '1_year', label: 'Last 1 Year' },
   { value: 'prev_year', label: 'Previous Year' },
@@ -50,7 +50,7 @@ const DATE_PRESETS = [
 function getDateRange(preset: string): { from_date?: string; to_date?: string } {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const fmt = (d: Date) => d.toISOString().substring(0, 10);
+  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   switch (preset) {
     case 'yesterday': {
@@ -105,7 +105,7 @@ export default function FinanceOverview() {
     return getDateRange(preset);
   }, [preset, customFrom, customTo]);
 
-  const { data, isLoading } = useGetFinanceOverviewQuery(dateParams);
+  const { data, isLoading } = useGetFinanceOverviewQuery(dateParams, { refetchOnMountOrArgChange: true });
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>;
@@ -214,22 +214,35 @@ export default function FinanceOverview() {
                   <th className="table-th">Candidate</th>
                   <th className="table-th">Job</th>
                   <th className="table-th">Amount</th>
+                  <th className="table-th">Discount</th>
+                  <th className="table-th">Net Total</th>
+                  <th className="table-th">Paid</th>
                   <th className="table-th">Method</th>
                   <th className="table-th">Date</th>
                   <th className="table-th">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {recentPayments.map((p: any, i: number) => (
-                  <tr key={p.id ?? i} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="table-td font-medium text-gray-800">{p.candidate_name ?? '—'}</td>
-                    <td className="table-td text-gray-500 text-xs">{p.job_title ?? '—'}</td>
-                    <td className="table-td font-semibold text-emerald-700">{formatINR(p.amount_paid)}</td>
-                    <td className="table-td"><MethodBadge method={p.payment_method} /></td>
-                    <td className="table-td text-gray-500 text-xs">{formatDate(p.paid_date)}</td>
-                    <td className="table-td"><StatusBadge status={p.status} /></td>
-                  </tr>
-                ))}
+                {recentPayments.map((p: any, i: number) => {
+                  const waiver = Number(p.fee_waiver_amount ?? 0);
+                  const due    = Number(p.amount_due ?? 0);
+                  const net    = p.net_amount != null ? Number(p.net_amount) : Math.max(0, due - waiver);
+                  return (
+                    <tr key={p.id ?? i} className="hover:bg-blue-50/30 transition-colors">
+                      <td className="table-td font-medium text-gray-800">{p.candidate_name ?? '—'}</td>
+                      <td className="table-td text-gray-500 text-xs">{p.job_title ?? '—'}</td>
+                      <td className="table-td font-semibold text-gray-700">{due > 0 ? formatINR(due) : '—'}</td>
+                      <td className="table-td font-semibold text-red-500">
+                        {waiver > 0 ? `−${formatINR(waiver)}` : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="table-td font-bold text-gray-900">{net > 0 ? formatINR(net) : '—'}</td>
+                      <td className="table-td font-semibold text-emerald-700">{formatINR(p.amount_paid)}</td>
+                      <td className="table-td"><MethodBadge method={p.payment_method} /></td>
+                      <td className="table-td text-gray-500 text-xs">{formatDate(p.paid_date)}</td>
+                      <td className="table-td"><StatusBadge status={p.status} /></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

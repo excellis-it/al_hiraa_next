@@ -180,9 +180,9 @@ export default function JobPostingPrint({
 
     /* ── Header ── */
     .header { display: flex; align-items: stretch; border: 2px solid #1a3a6b; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-    .header-logo { background: #1a3a6b; padding: 10px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 140px; }
-    .header-logo .brand { color: #fff; font-size: 20px; font-weight: 900; letter-spacing: 2px; line-height: 1; }
-    .header-logo .tagline { color: #a8c4e8; font-size: 8px; font-weight: 600; letter-spacing: 0.4px; margin-top: 3px; text-align: center; }
+    .header-logo { background: #fff; padding: 8px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 130px; border-right: 2px solid #1a3a6b; }
+    .header-logo img { width: 90px; height: auto; object-fit: contain; }
+    .header-logo .tagline { color: #1a3a6b; font-size: 7.5px; font-weight: 700; letter-spacing: 0.3px; margin-top: 3px; text-align: center; }
     .header-info { flex: 1; padding: 8px 12px; border-left: 2px solid #1a3a6b; }
     .header-info .company-title { font-size: 10px; font-weight: 700; color: #1a3a6b; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
     .header-info p { font-size: 8.5px; color: #444; line-height: 1.5; }
@@ -248,7 +248,8 @@ export default function JobPostingPrint({
   <!-- Header -->
   <div class="header">
     <div class="header-logo">
-      <div class="brand">AL-HIRAA</div>
+      <img src="__LOGO_URL__" alt="Al-Hiraa Logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+      <div style="display:none;color:#1a3a6b;font-size:18px;font-weight:900;letter-spacing:2px;">AL-HIRAA</div>
       <div class="tagline">MANPOWER CONSULTANT PVT. LTD.</div>
     </div>
     <div class="header-info">
@@ -353,10 +354,13 @@ export default function JobPostingPrint({
 </div>
 </body></html>`;
 
+  const logoAbsUrl = `${window.location.origin}/logo.png`;
+
   const handlePrint = () => {
     const w = window.open('', '_blank', 'width=860,height=1160');
     if (!w) return;
-    w.document.write(htmlContent);
+    // Use absolute logo URL so the popup window can load it
+    w.document.write(htmlContent.replace('__LOGO_URL__', logoAbsUrl));
     w.document.close();
     w.focus();
     setTimeout(() => {
@@ -390,7 +394,7 @@ export default function JobPostingPrint({
             title="flyer-preview"
             className="bg-white shadow-xl rounded-lg mx-auto block"
             style={{ width: 794, height: 1123, border: 'none' }}
-            srcDoc={htmlContent}
+            srcDoc={htmlContent.replace('__LOGO_URL__', logoAbsUrl)}
           />
         </div>
       </div>

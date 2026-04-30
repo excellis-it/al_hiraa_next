@@ -8,27 +8,58 @@ export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
   async findByCandidateJob(candidateJobId: number) {
-    return this.prisma.payment.findMany({
-      where: { candidate_job_id: candidateJobId },
-      include: {
-        collector: {
-          select: { id: true, full_name: true },
-        },
+    const [payments, processDetails] = await Promise.all([
+      this.prisma.payment.findMany({
+        where: { candidate_job_id: candidateJobId },
+        include: { collector: { select: { id: true, full_name: true } } },
+        orderBy: { installment_number: 'asc' },
+      }),
+      this.prisma.processDetails.findUnique({
+        where: { candidate_job_id: candidateJobId },
+        select: { disc_allot: true },
+      }),
+    ]);
+
+    const subTotal      = payments.reduce((s, p) => s + Number(p.amount_due), 0);
+    const totalDiscount = payments.reduce((s, p) => s + Number(p.fee_waiver_amount ?? 0), 0);
+    const netTotal      = Math.max(0, subTotal - totalDiscount);
+    const totalPaid     = payments
+      .filter(p => p.status === 'paid')
+      .reduce((s, p) => s + Number(p.amount_due) - Number(p.fee_waiver_amount ?? 0), 0);
+    const balance       = Math.max(0, netTotal - totalPaid);
+
+    return {
+      payments,
+      summary: {
+        sub_total:      subTotal,
+        total_discount: totalDiscount,
+        net_total:      netTotal,
+        total_paid:     totalPaid,
+        balance_due:    balance,
+        disc_allot:     Number(processDetails?.disc_allot ?? 0),
       },
-      orderBy: { installment_number: 'asc' },
-    });
+    };
   }
 
-  async create(dto: CreatePaymentDto, userId: string) {
+  async create(dto: CreatePaymentDto, _userId: string) {
+    const waiver    = dto.fee_waiver_amount ?? 0;
+    const paidDate  = dto.paid_date ? new Date(dto.paid_date) : null;
+    const netAmount = Math.max(0, dto.amount_due - waiver);
+    const status    = paidDate ? 'paid' : 'pending';
+
     return this.prisma.payment.create({
       data: {
-        candidate_job_id: dto.candidate_job_id,
-        total_fee: dto.total_fee,
+        candidate_job_id:  dto.candidate_job_id,
+        total_fee:         dto.total_fee ?? dto.amount_due,
         installment_number: dto.installment_number,
-        amount_due: dto.amount_due,
-        due_date: new Date(dto.due_date),
-        notes: dto.notes,
-        status: 'pending',
+        amount_due:        dto.amount_due,
+        amount_paid:       paidDate ? netAmount : 0,
+        fee_waiver_amount: waiver,
+        due_date:          paidDate ?? new Date(dto.due_date),
+        paid_date:         paidDate,
+        payment_method:    dto.payment_method,
+        status,
+        notes:             dto.notes,
       },
     });
   }
@@ -38,34 +69,33 @@ export class PaymentsService {
       const payment = await tx.payment.findUnique({ where: { id } });
       if (!payment) throw new NotFoundException('Payment not found');
 
-      const paidDate = dto.paid_date ? new Date(dto.paid_date) : new Date();
+      const paidDate = dto.paid_date ? new Date(dto.paid_date) : payment.paid_date;
+      const waiver   = dto.fee_waiver_amount !== undefined
+        ? dto.fee_waiver_amount
+        : Number(payment.fee_waiver_amount ?? 0);
+      const amountDue = dto.amount_due !== undefined ? dto.amount_due : Number(payment.amount_due);
+      const netAmount = Math.max(0, amountDue - waiver);
+
+      // Payment is confirmed when a paid_date exists
+      const status = paidDate ? 'paid' : 'pending';
 
       const data: any = {
-        amount_paid: dto.amount_paid,
-        paid_date: paidDate,
-        collected_by: userId,
+        amount_due:        amountDue,
+        amount_paid:       paidDate ? netAmount : 0,
+        fee_waiver_amount: waiver,
+        paid_date:         paidDate,
+        status,
+        collected_by:      userId,
       };
 
       if (dto.payment_method !== undefined) data.payment_method = dto.payment_method;
       if (dto.receipt_number !== undefined) data.receipt_number = dto.receipt_number;
-      if (dto.notes !== undefined) data.notes = dto.notes;
-
-      // Determine status based on amount paid vs amount due
-      const amountDue = Number(payment.amount_due);
-      if (dto.amount_paid >= amountDue) {
-        data.status = 'paid';
-      } else {
-        data.status = 'pending';
-      }
+      if (dto.notes         !== undefined) data.notes           = dto.notes;
 
       return tx.payment.update({
         where: { id },
         data,
-        include: {
-          collector: {
-            select: { id: true, full_name: true },
-          },
-        },
+        include: { collector: { select: { id: true, full_name: true } } },
       });
     });
   }
@@ -74,54 +104,45 @@ export class PaymentsService {
     const payment = await this.prisma.payment.findUnique({ where: { id } });
     if (!payment) throw new NotFoundException('Payment not found');
 
-    const newWaiver = Number(dto.waiver_amount);
-    const amountDue = Number(payment.amount_due);
-    const amountPaid = Number(payment.amount_paid);
-    const remainingAfterWaiver = amountDue - amountPaid - newWaiver;
+    const newWaiver   = Number(dto.waiver_amount);
+    const amountDue   = Number(payment.amount_due);
+    const amountPaid  = Number(payment.amount_paid);
+    const remaining   = amountDue - amountPaid - newWaiver;
 
     return this.prisma.payment.update({
       where: { id },
       data: {
-        fee_waiver_amount: newWaiver,
+        fee_waiver_amount:     newWaiver,
         fee_waiver_approved_by: userId,
-        status: remainingAfterWaiver <= 0 ? 'waived' : payment.status,
-        notes: dto.reason ? `Waiver: ${dto.reason}` : payment.notes,
+        status:                remaining <= 0 ? 'waived' : payment.status,
+        notes:                 dto.reason ? `Waiver: ${dto.reason}` : payment.notes,
       },
     });
   }
 
   async getSummary(candidateJobId: number) {
-    const payments = await this.prisma.payment.findMany({
-      where: { candidate_job_id: candidateJobId },
-    });
+    const [payments, processDetails] = await Promise.all([
+      this.prisma.payment.findMany({ where: { candidate_job_id: candidateJobId } }),
+      this.prisma.processDetails.findUnique({
+        where: { candidate_job_id: candidateJobId },
+        select: { disc_allot: true },
+      }),
+    ]);
 
     if (payments.length === 0) {
-      return {
-        total_fee: 0,
-        total_paid: 0,
-        total_due: 0,
-        total_waived: 0,
-        is_complete: false,
-      };
+      return { sub_total: 0, total_discount: 0, net_total: 0, total_paid: 0, balance_due: 0, is_complete: false };
     }
 
-    const total_fee = Number(payments[0].total_fee);
-    const total_paid = payments.reduce(
-      (sum, p) => sum + Number(p.amount_paid),
-      0,
-    );
-    const total_waived = payments.reduce(
-      (sum, p) => sum + Number(p.fee_waiver_amount),
-      0,
-    );
-    const total_due = payments
-      .filter((p) => p.status === 'pending' || p.status === 'overdue')
-      .reduce((sum, p) => sum + Number(p.amount_due) - Number(p.amount_paid), 0);
+    const sub_total      = payments.reduce((s, p) => s + Number(p.amount_due), 0);
+    const total_discount = payments.reduce((s, p) => s + Number(p.fee_waiver_amount ?? 0), 0);
+    const net_total      = Math.max(0, sub_total - total_discount);
+    const total_paid     = payments
+      .filter(p => p.status === 'paid')
+      .reduce((s, p) => s + Number(p.amount_due) - Number(p.fee_waiver_amount ?? 0), 0);
+    const balance_due    = Math.max(0, net_total - total_paid);
+    const is_complete    = payments.every(p => p.status === 'paid' || p.status === 'waived');
 
-    const is_complete = payments.every(
-      (p) => p.status === 'paid' || p.status === 'waived',
-    );
-
-    return { total_fee, total_paid, total_due, total_waived, is_complete };
+    return { sub_total, total_discount, net_total, total_paid, balance_due, is_complete,
+             disc_allot: Number(processDetails?.disc_allot ?? 0) };
   }
 }
