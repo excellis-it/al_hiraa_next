@@ -140,7 +140,7 @@ export default function UserManagement() {
   };
 
   const users = data?.data || [];
-  const total = data?.meta.total || 0;
+  const total = data?.total || 0;
 
   return (
     <div className="p-6 space-y-5">

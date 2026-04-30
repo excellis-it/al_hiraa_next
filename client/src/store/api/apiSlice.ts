@@ -36,17 +36,19 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   }
 
   if (!refreshPromise) {
-    refreshPromise = baseQuery(
-      { url: '/auth/refresh-token', method: 'POST', body: { refresh_token: refreshToken } },
-      api,
-      extraOptions,
+    refreshPromise = Promise.resolve(
+      baseQuery(
+        { url: '/auth/refresh-token', method: 'POST', body: { refresh_token: refreshToken } },
+        api,
+        extraOptions,
+      ),
     );
   }
 
   const refreshResult = await refreshPromise;
   refreshPromise = null;
 
-  const data = refreshResult.data as { access_token: string; refresh_token: string } | undefined;
+  const data = refreshResult?.data as { access_token: string; refresh_token: string } | undefined;
   if (!data?.access_token) {
     api.dispatch(logout());
     return result;
