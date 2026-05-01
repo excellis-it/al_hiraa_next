@@ -56,8 +56,8 @@ const COLUMNS = [
   { key: 'gulf_return_details',  label: 'Gulf Details',    width: 160, sticky: false },
   { key: 'indian_experience',    label: 'Indian Exp.',     width: 150, sticky: false },
   { key: 'abroad_experience',    label: 'Abroad Exp.',     width: 150, sticky: false },
-  { key: 'whatsapp_no',          label: 'WhatsApp No',     width: 130, sticky: false },
-  { key: 'alternate_contact',    label: 'Alt. Contact',    width: 130, sticky: false },
+  { key: 'whatsapp_no',          label: 'WhatsApp No',     width: 130, sticky: false, hidden: true },
+  { key: 'alternate_contact',    label: 'Alt. Contact',    width: 130, sticky: false, hidden: true },
   { key: 'completion_status',    label: 'Completion',      width: 100, sticky: false },
   { key: 'interview_status',     label: 'Interview Status',width: 130, sticky: false },
   { key: 'remarks',              label: 'Remarks',         width: 200, sticky: false },
@@ -1454,7 +1454,7 @@ export default function CandidateList() {
                       View
                     </th>
                     {/* Data columns */}
-                    {COLUMNS.map((col) => (
+                    {COLUMNS.filter((col) => !(col as any).hidden).map((col) => (
                       <th
                         key={col.key}
                         className="px-3 py-3 text-left border-r border-white/10 last:border-r-0 whitespace-nowrap text-slate-300"
@@ -1518,7 +1518,7 @@ export default function CandidateList() {
                           </button>
                         </td>
                         {/* Data cells */}
-                        {COLUMNS.map((col) => (
+                        {COLUMNS.filter((col) => !(col as any).hidden).map((col) => (
                           <td
                             key={col.key}
                             className="px-3 py-2.5 border-b border-r border-gray-100 last:border-r-0 text-gray-700"
@@ -1532,7 +1532,7 @@ export default function CandidateList() {
                   })}
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={COLUMNS.length + 3} className="py-24 text-center">
+                      <td colSpan={COLUMNS.filter((col) => !(col as any).hidden).length + 3} className="py-24 text-center">
                         <div className="inline-flex flex-col items-center gap-3">
                           <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
                             <Users size={28} className="text-gray-300" strokeWidth={1.5} />
