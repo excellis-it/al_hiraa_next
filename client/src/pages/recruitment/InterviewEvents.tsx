@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Calendar, CalendarCheck, Plus, X, Search, ChevronRight,
@@ -84,7 +84,6 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const [company_id, setCompanyId] = useState('');
   const [country, setCountry] = useState('');
   const [interview_date_start, setDateStart] = useState('');
-  const [interview_time, setInterviewTime] = useState('');
   const [interview_date_end, setDateEnd] = useState('');
   const [service_fee, setServiceFee] = useState('');
   const [venue_id, setVenueId] = useState('');
@@ -200,7 +199,7 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       const firstAccom = positions.find(p => p.accommodation === 'yes' || p.accommodation === 'no');
       const firstTrans = positions.find(p => p.transportation === 'yes' || p.transportation === 'no');
       const eventDate = interview_date_start
-        ? `${interview_date_start}T${interview_time || '09:00'}:00`
+        ? `${interview_date_start}T09:00:00`
         : new Date().toISOString().slice(0, 10);
       await createEvent({
         job_id: job.id,
@@ -267,10 +266,6 @@ function InterviewFormModal({ onClose, onSuccess }: { onClose: () => void; onSuc
             <div>
               <label className={lbl}>Interview Date (Day 1)</label>
               <input type="date" value={interview_date_start} onChange={e => setDateStart(e.target.value)} min={new Date().toISOString().substring(0, 10)} className={inp} />
-            </div>
-            <div>
-              <label className={lbl}>Interview Time</label>
-              <input type="time" value={interview_time} onChange={e => setInterviewTime(e.target.value)} className={inp} />
             </div>
             <div>
               <label className={lbl}>Interview Date (Day 2 — optional)</label>
@@ -657,6 +652,7 @@ export default function InterviewEvents() {
   };
 
   const totalPositions = filtered.reduce((s, j) => s + (j.positions_required || 0), 0);
+  const openJobsCount = jobs.filter((j: any) => j.status === 'open').length;
 
   return (
     <div className="flex flex-col h-full">
@@ -664,7 +660,10 @@ export default function InterviewEvents() {
       <div className="flex items-center justify-between mb-5 flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Interviews</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{filtered.length} interviews · {totalPositions} positions · grouped by date</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            <span className="font-semibold text-blue-600">{openJobsCount} open jobs</span>
+            {' · '}{filtered.length} interviews · {totalPositions} positions · grouped by date
+          </p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn-primary text-sm"><Plus size={14} /> New Interview</button>
       </div>

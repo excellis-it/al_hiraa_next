@@ -528,7 +528,11 @@ function parseCsvImportLine(line: string): string[] {
   return out.map((s) => s.trim());
 }
 
-type ImportRow = Record<string, string> & { _rowIndex: number; _error?: string };
+interface ImportRow {
+  _rowIndex: number;
+  _error?: string;
+  [key: string]: any;
+}
 
 function ImportModal({ onClose }: { onClose: () => void }) {
   type Step = 'upload' | 'preview' | 'done';

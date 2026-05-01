@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router';
 import { Search, Filter, ChevronLeft, ChevronRight, Edit2, Phone, X, CheckSquare, Square, ClipboardList } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import { useGetPipelineQuery, useUpdatePipelineStatusMutation } from '../../store/api/pipelineApi';
@@ -35,10 +36,21 @@ function getStatusInfo(value: string) {
 const LIMIT = 20;
 
 export default function Pipeline() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
   const [followUpToday, setFollowUpToday] = useState(false);
+
+  // Keep URL in sync with the status filter so links are shareable & back-button works
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (statusFilter) next.set('status', statusFilter);
+    else next.delete('status');
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [statusFilter]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+﻿import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Search, Upload, Download, X, ChevronDown,
   CheckCircle2, Clock, Zap, FileSpreadsheet,
@@ -15,6 +15,7 @@ import {
   useImportProcessCsvMutation,
 } from '../../store/api/processDetailsApi';
 import { useGetInterviewEventsQuery, useGetInterviewEventQuery } from '../../store/api/interviewEventsApi';
+import { useGetVendorsQuery } from '../../store/api/vendorsApi';
 import { useGetPipelineQuery } from '../../store/api/pipelineApi';
 import { useCreatePaymentMutation, useRecordPaymentMutation } from '../../store/api/paymentsApi';
 import * as XLSX from 'xlsx';
@@ -144,10 +145,14 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
 
   const toggle = (k: string) => setOpen(s => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
-  const totalFee  = Number(record.total_receivable_amount || 0);
-  const totalPaid = payments.reduce((s: number, p: any) => s + Number(p.amount_paid || 0), 0);
+  const serviceCharge = Number(record.vendor_service_charge || 0);
   const discount  = Number(record.disc_allot || 0);
-  const dueAmount = totalFee > 0 ? Math.max(0, totalFee - totalPaid - discount) : 0;
+  // Net payable: prefer service_charge - discount (new flow); fall back to total_receivable_amount (legacy records)
+  const totalFee  = serviceCharge > 0
+    ? Math.max(0, serviceCharge - discount)
+    : Number(record.total_receivable_amount || 0);
+  const totalPaid = payments.reduce((s: number, p: any) => s + Number(p.amount_paid || 0), 0);
+  const dueAmount = totalFee > 0 ? Math.max(0, totalFee - totalPaid) : 0;
   const curStage  = computeStage(record);
   const curIdx    = PIPELINE_STAGES.findIndex(s => s.key === curStage);
   const nextStep  = computeNextStep(record);
@@ -363,7 +368,7 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
           )}
 
           {/* Payment */}
-          <StageBtn stageKey="payment" label="Payment" subtitle="Up to 4 installments" num={4} Icon={'₹'} />
+          <StageBtn stageKey="payment" label="Payment" subtitle="Up to 3 installments" num={4} Icon={DollarSign} />
           {open.has('payment') && (
             <div className="px-5 py-3 bg-white border-b border-gray-100">
               {payments.length > 0 && (
@@ -386,10 +391,10 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
               {/* Summary cards */}
               <div className="grid grid-cols-4 gap-2">
                 {[
-                  { label: 'Total Fee',  val: fmtCurrency(record.total_receivable_amount), color: 'bg-gray-50 text-gray-700' },
-                  { label: 'Discount',   val: fmtCurrency(record.disc_allot),              color: 'bg-blue-50 text-blue-700' },
-                  { label: 'Collected',  val: fmtCurrency(totalPaid),                      color: 'bg-emerald-50 text-emerald-700' },
-                  { label: 'Due',        val: fmtCurrency(dueAmount),                      color: dueAmount > 0 ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700' },
+                  { label: 'Service Charge', val: fmtCurrency(serviceCharge || record.total_receivable_amount), color: 'bg-gray-50 text-gray-700' },
+                  { label: 'Discount',       val: fmtCurrency(discount),                                         color: 'bg-blue-50 text-blue-700' },
+                  { label: 'Collected',      val: fmtCurrency(totalPaid),                                        color: 'bg-emerald-50 text-emerald-700' },
+                  { label: 'Due',            val: fmtCurrency(dueAmount),                                        color: dueAmount > 0 ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700' },
                 ].map(({ label, val, color }) => (
                   <div key={label} className={`${color} rounded-xl p-2.5 text-center`}>
                     <div className="text-[10px] font-bold uppercase tracking-wide opacity-70 mb-0.5">{label}</div>
@@ -502,12 +507,14 @@ function MoneyInp({ label, value, onChange }: { label: string; value: string; on
 
 // ── Edit Drawer ────────────────────────────────────────────────────────────────
 
-type PayRow = { id: number | null; amount: string; discount: string; date: string; method: string };
+type PayRow = { id: number | null; date: string; method: string; amount: string };
 
 function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => void }) {
   const [updateDetails, { isLoading }] = useUpdateProcessDetailsMutation();
   const [createPayment] = useCreatePaymentMutation();
   const [recordPayment] = useRecordPaymentMutation();
+  const { data: vendorsData } = useGetVendorsQuery({ status: 'active', limit: 200 } as any);
+  const vendors: any[] = (vendorsData as any)?.data || [];
   const cj   = record.candidate_job;
   const cand = cj?.candidate;
   const job  = cj?.job;
@@ -519,9 +526,9 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
     mode_of_selection:        record.mode_of_selection   || '',
     interview_location:       record.interview_location  || '',
     client_remark:            record.client_remark       || '',
-    vendor:                   record.vendor              || '',
+    vendor:                   record.vendor              || record.candidate_job?.job?.interview_events?.[0]?.vendor?.name || '',
     sponsor:                  record.sponsor             || '',
-    vendor_service_charge:    record.vendor_service_charge ?? '',
+    vendor_service_charge:    record.vendor_service_charge ?? record.candidate_job?.job?.service_fee ?? '',
     candidate_status:         record.candidate_status    || 'selected',
     medical_status:           record.medical_status            || 'pending',
     medical_app_date:         record.medical_app_date?.substring(0,10)         || '',
@@ -561,20 +568,51 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
   );
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  const existingPayments: any[] = cj?.payments || [];
+  const [numInstallments, setNumInstallments] = useState<number>(() => {
+    const count = existingPayments.filter((p: any) => Number(p?.amount_due || 0) > 0).length;
+    return count > 0 ? Math.min(3, count) : 3;
+  });
   const [payRows, setPayRows] = useState<PayRow[]>(() => {
-    const existing: any[] = cj?.payments || [];
+    const existingCount = existingPayments.filter((p: any) => Number(p?.amount_due || 0) > 0).length;
+    const instCount = existingCount > 0 ? Math.min(3, existingCount) : 3;
+    const sc   = parseFloat(String(record.vendor_service_charge ?? record.candidate_job?.job?.service_fee ?? 0)) || 0;
+    const disc = parseFloat(String(record.disc_allot ?? 0)) || 0;
+    const net  = Math.max(0, sc - disc);
+    const base = instCount > 0 ? Math.floor(net / instCount) : 0;
+    const dbAmounts = [1, 2, 3].map(n => {
+      const p = existingPayments.find((x: any) => x.installment_number === n);
+      return n <= instCount && p?.amount_due ? Number(p.amount_due) : null;
+    });
+    const dbSum = dbAmounts.every(a => a !== null) ? dbAmounts.reduce((s, a) => s + (a ?? 0), 0) : null;
+    const useDb = dbSum !== null && dbSum === net;
     return [1, 2, 3].map(n => {
-      const p = existing.find((x: any) => x.installment_number === n);
-      const amt = Number(p?.amount_due || 0) || Number(p?.amount_paid || 0);
+      const p = existingPayments.find((x: any) => x.installment_number === n);
+      const dbAmt = p?.amount_due ? Number(p.amount_due) : null;
+      const autoAmt = net > 0 && n <= instCount ? (n === instCount ? net - base * (instCount - 1) : base) : 0;
       return {
-        id:       p?.id ?? null,
-        amount:   amt > 0 ? String(amt) : '',
-        discount: p?.fee_waiver_amount ? String(Number(p.fee_waiver_amount)) : '',
-        date:     p?.paid_date?.substring(0, 10) || '',
-        method:   p?.payment_method || '',
+        id:     p?.id ?? null,
+        date:   p?.paid_date?.substring(0, 10) || '',
+        method: p?.payment_method || '',
+        amount: useDb && dbAmt !== null ? String(dbAmt) : (autoAmt > 0 ? String(autoAmt) : ''),
       };
     });
   });
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    const sc   = parseFloat(String(form.vendor_service_charge)) || 0;
+    const disc = parseFloat(String(form.disc_allot)) || 0;
+    const net  = Math.max(0, sc - disc);
+    const perInst = numInstallments > 0 ? Math.round(net / numInstallments) : 0;
+    if (perInst > 0) {
+      setPayRows(prev => prev.map((r, i) => ({
+        ...r,
+        amount: i < numInstallments ? String(perInst) : r.amount,
+      })));
+    }
+  }, [numInstallments, form.vendor_service_charge, form.disc_allot]);
 
   const set = (k: string, v: string) => setForm(f => {
     const next: any = { ...f, [k]: v };
@@ -609,22 +647,43 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
 
   const handleSave = async () => {
     setSaveError(null);
-    const computedSubTotal = payRows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-    const payload: any = { ...form, documents_checklist: docs, total_receivable_amount: computedSubTotal || form.total_receivable_amount };
+    const serviceCharge = parseFloat(String(form.vendor_service_charge)) || 0;
+    const discount      = parseFloat(String(form.disc_allot))           || 0;
+    const netTotal      = Math.max(0, serviceCharge - discount);
+
+    // Validate installment amounts
+    if (netTotal > 0) {
+      const visibleAmounts = payRows.slice(0, numInstallments).map(r => parseFloat(r.amount) || 0);
+      if (visibleAmounts.some(a => a <= 0)) {
+        setSaveError('All installment amounts must be greater than ₹0.');
+        return;
+      }
+      if (visibleAmounts.some(a => a > netTotal)) {
+        setSaveError(`No installment can exceed the net payable amount (₹${netTotal.toLocaleString('en-IN')}).`);
+        return;
+      }
+    }
+    const baseInstallment = numInstallments > 0 ? Math.floor(netTotal / numInstallments) : 0;
+
+    const payload: any = {
+      ...form,
+      documents_checklist: docs,
+      total_receivable_amount: netTotal || form.total_receivable_amount,
+    };
     if (payload.deployment_date) payload.candidate_status = 'deployed';
     const result = await updateDetails({ candidateJobId: record.candidate_job_id, ...payload });
     if ('error' in result) {
       setSaveError('Save failed. Please check your inputs and try again.');
       return;
     }
-    // Save payment installments
-    for (let i = 0; i < payRows.length; i++) {
-      const row      = payRows[i];
-      if (!row.amount) continue;
-      const amount   = parseFloat(row.amount);
-      if (isNaN(amount) || amount <= 0) continue;
-      const discount = parseFloat(row.discount) || 0;
-      const netAmt   = Math.max(0, amount - discount);
+
+    // Save payment installments — only for selected number, evenly divided
+    for (let i = 0; i < numInstallments; i++) {
+      const row = payRows[i];
+      const isLastInst = i === numInstallments - 1;
+      const fallback = isLastInst ? netTotal - baseInstallment * (numInstallments - 1) : baseInstallment;
+      const amount = parseFloat(row.amount) || fallback;
+      if (amount <= 0) continue;
       const installmentNum = i + 1;
       try {
         let payId = row.id;
@@ -634,7 +693,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
             installment_number: installmentNum,
             total_fee:          amount,
             amount_due:         amount,
-            fee_waiver_amount:  discount,
+            fee_waiver_amount:  0,
             due_date:           row.date || new Date().toISOString().substring(0, 10),
             ...(row.date   ? { paid_date: row.date, payment_method: row.method } : {}),
           }).unwrap();
@@ -644,8 +703,8 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
           await recordPayment({
             id:                payId,
             amount_due:        amount,
-            amount_paid:       row.date ? netAmt : 0,
-            fee_waiver_amount: discount,
+            amount_paid:       row.date ? amount : 0,
+            fee_waiver_amount: 0,
             ...(row.date   ? { paid_date:      row.date   } : {}),
             ...(row.method ? { payment_method: row.method } : {}),
           }).unwrap();
@@ -689,7 +748,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
               <div><label className={lbl}>Selection Date</label><input type="date" value={form.date_of_selection} onChange={e=>set('date_of_selection',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Mode</label><Select value={form.mode_of_selection} onChange={e=>set('mode_of_selection',e.target.value)}><option value="">Select</option>{MODE_OPTIONS.map(m=><option key={m.value} value={m.value}>{m.label}</option>)}</Select></div>
               <div><label className={lbl}>Status</label><Select value={form.candidate_status} onChange={e=>set('candidate_status',e.target.value)}>{CANDIDATE_STATUS_OPTIONS.map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}</Select></div>
-              <div><label className={lbl}>Vendor / Sub-agent</label><input value={form.vendor} onChange={e=>set('vendor',e.target.value)} className={inp} placeholder="e.g. Al-Noor Travels" /></div>
+              <div><label className={lbl}>Vendor / Sub-agent</label><select value={form.vendor} onChange={e=>set('vendor',e.target.value)} className={inp}><option value="">— Select vendor —</option>{vendors.map((v:any) => <option key={v.id} value={v.name}>{v.name} ({v.vendor_id})</option>)}</select></div>
               <MoneyInp label="Service Charge" value={String(form.vendor_service_charge)} onChange={v=>set('vendor_service_charge',v)} />
             </div>
           </EditSec>
@@ -763,56 +822,106 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
 
           {/* Payment */}
           {(() => {
-            const isFit       = form.medical_status === 'fit';
-            const subTotal    = payRows.reduce((s, r) => s + (parseFloat(r.amount)    || 0), 0);
-            const totalDisc   = payRows.reduce((s, r) => s + (parseFloat(r.discount)  || 0), 0);
-            const netTotal    = Math.max(0, subTotal - totalDisc);
-            const totalPaid   = payRows.reduce((s, r) => {
+            const isFit          = form.medical_status === 'fit';
+            const serviceCharge  = parseFloat(String(form.vendor_service_charge)) || 0;
+            const discount       = parseFloat(String(form.disc_allot))            || 0;
+            const netTotal       = Math.max(0, serviceCharge - discount);
+            const perInstallment = numInstallments > 0 ? Math.floor(netTotal / numInstallments) : 0;
+            const visibleRows    = payRows.slice(0, numInstallments);
+            const totalPaid      = visibleRows.reduce((s, r, i) => {
               if (!r.date) return s;
-              const amt  = parseFloat(r.amount)   || 0;
-              const disc = parseFloat(r.discount) || 0;
-              return s + Math.max(0, amt - disc);
+              const isLast = i === numInstallments - 1;
+              const fallback = isLast ? netTotal - perInstallment * (numInstallments - 1) : perInstallment;
+              return s + (parseFloat(r.amount) || fallback);
             }, 0);
-            const balance     = Math.max(0, netTotal - totalPaid);
-            const INST_COLORS = ['bg-amber-100 text-amber-700','bg-blue-100 text-blue-700','bg-violet-100 text-violet-700'];
+            const balance        = Math.max(0, netTotal - totalPaid);
+            const INST_COLORS    = ['bg-amber-100 text-amber-700','bg-blue-100 text-blue-700','bg-violet-100 text-violet-700'];
 
             return (
-              <EditSec title="Payment" icon={'₹'} color="amber"
+              <EditSec title="Payment" icon={DollarSign} color="amber"
                 locked={!isFit} lockReason="Medical status must be Fit to record payments">
 
+                {/* Service charge + discount + installments */}
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <MoneyInp
+                    label="Vendor Service Charge"
+                    value={String(form.vendor_service_charge)}
+                    onChange={v => set('vendor_service_charge', v)}
+                  />
+                  <MoneyInp
+                    label="Discount"
+                    value={String(form.disc_allot)}
+                    onChange={v => set('disc_allot', v)}
+                  />
+                  <div>
+                    <label className={lbl}>Installments</label>
+                    <Select value={String(numInstallments)} onChange={e => setNumInstallments(parseInt(e.target.value, 10))}>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Net total readout */}
+                <div className="bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-100 rounded-xl px-4 py-3 mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">Net Payable</p>
+                    <p className="text-lg font-bold text-blue-700">₹{netTotal.toLocaleString('en-IN')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">Per Installment</p>
+                    <p className="text-lg font-bold text-violet-700">
+                      ₹{perInstallment.toLocaleString('en-IN')} <span className="text-xs text-gray-500 font-medium">× {numInstallments}</span>
+                    </p>
+                  </div>
+                </div>
+
                 {/* Header labels */}
-                <div className="grid grid-cols-[28px_1fr_1fr_1fr_1fr_1fr] gap-2 mb-1">
+                <div className="grid grid-cols-[28px_1.2fr_1fr_1fr] gap-2 mb-1">
                   <div />
-                  {['Amount (₹)','Discount (₹)','Net','Date Paid','Method'].map(h => (
+                  {['Amount','Date Paid','Method'].map(h => (
                     <div key={h} className="text-[9px] font-bold text-gray-400 uppercase">{h}</div>
                   ))}
                 </div>
 
-                {/* Installment rows */}
+                {/* Installment rows — only as many as numInstallments */}
                 <div className="space-y-2">
-                  {payRows.map((row, i) => {
-                    const amt  = parseFloat(row.amount)   || 0;
-                    const disc = parseFloat(row.discount) || 0;
-                    const net  = Math.max(0, amt - disc);
+                  {visibleRows.map((row, i) => {
                     const paid = !!row.date;
                     return (
-                      <div key={i} className={`grid grid-cols-[28px_1fr_1fr_1fr_1fr_1fr] gap-2 items-center p-2 rounded-xl ${paid ? 'bg-emerald-50/60' : 'bg-gray-50'}`}>
+                      <div key={i} className={`grid grid-cols-[28px_1.2fr_1fr_1fr] gap-2 items-center p-2 rounded-xl ${paid ? 'bg-emerald-50/60' : 'bg-gray-50'}`}>
                         <div className={`text-[10px] font-bold px-1.5 py-1 rounded-lg text-center ${INST_COLORS[i]}`}>#{i+1}</div>
-                        <input
-                          type="text" inputMode="decimal" placeholder="0"
-                          value={row.amount}
-                          onChange={e => setPayRows(prev => prev.map((r, idx) => idx === i ? { ...r, amount: e.target.value.replace(/[^0-9.]/g, '') } : r))}
-                          className={`${MONEY_CLS} px-2 py-1.5 text-sm`}
-                        />
-                        <input
-                          type="text" inputMode="decimal" placeholder="0"
-                          value={row.discount}
-                          onChange={e => setPayRows(prev => prev.map((r, idx) => idx === i ? { ...r, discount: e.target.value.replace(/[^0-9.]/g, '') } : r))}
-                          className={`${MONEY_CLS} px-2 py-1.5 text-sm border-red-200`}
-                        />
-                        {/* Net — auto */}
-                        <div className={`${MONEY_CLS} px-2 py-1.5 text-sm font-bold ${net > 0 ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 text-gray-400'} cursor-default`}>
-                          {net > 0 ? `₹${net.toLocaleString('en-IN')}` : '—'}
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 pointer-events-none select-none">&#8377;</span>
+                          <input
+                            type="text" inputMode="decimal"
+                            value={row.amount}
+                            placeholder={perInstallment > 0 ? String(perInstallment) : '0'}
+                            onChange={e => {
+                              const raw = e.target.value.replace(/[^0-9.]/g, '');
+                              // Clamp to [0, netTotal]
+                              const val = raw === '' ? '' : String(Math.min(parseFloat(raw) || 0, netTotal));
+                              const afterCount = numInstallments - i - 1;
+                              setPayRows(prev => {
+                                const next = [...prev];
+                                next[i] = { ...next[i], amount: val };
+                                if (afterCount > 0 && val !== '') {
+                                  const entered = parseFloat(val) || 0;
+                                  const remaining = Math.max(0, netTotal - entered);
+                                  let given = 0;
+                                  for (let j = i + 1; j < numInstallments; j++) {
+                                    const isLast = j === numInstallments - 1;
+                                    const amt = isLast ? remaining - given : Math.round(remaining / afterCount);
+                                    next[j] = { ...next[j], amount: String(Math.max(0, amt)) };
+                                    given += amt;
+                                  }
+                                }
+                                return next;
+                              });
+                            }}
+                            className={`${MONEY_CLS} pl-6 pr-2 py-1.5 text-sm font-bold ${row.amount !== '' && (parseFloat(row.amount) <= 0 || parseFloat(row.amount) > netTotal) ? 'border-red-400 bg-red-50' : ''}`}
+                          />
                         </div>
                         <input
                           type="date"
@@ -839,10 +948,10 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                 {/* Summary */}
                 <div className="border-t border-gray-100 mt-4 pt-3 grid grid-cols-4 gap-3">
                   {[
-                    { label: 'Sub Total',       val: subTotal,  cls: 'text-gray-700',    bg: 'bg-gray-50' },
-                    { label: 'Total Discount',  val: totalDisc, cls: 'text-red-600',     bg: 'bg-red-50'  },
-                    { label: 'Total Payable',   val: netTotal,  cls: 'text-gray-900',    bg: 'bg-white',  bold: true },
-                    { label: 'Total Paid',      val: totalPaid, cls: 'text-emerald-700', bg: 'bg-emerald-50' },
+                    { label: 'Service Charge', val: serviceCharge, cls: 'text-gray-700',    bg: 'bg-gray-50' },
+                    { label: 'Discount',       val: discount,      cls: 'text-red-600',     bg: 'bg-red-50'  },
+                    { label: 'Net Payable',    val: netTotal,      cls: 'text-gray-900',    bg: 'bg-white',  bold: true },
+                    { label: 'Total Paid',     val: totalPaid,     cls: 'text-emerald-700', bg: 'bg-emerald-50' },
                   ].map(({ label, val, cls, bg, bold }) => (
                     <div key={label}>
                       <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{label}</p>
