@@ -21,6 +21,23 @@ export class ProcessDetailsController {
     return this.service.getStageSummary();
   }
 
+  @Get('export')
+  exportAll(
+    @Query('search')           search?: string,
+    @Query('medical_status')   medical_status?: string,
+    @Query('candidate_status') candidate_status?: string,
+    @Query('year')             year?: string,
+    @Query('job_id')           job_id?: string,
+  ) {
+    return this.service.exportAll({
+      search,
+      medical_status,
+      candidate_status,
+      year:   year   ? +year   : undefined,
+      job_id: job_id ? +job_id : undefined,
+    });
+  }
+
   @Get()
   findAll(
     @Query('page')             page?: string,

@@ -207,6 +207,34 @@ export class ProcessDetailsService {
     return counts;
   }
 
+  // ── Full export (no pagination) ──────────────────────────────────────────
+  async exportAll(params: {
+    search?: string; medical_status?: string;
+    candidate_status?: string; year?: number; job_id?: number;
+  }) {
+    const where: any = {};
+    if (params.medical_status)   where.medical_status   = params.medical_status;
+    if (params.candidate_status) where.candidate_status = params.candidate_status;
+    if (params.year)             where.year_of_selection = params.year;
+
+    const candidateJobWhere: any = {};
+    if (params.job_id) candidateJobWhere.job_id = params.job_id;
+    if (params.search) {
+      candidateJobWhere.OR = [
+        { candidate: { full_name:    { contains: params.search, mode: 'insensitive' } } },
+        { candidate: { passport_no:  { contains: params.search, mode: 'insensitive' } } },
+        { candidate: { whatsapp_no:  { contains: params.search, mode: 'insensitive' } } },
+      ];
+    }
+    if (Object.keys(candidateJobWhere).length > 0) where.candidate_job = candidateJobWhere;
+
+    return this.prisma.processDetails.findMany({
+      where,
+      orderBy: { date_of_selection: 'desc' },
+      include: { candidate_job: { include: CANDIDATE_INCLUDE } },
+    });
+  }
+
   // ── List all with enriched data ───────────────────────────────────────────
   async findAll(params: {
     page?: number; limit?: number; search?: string; medical_status?: string;

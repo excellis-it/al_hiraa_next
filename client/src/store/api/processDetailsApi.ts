@@ -52,6 +52,13 @@ export const processDetailsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['ProcessTracking'],
     }),
+    // Full export (no pagination)
+    exportProcessDetails: builder.query({
+      query: (params?: {
+        search?: string; medical_status?: string; candidate_status?: string;
+        year?: number; job_id?: number;
+      }) => ({ url: '/process-details/export', params }),
+    }),
   }),
 });
 
@@ -63,4 +70,5 @@ export const {
   useBatchFromInterviewMutation,
   useQuickAddProcessMutation,
   useImportProcessCsvMutation,
+  useLazyExportProcessDetailsQuery,
 } = processDetailsApi;

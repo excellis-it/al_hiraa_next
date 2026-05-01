@@ -13,6 +13,7 @@ import {
   useBatchFromInterviewMutation,
   useQuickAddProcessMutation,
   useImportProcessCsvMutation,
+  useLazyExportProcessDetailsQuery,
 } from '../../store/api/processDetailsApi';
 import { useGetInterviewEventsQuery, useGetInterviewEventQuery } from '../../store/api/interviewEventsApi';
 import { useGetVendorsQuery } from '../../store/api/vendorsApi';
@@ -1311,29 +1312,127 @@ function AddToProcessModal({
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
-function exportToExcel(records: any[]) {
-  const rows = records.map(r => {
-    const cj = r.candidate_job; const cand = cj?.candidate; const job = cj?.job;
-    const dc = docsCount(r);
+function fmtDate(val: any) {
+  if (!val) return '';
+  return String(val).substring(0, 10);
+}
+
+function buildPaymentCols(payments: any[], num: number) {
+  const p = payments?.find((x: any) => x.installment_number === num);
+  return {
+    [`P${num} Total Fee`]:   p?.total_fee        ?? '',
+    [`P${num} Amount Due`]:  p?.amount_due        ?? '',
+    [`P${num} Amount Paid`]: p?.amount_paid       ?? '',
+    [`P${num} Waiver`]:      p?.fee_waiver_amount ?? '',
+    [`P${num} Status`]:      p?.status            || '',
+    [`P${num} Due Date`]:    fmtDate(p?.due_date),
+    [`P${num} Paid Date`]:   fmtDate(p?.paid_date),
+    [`P${num} Receipt No`]:  p?.receipt_number    || '',
+    [`P${num} Method`]:      p?.payment_method    || '',
+  };
+}
+
+function buildExportRows(records: any[]) {
+  return records.map((r, i) => {
+    const cj   = r.candidate_job;
+    const cand = cj?.candidate;
+    const job  = cj?.job;
+    const dc   = docsCount(r);
+    const pays = cj?.payments || [];
+
     return {
-      'Passport No': cand?.passport_no || '',
-      'Full Name': cand?.full_name || '',
-      'Phone': cand?.whatsapp_no || '',
-      'ECR': cand?.ecr_type || '',
-      'Trade': job?.title || '',
-      'Company': job?.company?.name || '',
-      'Stage': computeStage(r),
-      'Selection Date': r.date_of_selection?.substring(0,10) || '',
-      'Documents': `${dc.submitted}/${dc.total}`,
-      'Medical': r.medical_status || '',
-      'Visa Issue': r.visa_issue_date?.substring(0,10) || '',
-      'MOFA': r.mofa_number || '',
-      'Deployment Date': r.deployment_date?.substring(0,10) || '',
+      'S.No':                    i + 1,
+      'Candidate ID':            cand?.id            || '',
+      'Full Name':               cand?.full_name      || '',
+      'Passport No':             cand?.passport_no    || '',
+      'WhatsApp No':             cand?.whatsapp_no    || '',
+      'Gender':                  cand?.gender         || '',
+      'Date of Birth':           fmtDate(cand?.dob),
+      'Education':               cand?.education      || '',
+      'ECR Type':                cand?.ecr_type       || '',
+      'State':                   cand?.state?.name    || '',
+      'City':                    cand?.city?.name     || '',
+      // Job / Company
+      'Company':                 job?.company?.name   || '',
+      'Trade / Job':             job?.title           || '',
+      'Country':                 job?.country         || '',
+      'Salary Min':              job?.salary_min      ?? '',
+      'Salary Max':              job?.salary_max      ?? '',
+      'Currency':                job?.salary_currency || '',
+      // Selection
+      'Stage':                   computeStage(r),
+      'Year of Selection':       r.year_of_selection  || '',
+      'Date of Interview':       fmtDate(r.date_of_interview),
+      'Date of Selection':       fmtDate(r.date_of_selection),
+      'Selection Month':         r.selection_month    || '',
+      'Mode of Selection':       r.mode_of_selection  || '',
+      'Interview Location':      r.interview_location || '',
+      'Candidate Status':        r.candidate_status   || '',
+      'Client Remark':           r.client_remark      || '',
+      'Vendor':                  r.vendor             || '',
+      'Sponsor':                 r.sponsor            || '',
+      // Medical
+      'Medical Status':          r.medical_status             || '',
+      'Medical App Date':        fmtDate(r.medical_app_date),
+      'Medical Completion Date': fmtDate(r.medical_completion_date),
+      'Medical Approval Date':   fmtDate(r.medical_approval_date),
+      'Medical Expiry Date':     fmtDate(r.medical_expiry_date),
+      'Medical Repeat Date':     fmtDate(r.medical_repeat_date),
+      // Documents
+      'Documents Submitted':     dc.submitted,
+      'Documents Total':         dc.total,
+      'Courier Sent Date':       fmtDate(r.courier_sent_date),
+      'Courier Received Date':   fmtDate(r.courier_received_date),
+      // MOFA & Visa
+      'MOFA Number':             r.mofa_number        || '',
+      'MOFA Date':               fmtDate(r.mofa_date),
+      'MOFA Received Date':      fmtDate(r.mofa_received_date),
+      'Visa Issue Date':         fmtDate(r.visa_issue_date),
+      'Visa Expiry Date':        fmtDate(r.visa_expiry_date),
+      'Visa Receiving Date':     fmtDate(r.visa_receiving_date),
+      'VFS Applied Date':        fmtDate(r.vfs_applied_date),
+      'VFS Received Date':       fmtDate(r.vfs_received_date),
+      // Flight
+      'Ticket Booking Date':     fmtDate(r.ticket_booking_date),
+      'Ticket Confirm Date':     fmtDate(r.ticket_confirm_date),
+      'Onboarding City':         r.onboarding_city    || '',
+      'Exit Paper Date':         fmtDate(r.exit_paper_date),
+      'Deployment Date':         fmtDate(r.deployment_date),
+      'Deployment Month':        r.deployment_month   || '',
+      // Logistics
+      'Accommodation':           r.accommodation === true ? 'Yes (Provided)' : r.accommodation === false ? 'No (Candidate Pays)' : '',
+      'Accommodation Cost':      r.accommodation_cost ?? '',
+      'Transportation':          r.transportation === true ? 'Yes (Provided)' : r.transportation === false ? 'No (Candidate Pays)' : '',
+      'Transportation Cost':     r.transportation_cost ?? '',
+      // Financials
+      'Vendor Service Charge':   r.vendor_service_charge  ?? '',
+      'Advance Received':        r.advance_received        ?? '',
+      'Exit Setting Payment':    r.exit_setting_payment    ?? '',
+      'Other Setting Charge':    r.other_setting_charge    ?? '',
+      'Total Received':          r.total_received_amount   ?? '',
+      'Total Receivable':        r.total_receivable_amount ?? '',
+      'Disc Allot':              r.disc_allot              ?? '',
+      'Refund Amount':           r.refund_amount           ?? '',
+      'Refund Date':             fmtDate(r.refund_date),
+      // Payment installments
+      ...buildPaymentCols(pays, 1),
+      ...buildPaymentCols(pays, 2),
+      ...buildPaymentCols(pays, 3),
+      // Contact & Remarks
+      'Family Contact Name':  r.family_contact_name  || '',
+      'Family Contact Phone': r.family_contact_phone || '',
+      'Address':              r.candidate_address    || '',
+      'Remarks':              r.remarks              || '',
+      'Other Remarks':        r.other_remarks        || '',
     };
   });
+}
+
+function generateExcelFile(records: any[]) {
+  const rows = buildExportRows(records);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Process');
-  XLSX.writeFile(wb, `process_${new Date().toISOString().substring(0,10)}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Process Data');
+  XLSX.writeFile(wb, `process_export_${new Date().toISOString().substring(0, 10)}.xlsx`);
 }
 
 // ── EventGroup type ───────────────────────────────────────────────────────────
@@ -1516,6 +1615,25 @@ export default function ProcessModule() {
 
   const handleEdit = (r: any) => { setViewRecord(null); setEditRecord(r); };
 
+  const [triggerExport, { isFetching: isExporting }] = useLazyExportProcessDetailsQuery();
+
+  const handleExport = async () => {
+    const result = await triggerExport({ search: search || undefined });
+    if (!result.data) return;
+    let exportData: any[] = result.data;
+    // Apply same client-side filters as the table
+    if (activeGroup) {
+      exportData = exportData.filter((r: any) => activeGroup.jobIds.includes(r.candidate_job?.job?.id));
+    }
+    if (tradeFilter !== 'all') {
+      exportData = exportData.filter((r: any) => r.candidate_job?.job?.title === tradeFilter);
+    }
+    if (stageFilter !== 'all') {
+      exportData = exportData.filter((r: any) => computeStage(r) === stageFilter);
+    }
+    generateExcelFile(exportData);
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -1530,8 +1648,9 @@ export default function ProcessModule() {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search passport, name…"
               className="pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-blue-400 w-52" />
           </div>
-          <button onClick={() => exportToExcel(filtered)} className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-2 rounded-xl hover:bg-blue-100">
-            <Download size={12} />Export
+          <button onClick={handleExport} disabled={isExporting} className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-2 rounded-xl hover:bg-blue-100 disabled:opacity-50">
+            {isExporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+            {isExporting ? 'Exporting…' : 'Export'}
           </button>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 px-3 py-2 rounded-xl hover:bg-blue-700">
             <Plus size={12} />Add to Process

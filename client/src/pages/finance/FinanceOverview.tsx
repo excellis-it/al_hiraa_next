@@ -148,7 +148,7 @@ export default function FinanceOverview() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="stat-card">
+        {/* <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Opening Balance</p>
@@ -167,7 +167,7 @@ export default function FinanceOverview() {
             </div>
             <div className="w-11 h-11 rounded-2xl bg-indigo-50 flex items-center justify-center"><ArrowLeftCircle size={20} className="text-indigo-500" /></div>
           </div>
-        </div>
+        </div> */}
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
@@ -189,13 +189,13 @@ export default function FinanceOverview() {
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">This Month</p>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">This Month Collections</p>
               <p className="text-2xl font-bold text-blue-600 mt-1">{formatINR(overview.this_month_collected)}</p>
             </div>
             <div className="w-11 h-11 rounded-2xl bg-blue-50 flex items-center justify-center"><TrendingUp size={20} className="text-blue-600" /></div>
           </div>
         </div>
-        <div className="stat-card">
+        {/* <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Overdue</p>
@@ -203,7 +203,7 @@ export default function FinanceOverview() {
             </div>
             <div className="w-11 h-11 rounded-2xl bg-amber-50 flex items-center justify-center"><Clock size={20} className="text-amber-600" /></div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Collection Comparison Chart */}
