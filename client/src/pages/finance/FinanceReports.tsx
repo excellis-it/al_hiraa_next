@@ -1,8 +1,15 @@
 import { useState, useMemo } from 'react';
-import { FileSpreadsheet, FileText, Calendar, Search } from 'lucide-react';
+import { FileSpreadsheet, FileText, Calendar, Search, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import { useGetFinanceReportQuery } from '../../store/api/financeApi';
 import * as XLSX from 'xlsx';
+
+const INST_COLORS = [
+  'bg-amber-100 text-amber-700',
+  'bg-blue-100 text-blue-700',
+  'bg-violet-100 text-violet-700',
+  'bg-teal-100 text-teal-700',
+];
 
 function formatINR(n: number | null | undefined): string {
   if (!n) return '₹0';
@@ -43,6 +50,8 @@ export default function FinanceReports() {
   const [customFrom, setCustomFrom] = useState('');
   const [customTo,   setCustomTo]   = useState('');
   const [search,     setSearch]     = useState('');
+  const [expanded,   setExpanded]   = useState<Set<number>>(new Set());
+  const toggleExpand = (id: number) => setExpanded(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const dateRange = useMemo(() => {
     if (preset === 'custom') return { from_date: customFrom || undefined, to_date: customTo || undefined };
@@ -56,100 +65,151 @@ export default function FinanceReports() {
   const payments: any[] = (data as any)?.payments ?? [];
   const summary:  any   = (data as any)?.summary  ?? {};
 
+  // Group payments by candidate_job for the Payment Details table
+  const groupedPayments = useMemo(() => {
+    const map = new Map<number, any>();
+    for (const p of payments) {
+      const key = p.candidate_job_id;
+      if (!map.has(key)) {
+        map.set(key, {
+          candidate_job_id: p.candidate_job_id,
+          candidate_name:   p.candidate_name,
+          passport_no:      p.passport_no,
+          whatsapp_no:      p.whatsapp_no,
+          job_title:        p.job_title,
+          company_name:     p.company_name,
+          discount:         Number(p.disc_allot) || Number(p.fee_waiver_amount) || 0,
+          installments:     [],
+        });
+      }
+      map.get(key).installments.push(p);
+    }
+    return Array.from(map.values()).map(g => {
+      const netTotal   = g.installments.reduce((s: number, p: any) => s + Number(p.amount_due || 0), 0);
+      const subTotal   = netTotal + g.discount;
+      const totalPaid  = g.installments.filter((p: any) => p.status === 'paid').reduce((s: number, p: any) => s + Number(p.amount_paid || 0), 0);
+      const balance    = Math.max(0, netTotal - totalPaid);
+      const allPaid    = g.installments.every((p: any) => p.status === 'paid');
+      const anyPaid    = g.installments.some((p: any) => Number(p.amount_paid) > 0);
+      const status     = allPaid ? 'paid' : anyPaid ? 'partial' : 'pending';
+      return { ...g, subTotal, netTotal, totalPaid, balance, status };
+    });
+  }, [payments]);
+
   // Monthly breakdown (client-computed from the already-filtered payment list)
   const byMonth = useMemo(() => {
     const map = new Map<string, { month: string; count: number; subTotal: number; discount: number; netTotal: number; collected: number; pending: number }>();
+    // Track seen candidate_jobs per month to avoid double-counting disc_allot
+    const seenByMonth = new Map<string, Set<number>>();
     for (const p of payments) {
       const raw = p.paid_date || p.due_date || p.created_at;
       if (!raw) continue;
       const key = new Date(raw).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
-      if (!map.has(key)) map.set(key, { month: key, count: 0, subTotal: 0, discount: 0, netTotal: 0, collected: 0, pending: 0 });
+      if (!map.has(key)) { map.set(key, { month: key, count: 0, subTotal: 0, discount: 0, netTotal: 0, collected: 0, pending: 0 }); seenByMonth.set(key, new Set()); }
       const row = map.get(key)!;
+      const seen = seenByMonth.get(key)!;
       row.count++;
-      row.subTotal  += Number(p.amount_due        || 0);
-      row.discount  += Number(p.fee_waiver_amount  || 0);
-      row.netTotal  += Number(p.net_amount         || 0);
+      row.subTotal += Number(p.amount_due || 0);
+      if (!seen.has(p.candidate_job_id)) {
+        seen.add(p.candidate_job_id);
+        row.discount += Number(p.disc_allot) || Number(p.fee_waiver_amount) || 0;
+      }
+      row.netTotal  += Number(p.net_amount || 0);
       if (p.status === 'paid') row.collected += Number(p.amount_paid || 0);
       else                     row.pending   += Number(p.balance     || 0);
     }
     return Array.from(map.values());
   }, [payments]);
 
-  // Excel export
+  // Excel export — identical structure to All Payments
   const handleExportExcel = () => {
-    const rows = payments.map(p => ({
-      Candidate:        p.candidate_name,
-      Passport:         p.passport_no  || '',
-      Phone:            p.whatsapp_no  || '',
-      Job:              p.job_title,
-      Company:          p.company_name,
-      'Installment #':  p.installment_number,
-      'Amount (₹)':     p.amount_due,
-      'Discount (₹)':   p.fee_waiver_amount,
-      'Net Total (₹)':  p.net_amount,
-      'Paid (₹)':       p.amount_paid,
-      'Balance (₹)':    p.balance,
-      'Paid Date':      formatDate(p.paid_date),
-      Method:           p.payment_method  || '',
-      Receipt:          p.receipt_number  || '',
-      Status:           p.status,
-    }));
+    const rows: any[] = [];
+    groupedPayments.forEach(g => {
+      rows.push({
+        Candidate: g.candidate_name, Passport: g.passport_no || '', Phone: g.whatsapp_no || '',
+        Job: g.job_title, Company: g.company_name,
+        Installment: '', 'Sub Total': g.subTotal, Discount: g.discount,
+        'Net Total': g.netTotal, Paid: g.totalPaid, Balance: g.balance, Status: g.status,
+        'Paid Date': '', Method: '',
+      });
+      g.installments.forEach((p: any) => {
+        rows.push({
+          Candidate: '', Passport: '', Phone: '', Job: '', Company: '',
+          Installment: `#${p.installment_number}`,
+          'Sub Total': p.amount_due, Discount: 0,
+          'Net Total': p.net_amount,
+          Paid: p.amount_paid,
+          Balance: p.balance,
+          Status: p.status,
+          'Paid Date': p.paid_date ? formatDate(p.paid_date) : '',
+          Method: p.payment_method || '',
+        });
+      });
+    });
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Payments');
     XLSX.writeFile(wb, `finance-report-${new Date().toISOString().substring(0, 10)}.xlsx`);
   };
 
-  // PDF export
+  // PDF export — identical structure to All Payments printPayments
   const handleExportPDF = () => {
+    const fmt = (n: number) => `₹${Number(n).toLocaleString('en-IN')}`;
+    const label = DATE_PRESETS.find(p => p.value === preset)?.label || 'Custom';
+    const tableRows = groupedPayments.map(g => `
+      <tr style="background:#f8fafc;font-weight:600">
+        <td>${g.candidate_name}</td>
+        <td>${g.passport_no || '—'}</td>
+        <td>${g.job_title} / ${g.company_name}</td>
+        <td>${g.installments.length}</td>
+        <td>${fmt(g.subTotal)}</td>
+        <td style="color:#ef4444">${g.discount > 0 ? '−' + fmt(g.discount) : '—'}</td>
+        <td style="font-weight:700">${fmt(g.netTotal)}</td>
+        <td style="color:#059669">${fmt(g.totalPaid)}</td>
+        <td style="color:${g.balance > 0 ? '#d97706' : '#059669'}">${g.balance > 0 ? fmt(g.balance) : '₹0'}</td>
+        <td>${g.status.toUpperCase()}</td>
+      </tr>
+      ${g.installments.map((p: any, i: number) => `
+        <tr style="font-size:11px;color:#6b7280">
+          <td colspan="3" style="padding-left:24px;font-style:italic">Installment #${i + 1}</td>
+          <td>#${p.installment_number}</td>
+          <td>${fmt(p.amount_due)}</td>
+          <td style="color:#ef4444">—</td>
+          <td>${fmt(p.net_amount)}</td>
+          <td style="color:#059669">${fmt(p.amount_paid)}</td>
+          <td>${p.paid_date ? new Date(p.paid_date).toLocaleDateString('en-IN') : '—'}</td>
+          <td>${p.payment_method?.replace('_', ' ') || '—'}</td>
+        </tr>`).join('')}
+    `).join('');
+
     const win = window.open('', '_blank');
     if (!win) return;
-    const label = DATE_PRESETS.find(p => p.value === preset)?.label || 'Custom';
-    const tableRows = payments.map(p => `
-      <tr>
-        <td>${p.candidate_name}</td>
-        <td>${p.passport_no || '—'}</td>
-        <td>${p.job_title} / ${p.company_name}</td>
-        <td style="text-align:center">#${p.installment_number}</td>
-        <td style="text-align:right">₹${Number(p.amount_due).toLocaleString('en-IN')}</td>
-        <td style="text-align:right;color:#ef4444">${p.fee_waiver_amount > 0 ? '−₹' + Number(p.fee_waiver_amount).toLocaleString('en-IN') : '—'}</td>
-        <td style="text-align:right;font-weight:700">₹${Number(p.net_amount).toLocaleString('en-IN')}</td>
-        <td style="text-align:right;color:#059669">₹${Number(p.amount_paid).toLocaleString('en-IN')}</td>
-        <td style="text-align:right;color:${p.balance > 0 ? '#d97706' : '#059669'}">${p.balance > 0 ? '₹' + Number(p.balance).toLocaleString('en-IN') : 'Nil'}</td>
-        <td>${formatDate(p.paid_date)}</td>
-        <td>${p.payment_method?.replace('_', ' ') || '—'}</td>
-        <td style="color:${p.status === 'paid' ? '#059669' : '#d97706'}">${p.status}</td>
-      </tr>`).join('');
-
     win.document.write(`<!DOCTYPE html><html><head><title>Finance Report</title>
-      <style>
-        body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
-        table{width:100%;border-collapse:collapse}
-        th,td{border:1px solid #e5e7eb;padding:5px 8px;text-align:left}
-        th{background:#1e40af;color:#fff;font-size:11px}
-        .summary{display:flex;gap:20px;margin-bottom:16px;padding:12px 16px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px}
-        .s-item{text-align:center;min-width:100px}
-        .s-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em}
-        .s-val{font-size:15px;font-weight:700;margin-top:2px}
-        h1{font-size:18px;margin-bottom:2px}
-        .subtitle{font-size:12px;color:#6b7280;margin-bottom:14px}
-        @media print{body{padding:8px}}
-      </style></head>
+      <style>body{font-family:sans-serif;padding:24px;font-size:13px}
+      table{width:100%;border-collapse:collapse}
+      th{background:#1e40af;color:#fff;padding:8px 10px;text-align:left;font-size:11px}
+      td{padding:6px 10px;border-bottom:1px solid #e5e7eb}
+      h2{margin-bottom:4px;color:#1e293b}
+      .sub{font-size:12px;color:#6b7280;margin-bottom:12px}
+      .summary{display:flex;gap:16px;margin-bottom:16px;padding:10px 14px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px}
+      .s-item{text-align:center;min-width:90px}
+      .s-label{font-size:10px;color:#6b7280;text-transform:uppercase}
+      .s-val{font-size:14px;font-weight:700;margin-top:2px}
+      @media print{body{padding:8px}}</style></head>
       <body>
-        <h1>Al-Hiraa — Finance Report</h1>
-        <div class="subtitle">${label}${dateRange.from_date ? ' · ' + formatDate(dateRange.from_date) + ' → ' + formatDate(dateRange.to_date) : ''}</div>
+        <h2>Al-Hiraa — Finance Report</h2>
+        <div class="sub">${label}${dateRange.from_date ? ' · ' + formatDate(dateRange.from_date) + ' → ' + formatDate(dateRange.to_date || '') : ''}</div>
         <div class="summary">
           <div class="s-item"><div class="s-label">Sub Total</div><div class="s-val">₹${Number(summary.sub_total||0).toLocaleString('en-IN')}</div></div>
           <div class="s-item"><div class="s-label">Discount</div><div class="s-val" style="color:#ef4444">−₹${Number(summary.total_discount||0).toLocaleString('en-IN')}</div></div>
           <div class="s-item"><div class="s-label">Net Payable</div><div class="s-val">₹${Number(summary.net_total||0).toLocaleString('en-IN')}</div></div>
           <div class="s-item"><div class="s-label">Collected</div><div class="s-val" style="color:#059669">₹${Number(summary.total_collected||0).toLocaleString('en-IN')}</div></div>
           <div class="s-item"><div class="s-label">Pending</div><div class="s-val" style="color:#d97706">₹${Number(summary.total_pending||0).toLocaleString('en-IN')}</div></div>
-          <div class="s-item"><div class="s-label">Records</div><div class="s-val">${summary.total_count||0}</div></div>
+          <div class="s-item"><div class="s-label">Records</div><div class="s-val">${groupedPayments.length}</div></div>
         </div>
         <table><thead><tr>
-          <th>Candidate</th><th>Passport</th><th>Job / Company</th><th>#</th>
-          <th>Amount</th><th>Discount</th><th>Net Total</th><th>Paid</th><th>Balance</th>
-          <th>Paid Date</th><th>Method</th><th>Status</th>
+          <th>Candidate</th><th>Passport</th><th>Job / Company</th><th>Insts</th>
+          <th>Sub Total</th><th>Discount</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th>
         </tr></thead><tbody>${tableRows}</tbody></table>
         <script>window.onload=()=>window.print()</script>
       </body></html>`);
@@ -261,49 +321,96 @@ export default function FinanceReports() {
         )}
       </div>
 
-      {/* Payment details */}
+      {/* Payment details — grouped by candidate-job */}
       <div className="card overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-700">Payment Details</h2>
-          <span className="text-xs text-gray-400">{payments.length} records</span>
+          <span className="text-xs text-gray-400">{groupedPayments.length} records</span>
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center h-32"><div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>
-        ) : payments.length > 0 ? (
+        ) : groupedPayments.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr>
-                  {['Candidate', 'Passport', 'Job', 'Inst.', 'Amount', 'Discount', 'Net Total', 'Paid', 'Balance', 'Method', 'Paid Date', 'Status'].map(h => (
+                  {['Candidate', 'Passport', 'Job', 'Installments', 'Sub Total', 'Discount', 'Net Total', 'Paid', 'Balance', 'Status'].map(h => (
                     <th key={h} className="table-th">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p: any, i: number) => (
-                  <tr key={p.id ?? i} className={`hover:bg-blue-50/30 transition-colors ${p.status === 'paid' ? 'bg-emerald-50/20' : ''}`}>
-                    <td className="table-td font-medium text-gray-800 whitespace-nowrap">{p.candidate_name}</td>
-                    <td className="table-td text-gray-400">{p.passport_no || '—'}</td>
-                    <td className="table-td text-gray-500 whitespace-nowrap">{p.job_title}</td>
-                    <td className="table-td text-center text-gray-500">#{p.installment_number}</td>
-                    <td className="table-td text-gray-700 font-mono">{formatINR(p.amount_due)}</td>
-                    <td className="table-td text-red-500 font-semibold">
-                      {p.fee_waiver_amount > 0 ? `−${formatINR(p.fee_waiver_amount)}` : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="table-td font-bold text-gray-900">{formatINR(p.net_amount)}</td>
-                    <td className="table-td text-emerald-700 font-semibold">{formatINR(p.amount_paid)}</td>
-                    <td className="table-td font-semibold">
-                      {p.balance > 0
-                        ? <span className="text-amber-600">{formatINR(p.balance)}</span>
-                        : <span className="text-emerald-600">Nil</span>}
-                    </td>
-                    <td className="table-td text-gray-500 capitalize">{p.payment_method?.replace('_', ' ') || '—'}</td>
-                    <td className="table-td text-gray-500 whitespace-nowrap">{formatDate(p.paid_date)}</td>
-                    <td className="table-td">
-                      <span className={p.status === 'paid' ? 'badge-green' : 'badge-orange'}>{p.status}</span>
-                    </td>
-                  </tr>
-                ))}
+                {groupedPayments.map((g: any) => {
+                  const isOpen = expanded.has(g.candidate_job_id);
+                  return (
+                    <>
+                      <tr
+                        key={`g-${g.candidate_job_id}`}
+                        onClick={() => toggleExpand(g.candidate_job_id)}
+                        className={`hover:bg-blue-50/30 transition-colors cursor-pointer ${g.status === 'paid' ? 'bg-emerald-50/20' : ''}`}
+                      >
+                        <td className="table-td">
+                          <div className="flex items-center gap-1.5">
+                            {isOpen ? <ChevronDown size={13} className="text-gray-400 shrink-0" /> : <ChevronRight size={13} className="text-gray-400 shrink-0" />}
+                            <div>
+                              <div className="font-semibold text-gray-800">{g.candidate_name}</div>
+                              {g.whatsapp_no && <div className="text-[10px] text-gray-400">{g.whatsapp_no}</div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="table-td text-gray-400">{g.passport_no || '—'}</td>
+                        <td className="table-td text-gray-500 whitespace-nowrap">
+                          <div>{g.job_title}</div>
+                          <div className="text-[10px] text-gray-300">{g.company_name}</div>
+                        </td>
+                        <td className="table-td">
+                          <div className="flex flex-wrap gap-1">
+                            {g.installments.map((p: any, i: number) => (
+                              <span key={p.id} className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${INST_COLORS[i % INST_COLORS.length]}`}>
+                                #{p.installment_number} {formatINR(p.amount_due)}
+                                {p.status === 'paid' && <CheckCircle2 size={9} />}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="table-td text-gray-700 font-semibold">{formatINR(g.subTotal)}</td>
+                        <td className="table-td text-red-500 font-semibold">
+                          {g.discount > 0 ? `-${formatINR(g.discount)}` : <span className="text-gray-300">-</span>}
+                        </td>
+                        <td className="table-td font-bold text-gray-900">{formatINR(g.netTotal)}</td>
+                        <td className="table-td text-emerald-700 font-semibold">{formatINR(g.totalPaid)}</td>
+                        <td className="table-td font-semibold">
+                          {g.balance > 0 ? <span className="text-amber-600">{formatINR(g.balance)}</span> : <span className="text-emerald-600">0</span>}
+                        </td>
+                        <td className="table-td">
+                          <span className={g.status === 'paid' ? 'badge-green' : g.status === 'partial' ? 'badge-blue' : 'badge-orange'}>
+                            {g.status === 'partial' ? 'Partial' : g.status}
+                          </span>
+                        </td>
+                      </tr>
+                      {isOpen && g.installments.map((p: any, i: number) => (
+                        <tr key={`i-${p.id}`} className="bg-gray-50/60 border-t border-gray-100">
+                          <td colSpan={2} className="px-4 py-2 pl-12 text-xs text-gray-400 italic">Installment #{p.installment_number}</td>
+                          <td className="px-4 py-2 text-xs text-gray-500">{p.job_title}</td>
+                          <td className="px-4 py-2">
+                            <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${INST_COLORS[i % INST_COLORS.length]}`}>#{p.installment_number}</span>
+                          </td>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-700">{formatINR(p.amount_due)}</td>
+                          <td className="px-4 py-2 text-xs text-gray-300">-</td>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-700">{formatINR(p.net_amount)}</td>
+                          <td className="px-4 py-2 text-xs font-semibold text-emerald-700">
+                            {formatINR(p.amount_paid)}
+                            {p.paid_date && <div className="text-[10px] text-gray-400 font-normal">{formatDate(p.paid_date)}</div>}
+                          </td>
+                          <td className="px-4 py-2 text-xs font-semibold">
+                            {p.balance > 0 ? <span className="text-amber-600">{formatINR(p.balance)}</span> : <span className="text-emerald-600">0</span>}
+                          </td>
+                          <td className="px-4 py-2"><span className={p.status === 'paid' ? 'badge-green' : 'badge-orange'}>{p.status}</span></td>
+                        </tr>
+                      ))}
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>

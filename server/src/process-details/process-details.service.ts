@@ -18,6 +18,13 @@ const CANDIDATE_INCLUDE = {
       service_fee: true, positions_required: true,
       experience_required: true,
       company: { select: { name: true } },
+      interview_events: {
+        take: 1,
+        orderBy: { id: 'desc' as const },
+        select: {
+          vendor: { select: { name: true } },
+        },
+      },
     },
   },
   payments: {

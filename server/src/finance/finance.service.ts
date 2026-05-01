@@ -87,6 +87,7 @@ export class FinanceService {
             include: {
               candidate: { select: { full_name: true } },
               job: { select: { title: true } },
+              process_details: { select: { disc_allot: true } },
             },
           },
         },
@@ -109,15 +110,16 @@ export class FinanceService {
     );
 
     const recentPaymentsMapped = recentPayments.map((p) => {
-      const waiver = Number(p.fee_waiver_amount ?? 0);
       const due    = Number(p.amount_due ?? 0);
+      const waiver = Number((p.candidate_job as any).process_details?.disc_allot ?? 0)
+                   || Number(p.fee_waiver_amount ?? 0);
       return {
         id:                p.id,
         candidate_name:    p.candidate_job.candidate.full_name,
         job_title:         p.candidate_job.job.title,
         amount_due:        due,
         fee_waiver_amount: waiver,
-        net_amount:        Math.max(0, due - waiver),
+        net_amount:        due,
         amount_paid:       Number(p.amount_paid),
         payment_method:    p.payment_method,
         paid_date:         p.paid_date,
@@ -190,10 +192,11 @@ export class FinanceService {
                 select: {
                   id: true,
                   title: true,
+                  service_fee: true,
                   company: { select: { id: true, name: true } },
                 },
               },
-              process_details: { select: { disc_allot: true } },
+              process_details: { select: { disc_allot: true, vendor_service_charge: true } },
             },
           },
         },
@@ -209,6 +212,7 @@ export class FinanceService {
       whatsapp_no: (p.candidate_job.candidate as any).whatsapp_no,
       job_title: p.candidate_job.job.title,
       company_name: p.candidate_job.job.company.name,
+      vendor_service_charge: Number((p.candidate_job as any).process_details?.vendor_service_charge ?? 0) || Number((p.candidate_job as any).job?.service_fee ?? 0),
       disc_allot: Number((p.candidate_job as any).process_details?.disc_allot ?? 0),
       total_fee: Number(p.total_fee),
       installment_number: p.installment_number,
@@ -254,7 +258,7 @@ export class FinanceService {
 
     const allRows = await this.prisma.payment.findMany({
       where,
-      orderBy: [{ candidate_job_id: 'asc' }, { installment_number: 'asc' }],
+      orderBy: [{ candidate_job_id: 'desc' }, { installment_number: 'asc' }],
       include: {
         candidate_job: {
           include: {
@@ -297,6 +301,7 @@ export class FinanceService {
         installment_number: p.installment_number,
         amount_due:         due,
         fee_waiver_amount:  waiver,
+        disc_allot:         Number((p.candidate_job as any).process_details?.disc_allot ?? 0),
         net_amount:         net,
         amount_paid:        paid,
         balance:            Math.max(0, net - paid),

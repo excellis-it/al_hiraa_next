@@ -48,6 +48,7 @@ coverage/
 
 # Prisma generated client
 server/node_modules/.prisma/
+server/src/generated/prisma/
 
 # Claude Code workspace config
 .claude/

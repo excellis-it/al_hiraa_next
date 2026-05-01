@@ -1,9 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router';
-import { Search, Filter, FileSpreadsheet, FileText, X, DollarSign, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, FileSpreadsheet, FileText, X, DollarSign, CheckCircle2, Plus } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import { useGetAllPaymentsQuery } from '../../store/api/financeApi';
-import { useRecordPaymentMutation } from '../../store/api/paymentsApi';
+import { useRecordPaymentMutation, useCreatePaymentMutation } from '../../store/api/paymentsApi';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 
@@ -50,48 +50,101 @@ const PAYMENT_METHODS = [
   { value: 'cheque', label: 'Cheque' },
 ];
 
-type InstRow = { id: number; amount: string; discount: string; date: string; method: string };
+type InstRow = { id: number | null; amount: string; date: string; method: string };
 
 function GroupPayModal({ group, onClose, onSuccess }: { group: any; onClose: () => void; onSuccess: () => void }) {
   const [rows, setRows] = useState<InstRow[]>(() =>
     group.installments.map((p: any) => ({
-      id:       p.id,
-      amount:   String(Number(p.amount_due) || ''),
-      discount: String(Number(p.fee_waiver_amount) || ''),
-      date:     p.paid_date ? p.paid_date.substring(0, 10) : '',
-      method:   p.payment_method || '',
+      id:     p.id,
+      amount: String(Number(p.amount_due) || ''),
+      date:   p.paid_date ? p.paid_date.substring(0, 10) : '',
+      method: p.payment_method || '',
     }))
   );
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [recordPayment] = useRecordPaymentMutation();
+  const [createPayment] = useCreatePaymentMutation();
 
-  const setRow = (i: number, patch: Partial<InstRow>) =>
-    setRows(rs => rs.map((r, idx) => idx === i ? { ...r, ...patch } : r));
+  const setRow = (i: number, patch: Partial<InstRow>) => {
+    setSaveError('');
+    setRows(rs => {
+      const updated = rs.map((r, idx) => idx === i ? { ...r, ...patch } : r);
+      // When a NEW row's amount changes, auto-adjust the last unpaid existing row
+      if ('amount' in patch && rs[i].id === null) {
+        const paidExistingTotal = updated
+          .filter(r => r.id !== null && !!r.date)
+          .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+        const newTotal = updated
+          .filter(r => r.id === null)
+          .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+        const unpaidIdxs = updated
+          .map((r, idx) => (r.id !== null && !r.date ? idx : -1))
+          .filter(x => x !== -1);
+        if (unpaidIdxs.length > 0) {
+          const lastIdx = unpaidIdxs[unpaidIdxs.length - 1];
+          const otherUnpaidTotal = unpaidIdxs
+            .filter(idx => idx !== lastIdx)
+            .reduce((s, idx) => s + (parseFloat(updated[idx].amount) || 0), 0);
+          const adjusted = Math.max(0, totalPayable - paidExistingTotal - newTotal - otherUnpaidTotal);
+          return updated.map((r, idx) => idx === lastIdx ? { ...r, amount: String(adjusted) } : r);
+        }
+      }
+      return updated;
+    });
+  };
 
-  const computed = rows.map(r => {
-    const amt  = parseFloat(r.amount)   || 0;
-    const disc = parseFloat(r.discount) || 0;
-    return { amt, disc, net: Math.max(0, amt - disc) };
-  });
-
-  const subTotal      = computed.reduce((s, c) => s + c.amt,  0);
-  const totalDiscount = computed.reduce((s, c) => s + c.disc, 0);
-  const totalPayable  = Math.max(0, subTotal - totalDiscount);
-  const totalPaid     = computed.reduce((s, c, i) => s + (rows[i].date ? c.net : 0), 0);
+  // Use process-level values for the summary
+  const subTotal      = group.subTotal      || 0;
+  const totalDiscount = group.totalDiscount || 0;
+  const totalPayable  = group.netTotal      || 0;
+  const totalPaid     = rows.reduce((s, r) => s + (r.date ? (parseFloat(r.amount) || 0) : 0), 0);
   const balance       = Math.max(0, totalPayable - totalPaid);
 
   const handleSave = async () => {
+    setSaveError('');
+    // Validate: no zero-amount rows (existing unpaid + new)
+    const editableRows = rows.filter(r => r.id === null || !r.date);
+    for (const row of editableRows) {
+      if ((parseFloat(row.amount) || 0) <= 0) {
+        setSaveError('All installment amounts must be greater than ₹0.');
+        return;
+      }
+    }
+    // Validate: grand total must not exceed total payable
+    const grandTotal = rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+    if (grandTotal > totalPayable) {
+      setSaveError(`Total of all installments (₹${grandTotal.toLocaleString('en-IN')}) exceeds the payable amount (₹${totalPayable.toLocaleString('en-IN')}).`);
+      return;
+    }
     setSaving(true);
     try {
-      await Promise.all(rows.map((row, i) =>
-        recordPayment({
-          id:                row.id,
-          amount_due:        computed[i].amt,
-          fee_waiver_amount: computed[i].disc,
-          ...(row.date   ? { paid_date:      row.date   } : {}),
-          ...(row.method ? { payment_method: row.method } : {}),
-        }).unwrap()
-      ));
+      const maxNum = Math.max(0, ...group.installments.map((p: any) => p.installment_number || 0));
+      let nextNum = maxNum;
+      await Promise.all(rows.map(async (row) => {
+        const amt = parseFloat(row.amount) || 0;
+        if (row.id === null) {
+          nextNum += 1;
+          await createPayment({
+            candidate_job_id:   group.candidate_job_id,
+            installment_number: nextNum,
+            total_fee:          amt,
+            amount_due:         amt,
+            fee_waiver_amount:  0,
+            due_date:           row.date || new Date().toISOString().substring(0, 10),
+            ...(row.date   ? { paid_date: row.date, payment_method: row.method } : {}),
+          }).unwrap();
+        } else {
+          await recordPayment({
+            id:                row.id,
+            amount_due:        amt,
+            amount_paid:       row.date ? amt : 0,
+            fee_waiver_amount: 0,
+            ...(row.date   ? { paid_date:      row.date   } : {}),
+            ...(row.method ? { payment_method: row.method } : {}),
+          }).unwrap();
+        }
+      }));
       toast.success('Payments saved');
       onSuccess();
     } catch (err: any) {
@@ -119,59 +172,93 @@ function GroupPayModal({ group, onClose, onSuccess }: { group: any; onClose: () 
 
         <div className="p-6 space-y-4">
           {/* Column headers */}
-          <div className="grid grid-cols-[32px_1fr_1fr_80px_1fr_1fr] gap-2 px-1">
+          <div className="grid grid-cols-[32px_1fr_1fr_1fr_20px] gap-2 px-1">
             <div />
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Amount (₹)</p>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Discount (₹)</p>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Net</p>
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Date Paid</p>
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Method</p>
+            <div />
           </div>
 
           {/* Installment rows */}
           {rows.map((row, i) => {
-            const c = computed[i];
-            const isPaid = !!row.date;
+            const isPaid   = !!row.date;
+            const isNew    = row.id === null;
+            // Paid existing rows: fully read-only; unpaid existing: amount locked; new: all editable
+            const amountRO = !isNew && isPaid;   // only PAID existing rows lock the amount
+            const restRO   = !isNew && isPaid;
             return (
               <div
-                key={row.id}
-                className={`grid grid-cols-[32px_1fr_1fr_80px_1fr_1fr] gap-2 items-center rounded-xl px-2 py-1.5 transition-colors ${isPaid ? 'bg-emerald-50/60' : ''}`}
+                key={row.id ?? `new-${i}`}
+                className={`grid grid-cols-[32px_1fr_1fr_1fr_20px] gap-2 items-center rounded-xl px-2 py-1.5 transition-colors ${isPaid ? 'bg-emerald-50/60' : ''}`}
               >
                 <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold ${INST_COLORS[i % INST_COLORS.length]}`}>
                   #{i + 1}
                 </span>
-                <input
-                  type="number" min="0" step="1"
-                  value={row.amount}
-                  onChange={e => setRow(i, { amount: e.target.value })}
-                  className="form-input text-sm"
-                  placeholder="0"
-                />
-                <input
-                  type="number" min="0" step="1"
-                  value={row.discount}
-                  onChange={e => setRow(i, { discount: e.target.value })}
-                  className="form-input text-sm"
-                  placeholder="0"
-                />
-                <div className="text-sm font-bold text-gray-700">₹{c.net.toLocaleString('en-IN')}</div>
-                <input
-                  type="date"
-                  value={row.date}
-                  onChange={e => setRow(i, { date: e.target.value })}
-                  className="form-input text-sm"
-                />
-                <select
-                  value={row.method}
-                  onChange={e => setRow(i, { method: e.target.value })}
-                  className="form-input text-sm"
-                >
-                  <option value="">—</option>
-                  {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                </select>
+                {amountRO ? (
+                  <div className="form-input text-sm bg-gray-50 text-gray-500 cursor-not-allowed select-none">
+                    {row.amount ? `₹${Number(row.amount).toLocaleString('en-IN')}` : '—'}
+                  </div>
+                ) : (
+                  <input
+                    type="number" min="0" step="1"
+                    value={row.amount}
+                    onChange={e => setRow(i, { amount: e.target.value })}
+                    className="form-input text-sm"
+                    placeholder="0"
+                  />
+                )}
+                {restRO ? (
+                  <div className="form-input text-sm bg-gray-50 text-gray-500 cursor-not-allowed select-none">
+                    {row.date ? new Date(row.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                  </div>
+                ) : (
+                  <input
+                    type="date"
+                    value={row.date}
+                    onChange={e => setRow(i, { date: e.target.value })}
+                    className="form-input text-sm"
+                  />
+                )}
+                {restRO ? (
+                  <div className="form-input text-sm bg-gray-50 text-gray-500 cursor-not-allowed select-none capitalize">
+                    {row.method ? PAYMENT_METHODS.find(m => m.value === row.method)?.label ?? row.method : '—'}
+                  </div>
+                ) : (
+                  <select
+                    value={row.method}
+                    onChange={e => setRow(i, { method: e.target.value })}
+                    className="form-input text-sm"
+                  >
+                    <option value="">—</option>
+                    {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </select>
+                )}
+                {/* Remove button — only for new (unsaved) rows */}
+                {isNew ? (
+                  <button
+                    type="button"
+                    onClick={() => { setSaveError(''); setRows(rs => rs.filter((_, idx) => idx !== i)); }}
+                    className="flex items-center justify-center w-5 h-5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title="Remove installment"
+                  >
+                    <X size={12} />
+                  </button>
+                ) : <div />}
               </div>
             );
           })}
+
+          {/* Add installment — hidden when 3 or more rows already exist */}
+          {rows.length < 3 && (
+            <button
+              type="button"
+              onClick={() => { setSaveError(''); setRows(rs => [...rs, { id: null, amount: '', date: '', method: '' }]); }}
+              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 px-2 py-1"
+            >
+              <Plus size={13} /> Add Installment
+            </button>
+          )}
 
           {/* Summary bar */}
           <div className="grid grid-cols-4 gap-3 mt-2 pt-3 border-t border-gray-100">
@@ -193,6 +280,10 @@ function GroupPayModal({ group, onClose, onSuccess }: { group: any; onClose: () 
             <span>Balance Due</span>
             <span>{balance === 0 ? 'Nil — Fully Paid' : `₹${balance.toLocaleString('en-IN')}`}</span>
           </div>
+
+          {saveError && (
+            <p className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{saveError}</p>
+          )}
 
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
@@ -235,10 +326,12 @@ function groupByProcess(payments: any[]): any[] {
   }
   return Array.from(map.values()).map(g => {
     const insts = g.installments.sort((a: any, b: any) => (a.installment_number ?? 0) - (b.installment_number ?? 0));
-    const subTotal      = insts.reduce((s: number, p: any) => s + Number(p.amount_due        || 0), 0);
-    const totalDiscount = insts.reduce((s: number, p: any) => s + Number(p.fee_waiver_amount || 0), 0);
-    const totalPaid     = insts.reduce((s: number, p: any) => s + Number(p.amount_paid       || 0), 0);
+    // Sub total = service charge (process-level); discount = disc_allot (process-level)
+    const subTotal      = Number(insts[0]?.vendor_service_charge || 0);
+    const totalDiscount = Number(insts[0]?.disc_allot || 0);
     const netTotal      = Math.max(0, subTotal - totalDiscount);
+    // Paid = sum of amount_paid for installments that have a paid date
+    const totalPaid     = insts.reduce((s: number, p: any) => s + (p.paid_date ? Number(p.amount_paid || 0) : 0), 0);
     const balance       = Math.max(0, netTotal - totalPaid);
     const allPaid   = insts.every((p: any) => p.status === 'paid');
     const anyPaid   = insts.some((p: any)  => Number(p.amount_paid) > 0);
@@ -497,7 +590,7 @@ export default function AllPayments() {
                         <td className="table-td font-bold text-gray-900">{formatINR(g.netTotal)}</td>
                         <td className="table-td font-semibold text-emerald-700">{formatINR(g.totalPaid)}</td>
                         <td className="table-td font-semibold text-amber-700">
-                          {g.balance > 0 ? formatINR(g.balance) : <span className="text-emerald-600">Nil</span>}
+                          {g.balance > 0 ? formatINR(g.balance) : <span className="text-emerald-600">&#8377;0</span>}
                         </td>
                         <td className="table-td"><GroupStatusBadge status={g.groupStatus} /></td>
                         <td className="table-td">
@@ -548,7 +641,7 @@ export default function AllPayments() {
                               {p.paid_date && <div className="text-[10px] text-gray-400 font-normal">{formatDate(p.paid_date)}</div>}
                             </td>
                             <td className="px-4 py-2 text-xs font-semibold text-amber-700">
-                              {instBalance > 0 ? formatINR(instBalance) : <span className="text-emerald-600 text-[10px]">Nil</span>}
+                              {instBalance > 0 ? formatINR(instBalance) : <span className="text-emerald-600 text-[10px]">&#8377;0</span>}
                             </td>
                             <td className="px-4 py-2"><MethodBadge method={p.payment_method} /></td>
                             <td className="px-4 py-2">
