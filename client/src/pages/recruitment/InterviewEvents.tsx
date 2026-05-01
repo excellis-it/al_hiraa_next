@@ -657,6 +657,7 @@ export default function InterviewEvents() {
   };
 
   const totalPositions = filtered.reduce((s, j) => s + (j.positions_required || 0), 0);
+  const openJobsCount = jobs.filter((j: any) => j.status === 'open').length;
 
   return (
     <div className="flex flex-col h-full">
@@ -664,7 +665,10 @@ export default function InterviewEvents() {
       <div className="flex items-center justify-between mb-5 flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Interviews</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{filtered.length} interviews · {totalPositions} positions · grouped by date</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            <span className="font-semibold text-blue-600">{openJobsCount} open jobs</span>
+            {' · '}{filtered.length} interviews · {totalPositions} positions · grouped by date
+          </p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn-primary text-sm"><Plus size={14} /> New Interview</button>
       </div>

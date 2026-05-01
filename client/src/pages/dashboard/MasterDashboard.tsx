@@ -119,7 +119,7 @@ function InterviewCalendar({ events }: { events: any[] }) {
 
 // ── Stat Card ──────────────────────────────────────────────────────────────
 function StatCard({
-  label, value, icon, iconBg, change, changePositive, sub,
+  label, value, icon, iconBg, change, changePositive, sub, to,
 }: {
   label: string;
   value: number;
@@ -128,16 +128,23 @@ function StatCard({
   change?: string;
   changePositive?: boolean;
   sub?: string;
+  to?: string;
 }) {
-  return (
-    <div className="stat-card">
+  const inner = (
+    <>
       <div className="flex items-start justify-between mb-3">
         <div className={`w-10 h-10 ${iconBg} rounded-2xl flex items-center justify-center`}>
           {icon}
         </div>
-        <button className="text-gray-300 hover:text-gray-500 transition-colors">
-          <MoreHorizontal size={14} />
-        </button>
+        {to ? (
+          <span className="text-gray-300 group-hover:text-blue-600 transition-colors">
+            <ArrowUpRight size={14} />
+          </span>
+        ) : (
+          <span className="text-gray-300">
+            <MoreHorizontal size={14} />
+          </span>
+        )}
       </div>
       <div className="text-2xl font-bold text-gray-900 mb-0.5">
         {value.toLocaleString()}
@@ -150,8 +157,21 @@ function StatCard({
           <span className="text-gray-400 font-normal ml-0.5">{sub || 'from last month'}</span>
         </div>
       )}
-    </div>
+    </>
   );
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="stat-card group block hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-blue-100 transition-all cursor-pointer"
+      >
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className="stat-card">{inner}</div>;
 }
 
 // ── Custom Tooltip ─────────────────────────────────────────────────────────
@@ -181,6 +201,7 @@ function fmtDate(d: string | null | undefined): string {
 
 // ── Main Dashboard ─────────────────────────────────────────────────────────
 export default function MasterDashboard() {
+  const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const role = user?.role ?? '';
 
@@ -230,6 +251,7 @@ export default function MasterDashboard() {
               value={deStats?.total ?? 0}
               icon={<Users size={18} className="text-blue-600" />}
               iconBg="bg-blue-50"
+              to="/data-entry/candidates"
             />
             <StatCard
               label="Incomplete Records"
@@ -237,6 +259,7 @@ export default function MasterDashboard() {
               icon={<AlertCircle size={18} className="text-rose-500" />}
               iconBg="bg-rose-50"
               sub="needs follow-up"
+              to="/data-entry/incomplete"
             />
           </>
         )}
@@ -247,18 +270,21 @@ export default function MasterDashboard() {
               value={recStats?.open_jobs ?? 0}
               icon={<Briefcase size={18} className="text-blue-600" />}
               iconBg="bg-blue-50"
+              to="/recruitment/interviews"
             />
             <StatCard
               label="Lined Up"
               value={recStats?.lined_up_total ?? 0}
               icon={<Users size={18} className="text-violet-600" />}
               iconBg="bg-violet-50"
+              to="/recruitment/pipeline?status=lined_up"
             />
             <StatCard
               label="Interviews This Week"
               value={recStats?.interviews_this_week ?? 0}
               icon={<CalendarCheck size={18} className="text-emerald-600" />}
               iconBg="bg-emerald-50"
+              to="/recruitment/interviews"
             />
           </>
         )}
@@ -268,6 +294,7 @@ export default function MasterDashboard() {
             value={stageTotal}
             icon={<FileCheck size={18} className="text-amber-600" />}
             iconBg="bg-amber-50"
+            to="/process-module"
           />
         )}
       </div>
@@ -296,7 +323,17 @@ export default function MasterDashboard() {
                     <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#94A3B8' }} axisLine={false} tickLine={false} interval={4} />
                     <YAxis tick={{ fontSize: 9, fill: '#94A3B8' }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F1F5F9', radius: 6 }} />
-                    <Bar dataKey="count" radius={[5, 5, 0, 0]}>
+                    <Bar
+                      dataKey="count"
+                      radius={[5, 5, 0, 0]}
+                      cursor="pointer"
+                      onClick={(payload: any) => {
+                        if (payload?.date) {
+                          const day = new Date(payload.date).toISOString().slice(0, 10);
+                          navigate(`/data-entry/candidates?date_from=${day}&date_to=${day}`);
+                        }
+                      }}
+                    >
                       {trendData.map((entry: any, index: number) => (
                         <Cell key={index} fill={entry.count === maxCount ? '#2563EB' : '#DBEAFE'} />
                       ))}
@@ -339,17 +376,21 @@ export default function MasterDashboard() {
                       );
                     })}
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {PROCESS_STAGES.map((s) => {
                       const count = (stageSummary as any)?.[s.key] || 0;
                       return (
-                        <div key={s.key} className="flex items-center justify-between">
+                        <Link
+                          key={s.key}
+                          to={`/process-module?stage=${s.key}`}
+                          className="flex items-center justify-between px-2 py-1.5 -mx-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                        >
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${s.color}`} />
-                            <span className="text-xs text-gray-500">{s.label}</span>
+                            <span className="text-xs text-gray-500 group-hover:text-gray-900">{s.label}</span>
                           </div>
-                          <span className="text-xs font-bold text-gray-700">{count}</span>
-                        </div>
+                          <span className="text-xs font-bold text-gray-700 group-hover:text-blue-600">{count}</span>
+                        </Link>
                       );
                     })}
                   </div>
@@ -395,7 +436,11 @@ export default function MasterDashboard() {
                   </thead>
                   <tbody>
                     {recentCandidates?.data?.map((c: any) => (
-                      <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
+                      <tr
+                        key={c.id}
+                        onClick={() => navigate(`/data-entry/candidates/${c.id}/edit`)}
+                        className="hover:bg-blue-50/40 transition-colors cursor-pointer"
+                      >
                         <td className="table-td">
                           <span className="text-blue-600 font-mono font-semibold text-[10px]">{c.candidate_code}</span>
                         </td>
@@ -404,7 +449,7 @@ export default function MasterDashboard() {
                             <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-[10px] font-bold flex-shrink-0">
                               {c.full_name[0]}
                             </div>
-                            <span className="font-medium text-gray-800 text-xs">{c.full_name}</span>
+                            <span className="font-medium text-gray-800 text-xs hover:text-blue-700">{c.full_name}</span>
                           </div>
                         </td>
                         <td className="table-td text-xs text-gray-600">{c.position_1?.name || '—'}</td>

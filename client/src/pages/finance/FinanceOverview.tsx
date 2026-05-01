@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { DollarSign, AlertCircle, TrendingUp, Clock, Download, Calendar } from 'lucide-react';
+import { AlertCircle, TrendingUp, Clock, Calendar, ArrowRightCircle, ArrowLeftCircle } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useGetFinanceOverviewQuery } from '../../store/api/financeApi';
@@ -147,7 +147,27 @@ export default function FinanceOverview() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Opening Balance</p>
+              <p className="text-2xl font-bold text-slate-700 mt-1">{formatINR(overview.opening_balance)}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Receivables at start of period</p>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-slate-50 flex items-center justify-center"><ArrowRightCircle size={20} className="text-slate-500" /></div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Closing Balance</p>
+              <p className="text-2xl font-bold text-indigo-700 mt-1">{formatINR(overview.closing_balance)}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Receivables at end of period</p>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 flex items-center justify-center"><ArrowLeftCircle size={20} className="text-indigo-500" /></div>
+          </div>
+        </div>
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>

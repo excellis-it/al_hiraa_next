@@ -25,12 +25,36 @@ export class FinanceService {
     const hasDates = Object.keys(dateFilter).length > 0;
     const paidDateWhere = hasDates ? { paid_date: dateFilter } : { paid_date: { not: null } };
 
+    // Opening/Closing balance cutoffs
+    // Opening = receivables snapshot just before from_date (i.e. carried-forward balance)
+    // Closing = receivables snapshot at to_date (or now if not specified)
+    const openingCutoff = dateRange?.from_date
+      ? (() => { const d = new Date(dateRange.from_date); d.setHours(0,0,0,0); d.setMilliseconds(-1); return d; })()
+      : null;
+    const closingCutoff = dateRange?.to_date
+      ? (() => { const d = new Date(dateRange.to_date); d.setHours(23,59,59,999); return d; })()
+      : new Date();
+
+    const receivablesAt = (cutoff: Date) =>
+      this.prisma.payment.aggregate({
+        _sum: { amount_due: true, fee_waiver_amount: true },
+        where: {
+          created_at: { lte: cutoff },
+          OR: [
+            { paid_date: null },
+            { paid_date: { gt: cutoff } },
+          ],
+        },
+      });
+
     const [
       totalCollectedAgg,
       totalOutstandingRaw,
       overdueCount,
       thisMonthAgg,
       lastMonthAgg,
+      openingAgg,
+      closingAgg,
       recentPayments,
     ] = await Promise.all([
       this.prisma.payment.aggregate({
@@ -52,6 +76,8 @@ export class FinanceService {
         _sum: { amount_paid: true },
         where: { paid_date: { gte: startOfLastMonth, lte: endOfLastMonth } },
       }),
+      openingCutoff ? receivablesAt(openingCutoff) : Promise.resolve(null as any),
+      receivablesAt(closingCutoff),
       this.prisma.payment.findMany({
         take: 10,
         orderBy: { paid_date: 'desc' },
@@ -73,6 +99,14 @@ export class FinanceService {
     const totalOutstanding = Math.max(0, outstandingDue - outstandingPaid);
     const thisMonthCollected = Number(thisMonthAgg._sum.amount_paid ?? 0);
     const lastMonthCollected = Number(lastMonthAgg._sum.amount_paid ?? 0);
+
+    const opening_balance = openingAgg
+      ? Math.max(0, Number(openingAgg._sum.amount_due ?? 0) - Number(openingAgg._sum.fee_waiver_amount ?? 0))
+      : 0;
+    const closing_balance = Math.max(
+      0,
+      Number(closingAgg._sum.amount_due ?? 0) - Number(closingAgg._sum.fee_waiver_amount ?? 0),
+    );
 
     const recentPaymentsMapped = recentPayments.map((p) => {
       const waiver = Number(p.fee_waiver_amount ?? 0);
@@ -98,6 +132,8 @@ export class FinanceService {
         overdue_count: overdueCount,
         this_month_collected: thisMonthCollected,
         last_month_collected: lastMonthCollected,
+        opening_balance,
+        closing_balance,
       },
       recent_payments: recentPaymentsMapped,
     };
@@ -226,6 +262,7 @@ export class FinanceService {
             job: {
               select: { id: true, title: true, company: { select: { id: true, name: true } } },
             },
+            process_details: { select: { disc_allot: true } },
           },
         },
       },
@@ -274,7 +311,16 @@ export class FinanceService {
     });
 
     const sub_total       = payments.reduce((s, p) => s + p.amount_due,        0);
-    const total_discount  = payments.reduce((s, p) => s + p.fee_waiver_amount, 0);
+    const legacy_waiver   = payments.reduce((s, p) => s + p.fee_waiver_amount, 0);
+    // New flow: discount lives once per candidate_job in process_details.disc_allot.
+    // Sum unique candidate_jobs appearing in the report so we don't double-count.
+    const seenCandidateJobs = new Set<number>();
+    const disc_allot_total = filtered.reduce((s, p) => {
+      if (seenCandidateJobs.has(p.candidate_job_id)) return s;
+      seenCandidateJobs.add(p.candidate_job_id);
+      return s + Number((p.candidate_job as any).process_details?.disc_allot ?? 0);
+    }, 0);
+    const total_discount  = legacy_waiver + disc_allot_total;
     const net_total       = Math.max(0, sub_total - total_discount);
     const total_collected = payments.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount_paid, 0);
     const total_pending   = payments.filter(p => p.status !== 'paid').reduce((s, p) => s + p.balance,    0);
