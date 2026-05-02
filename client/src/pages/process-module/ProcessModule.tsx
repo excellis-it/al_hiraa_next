@@ -331,10 +331,12 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
               <Row label="Employment Country" value={job?.country} />
               <Row label="Salary"           value={job?.salary_min ? `${fmtCurrency(job.salary_min)} ${job.salary_currency || ''}`.trim() : null} />
               <Row label="Service charge"   value={record.vendor_service_charge ? fmtCurrency(record.vendor_service_charge) : null} highlight />
+              {/* PLEASE LOG TO SEE THE ACCOMMODATION AND TRANSPORTATION */}
+              {console.log(record)}
               <Row
                 label="Accommodation"
                 value={
-                  record.accommodation === true  ? 'Provided' :
+                  record.candidate_job === true  ? 'Provided' :
                   record.accommodation === false ? `Candidate pays${record.accommodation_cost ? ` · ${fmtCurrency(record.accommodation_cost)}` : ''}` :
                   null
                 }
@@ -956,7 +958,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                 </Select>
               </div>
               {form.accommodation === 'no' && (
-                <MoneyInp label="Accommodation Cost" value={String(form.accommodation_cost)} onChange={v=>set('accommodation_cost',v)} />
+                <MoneyInp label="Accommodation Cost" value={String(form.accommodation_cost ?? 0)} onChange={v=>set('accommodation_cost',v)} />
               )}
               {/* Transportation toggle + cost */}
               <div>
@@ -968,7 +970,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                 </Select>
               </div>
               {form.transportation === 'no' && (
-                <MoneyInp label="Transportation Cost" value={String(form.transportation_cost)} onChange={v=>set('transportation_cost',v)} />
+                <MoneyInp label="Transportation Cost" value={String(form.transportation_cost ?? 0)} onChange={v=>set('transportation_cost',v)} />
               )}
               <div className="col-span-3">
                 <label className={lbl}>Medical Approval Email Date & Time (from Client)</label>

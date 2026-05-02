@@ -93,11 +93,74 @@ export class ProcessDetailsService {
   }
 
   // ── Batch init from interview checkins ────────────────────────────────────
+  // Snapshot accommodation/transportation from the candidate's JobPosition (boolean)
+  // and the InterviewEvent they attended (cost). Once snapshotted, the process-module
+  // form reads these values from ProcessDetails directly — no prefill at render time.
   async batchFromInterview(candidateJobIds: number[], initialData?: any) {
     const results = [];
     for (const candidateJobId of candidateJobIds) {
+      // Snapshot inputs: positions for booleans, the candidate's actual checkin event for cost,
+      // with the job's most-recent event as fallback when no checkin exists.
+      const cj = await this.prisma.candidateJob.findUnique({
+        where: { id: candidateJobId },
+        select: {
+          trade_id: true,
+          job: {
+            select: {
+              positions: {
+                select: { trade_id: true, accommodation: true, transportation: true },
+              },
+              interview_events: {
+                take: 1,
+                orderBy: { id: 'desc' as const },
+                select: { accommodation_cost: true, transportation_cost: true },
+              },
+            },
+          },
+          interview_checkins: {
+            orderBy: { id: 'desc' as const },
+            take: 1,
+            select: {
+              interview_event: {
+                select: { accommodation_cost: true, transportation_cost: true },
+              },
+            },
+          },
+        },
+      });
+
+      const positions = cj?.job?.positions ?? [];
+      const matchedPosition =
+        positions.find((p) => p.trade_id === cj?.trade_id) ?? positions[0];
+      const sourceEvent =
+        cj?.interview_checkins?.[0]?.interview_event ??
+        cj?.job?.interview_events?.[0] ??
+        null;
+
+      const accomBool = matchedPosition?.accommodation ?? null;
+      const transBool = matchedPosition?.transportation ?? null;
+      // Cost only applies when the candidate pays (boolean === false). When the employer
+      // provides (true), cost stays null. When boolean is unknown, cost stays null.
+      const accomCost = accomBool === false ? sourceEvent?.accommodation_cost ?? null : null;
+      const transCost = transBool === false ? sourceEvent?.transportation_cost ?? null : null;
+
       const existing = await this.prisma.processDetails.findUnique({ where: { candidate_job_id: candidateJobId } });
-      if (existing) { results.push(existing); continue; }
+      if (existing) {
+        // Idempotent backfill: only fill fields that are currently null. Don't overwrite
+        // values a process manager has already saved.
+        const patch: any = {};
+        if (existing.accommodation        === null && accomBool !== null) patch.accommodation        = accomBool;
+        if (existing.accommodation_cost   === null && accomCost !== null) patch.accommodation_cost   = accomCost;
+        if (existing.transportation       === null && transBool !== null) patch.transportation       = transBool;
+        if (existing.transportation_cost  === null && transCost !== null) patch.transportation_cost  = transCost;
+        if (Object.keys(patch).length === 0) { results.push(existing); continue; }
+        results.push(await this.prisma.processDetails.update({
+          where: { candidate_job_id: candidateJobId },
+          data: patch,
+        }));
+        continue;
+      }
+
       const data: any = {};
       if (initialData) {
         for (const [k, v] of Object.entries(initialData)) {
@@ -105,6 +168,12 @@ export class ProcessDetailsService {
           data[k] = (DATE_FIELDS.includes(k) || DATETIME_FIELDS.includes(k)) ? new Date(v as string) : v;
         }
       }
+      // Snapshot values — only set when not already provided via initialData.
+      if (data.accommodation === undefined && accomBool !== null) data.accommodation = accomBool;
+      if (data.accommodation_cost === undefined && accomCost !== null) data.accommodation_cost = accomCost;
+      if (data.transportation === undefined && transBool !== null) data.transportation = transBool;
+      if (data.transportation_cost === undefined && transCost !== null) data.transportation_cost = transCost;
+
       results.push(await this.prisma.processDetails.create({
         data: { candidate_job_id: candidateJobId, ...data },
         include: { candidate_job: { include: CANDIDATE_INCLUDE } },
