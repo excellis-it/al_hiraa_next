@@ -241,6 +241,7 @@ model Candidate {
   email                 String?          @db.VarChar(255)
   gender                Gender?
   passport_no           String?          @unique @db.VarChar(20)
+  passport_expiry_date  DateTime?        @db.Date
   ecr_type              EcrType?
   state_id              Int?
   city_id               Int?

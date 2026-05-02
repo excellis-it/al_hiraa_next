@@ -4,7 +4,7 @@ import {
   CheckCircle2, Clock, Zap, FileSpreadsheet,
   UserPlus, DollarSign, Plane, FileText, Stethoscope,
   Globe, BadgeCheck, Info, Plus, Users, CalendarDays,
-  ArrowRight, Loader2, Eye, Lock,
+  ArrowRight, Loader2, Eye, Lock, User,
 } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import {
@@ -19,6 +19,8 @@ import { useGetInterviewEventsQuery, useGetInterviewEventQuery } from '../../sto
 import { useGetVendorsQuery } from '../../store/api/vendorsApi';
 import { useGetPipelineQuery } from '../../store/api/pipelineApi';
 import { useCreatePaymentMutation, useRecordPaymentMutation } from '../../store/api/paymentsApi';
+import { useUpdateCandidateMutation } from '../../store/api/candidatesApi';
+import { useGetSourcesQuery } from '../../store/api/mastersApi';
 import * as XLSX from 'xlsx';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -46,7 +48,7 @@ const DOCS_CHECKLIST = [
 ];
 
 const PIPELINE_STAGES = [
-  { key: 'selection', num: 1, label: 'Selection Offer', subtitle: 'Interview → Selection → Offer',         icon: BadgeCheck  },
+  { key: 'selection', num: 1, label: 'Interview Detials', subtitle: 'Interview → Selection → Offer',         icon: BadgeCheck  },
   { key: 'documents', num: 2, label: 'Documents',        subtitle: 'Passport, photos, certificates',        icon: FileText    },
   { key: 'medical',   num: 3, label: 'Medical',          subtitle: 'Application → Completion → Approval',   icon: Stethoscope },
   { key: 'payment',   num: 4, label: 'Payment',          subtitle: 'Up to 4 installments',                  icon: '₹'  },
@@ -295,8 +297,26 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto bg-gray-50/40">
 
+          {/* Candidate Details — informational card, always visible */}
+          <div className="px-5 py-4 bg-white border-b border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <User size={13} className="text-emerald-600" />
+              </div>
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Candidate Details</span>
+            </div>
+            <Row label="Source"               value={cand?.source?.name} />
+            <Row label="Name"                 value={cand?.full_name} />
+            <Row label="Applied for Position" value={cand?.position_1?.name || job?.title} />
+            <Row label="Work Experience"      value={[cand?.indian_experience, cand?.abroad_experience].filter(Boolean).join(' · ') || null} />
+            <Row label="Contact No"           value={cand?.whatsapp_no} mono />
+            <Row label="Email Id"             value={cand?.email} />
+            <Row label="Passport No"          value={cand?.passport_no} mono />
+            <Row label="Passport Expiry"      value={cand?.passport_expiry_date ? fmtDate(cand.passport_expiry_date, true) : null} />
+          </div>
+
           {/* Selection */}
-          <StageBtn stageKey="selection" label="Selection Offer" subtitle="Interview → Selection → Offer" num={1} Icon={BadgeCheck} />
+          <StageBtn stageKey="selection" label="Interview Detials" subtitle="Interview → Selection → Offer" num={1} Icon={BadgeCheck} />
           {open.has('selection') && (
             <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
               <Row label="Interview date"  value={fmtDate(record.date_of_interview, true)} />
@@ -341,8 +361,8 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
                   </div>
                 ))}
               </div>
-              <Row label="Passport No"      value={cand?.passport_no} mono />
-              <Row label="ECR Type"         value={cand?.ecr_type?.replace('_',' ').toUpperCase()} />
+              {/* <Row label="Passport No"      value={cand?.passport_no} mono /> */}
+              {/* <Row label="ECR Type"         value={cand?.ecr_type?.replace('_',' ').toUpperCase()} /> */}
               <Row label="Courier sent"     value={fmtDate(record.courier_sent_date, true)} />
               <Row label="Courier received" value={fmtDate(record.courier_received_date, true)} />
             </div>
@@ -512,10 +532,13 @@ type PayRow = { id: number | null; date: string; method: string; amount: string;
 
 function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => void }) {
   const [updateDetails, { isLoading }] = useUpdateProcessDetailsMutation();
-  const [createPayment] = useCreatePaymentMutation();
-  const [recordPayment] = useRecordPaymentMutation();
+  const [createPayment]   = useCreatePaymentMutation();
+  const [recordPayment]   = useRecordPaymentMutation();
+  const [updateCandidate] = useUpdateCandidateMutation();
   const { data: vendorsData } = useGetVendorsQuery({ status: 'active', limit: 200 } as any);
   const vendors: any[] = (vendorsData as any)?.data || [];
+  const { data: sourcesData } = useGetSourcesQuery({} as any);
+  const sources: any[] = (sourcesData as any)?.data || (sourcesData as any) || [];
   const cj   = record.candidate_job;
   const cand = cj?.candidate;
   const job  = cj?.job;
@@ -570,6 +593,20 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const existingPayments: any[] = cj?.payments || [];
+
+  // Candidate detail fields shown above Interview Detials.
+  // All editable except "Applied for Position" which displays the candidate's position_1 (or job title fallback).
+  const appliedPosition = cand?.position_1?.name || job?.title || '';
+  const [candForm, setCandForm] = useState({
+    source_id:            cand?.source?.id ? String(cand.source.id) : '',
+    full_name:            cand?.full_name        || '',
+    whatsapp_no:          cand?.whatsapp_no      || '',
+    email:                cand?.email            || '',
+    passport_no:          cand?.passport_no      || '',
+    passport_expiry_date: cand?.passport_expiry_date?.substring(0, 10) || '',
+    indian_experience:    cand?.indian_experience || '',
+  });
+  const setCand = (k: string, v: string) => setCandForm(c => ({ ...c, [k]: v }));
   const [numInstallments, setNumInstallments] = useState<number>(() => {
     const count = existingPayments.filter((p: any) => Number(p?.amount_due || 0) > 0).length;
     return count > 0 ? Math.min(4, count) : 1;
@@ -697,6 +734,22 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
       return;
     }
 
+    // Save candidate-level edits (source, name, contact, email, passport, experience)
+    if (cand?.id) {
+      try {
+        await updateCandidate({
+          id:                   cand.id,
+          source_id:            candForm.source_id ? Number(candForm.source_id) : null,
+          full_name:            candForm.full_name,
+          whatsapp_no:          candForm.whatsapp_no,
+          email:                candForm.email || null,
+          passport_no:          candForm.passport_no || null,
+          passport_expiry_date: candForm.passport_expiry_date || null,
+          indian_experience:    candForm.indian_experience || null,
+        }).unwrap();
+      } catch { /* candidate update is best-effort; main save succeeded */ }
+    }
+
     // Save payment installments — only for selected number, evenly divided
     for (let i = 0; i < numInstallments; i++) {
       const row = payRows[i];
@@ -764,8 +817,54 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 bg-gray-50">
 
-          {/* Selection Offer */}
-          <EditSec title="Selection Offer" icon={BadgeCheck} color="blue">
+          {/* Candidate Details — shown above Interview Detials; all editable except Applied Position */}
+          <EditSec title="Candidate Details" icon={User} color="emerald">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className={lbl}>Candidate Source</label>
+                <select value={candForm.source_id} onChange={e => setCand('source_id', e.target.value)} className={inp}>
+                  <option value="">— Select source —</option>
+                  {sources.map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={lbl}>Candidate Name</label>
+                <input type="text" value={candForm.full_name} onChange={e => setCand('full_name', e.target.value)} className={inp} />
+              </div>
+              <div>
+                <label className={lbl}>Applied for Position</label>
+                <div className={`${inp} bg-gray-100 text-gray-700 cursor-not-allowed select-text`}>
+                  {appliedPosition || <span className="text-gray-300">—</span>}
+                </div>
+              </div>
+              <div className="col-span-3">
+                <label className={lbl}>Work Experience</label>
+                <input type="text" value={candForm.indian_experience} onChange={e => setCand('indian_experience', e.target.value)} className={inp} placeholder="e.g. 5 years as electrician" />
+              </div>
+              <div>
+                <label className={lbl}>Contact No</label>
+                <input type="text" value={candForm.whatsapp_no} onChange={e => setCand('whatsapp_no', e.target.value)} className={inp} />
+              </div>
+              <div className="col-span-2">
+                <label className={lbl}>Email Id</label>
+                <input type="email" value={candForm.email} onChange={e => setCand('email', e.target.value)} className={inp} />
+              </div>
+              <div>
+                <label className={lbl}>Passport No</label>
+                <input type="text" value={candForm.passport_no} onChange={e => setCand('passport_no', e.target.value)} className={inp} />
+              </div>
+              <div>
+                <label className={lbl}>Passport Expiry Date</label>
+                <input type="date" value={candForm.passport_expiry_date} onChange={e => setCand('passport_expiry_date', e.target.value)} className={inp} />
+              </div>
+            </div>
+          </EditSec>
+
+
+          {/* Interview Detials */}
+          <EditSec title="Interview Detials" icon={BadgeCheck} color="blue">
             <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Interview Date</label><input type="date" value={form.date_of_interview} onChange={e=>set('date_of_interview',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Selection Date</label><input type="date" value={form.date_of_selection} onChange={e=>set('date_of_selection',e.target.value)} className={inp} /></div>

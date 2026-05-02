@@ -114,6 +114,7 @@ export class CandidatesService {
           ...dto,
           whatsapp_no,
           dob: dto.dob ? new Date(dto.dob) : null,
+          passport_expiry_date: dto.passport_expiry_date ? new Date(dto.passport_expiry_date) : null,
           indian_driving_license: dto.indian_driving_license || [],
           gulf_driving_license: dto.gulf_driving_license || [],
           completion_status,
@@ -368,6 +369,8 @@ export class CandidatesService {
 
     const updateData: any = { ...data, completion_status };
     if (data.dob) updateData.dob = new Date(data.dob);
+    if (data.passport_expiry_date) updateData.passport_expiry_date = new Date(data.passport_expiry_date);
+    else if (data.passport_expiry_date === null) updateData.passport_expiry_date = null;
     if (userId) updateData.updated_by = userId;
 
     const candidate = await this.prisma.candidate.update({

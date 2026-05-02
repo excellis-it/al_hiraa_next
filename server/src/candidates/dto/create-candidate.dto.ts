@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsArray,
   IsEmail,
+  IsDateString,
   MinLength,
   MaxLength,
 } from 'class-validator';
@@ -45,6 +46,10 @@ export class CreateCandidateDto {
   @IsOptional()
   @IsString()
   passport_no?: string;
+
+  @IsOptional()
+  @IsDateString()
+  passport_expiry_date?: string;
 
   @IsOptional()
   @IsEnum(EcrType)

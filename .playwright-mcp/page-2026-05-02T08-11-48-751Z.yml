@@ -1,0 +1,135 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - img "Al-Hiraa" [ref=e6]
+    - generic [ref=e7]:
+      - button "Notifications" [ref=e8]:
+        - img [ref=e9]
+      - button "SA System Admin Administrator" [ref=e14]:
+        - generic [ref=e15]: SA
+        - generic [ref=e16]:
+          - generic [ref=e17]: System Admin
+          - text: Administrator
+        - img [ref=e18]
+  - generic [ref=e20]:
+    - complementary [ref=e21]:
+      - generic [ref=e22]:
+        - link "Dashboard" [ref=e24] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e26]
+          - text: Dashboard
+        - generic [ref=e31]:
+          - generic [ref=e32]: Data Entry
+          - link "Register Candidate" [ref=e33] [cursor=pointer]:
+            - /url: /data-entry/register
+            - img [ref=e35]
+            - text: Register Candidate
+          - link "All Candidates" [ref=e38] [cursor=pointer]:
+            - /url: /data-entry/candidates
+            - img [ref=e40]
+            - text: All Candidates
+          - link "Incomplete Queue" [ref=e45] [cursor=pointer]:
+            - /url: /data-entry/incomplete
+            - img [ref=e47]
+            - text: Incomplete Queue
+        - generic [ref=e49]:
+          - generic [ref=e50]: Recruitment
+          - link "Interviews" [ref=e51] [cursor=pointer]:
+            - /url: /recruitment/interviews
+            - img [ref=e53]
+            - text: Interviews
+          - link "Process Management" [ref=e56] [cursor=pointer]:
+            - /url: /process-module
+            - img [ref=e58]
+            - text: Process Management
+        - generic [ref=e62]:
+          - generic [ref=e63]: Finance
+          - link "₹ Overview" [ref=e64] [cursor=pointer]:
+            - /url: /finance/overview
+            - generic [ref=e65]: ₹
+            - text: Overview
+          - link "All Payments" [ref=e66] [cursor=pointer]:
+            - /url: /finance/payments
+            - img [ref=e68]
+            - text: All Payments
+          - link "Reports" [ref=e70] [cursor=pointer]:
+            - /url: /finance/reports
+            - img [ref=e72]
+            - text: Reports
+        - generic [ref=e73]:
+          - generic [ref=e74]: General
+          - link "Associates" [ref=e75] [cursor=pointer]:
+            - /url: /associates
+            - img [ref=e77]
+            - text: Associates
+          - link "Deployed" [ref=e81] [cursor=pointer]:
+            - /url: /deployed
+            - img [ref=e83]
+            - text: Deployed
+        - generic [ref=e85]:
+          - generic [ref=e86]: Reports
+          - link "Analytics" [ref=e87] [cursor=pointer]:
+            - /url: /analytics
+            - img [ref=e89]
+            - text: Analytics
+        - generic [ref=e90]:
+          - generic [ref=e91]: Administration
+          - link "Companies" [ref=e92] [cursor=pointer]:
+            - /url: /recruitment/companies
+            - img [ref=e94]
+            - text: Companies
+          - link "Masters Config" [ref=e98] [cursor=pointer]:
+            - /url: /admin/masters
+            - img [ref=e100]
+            - text: Masters Config
+          - link "User Management" [ref=e103] [cursor=pointer]:
+            - /url: /admin/users
+            - img [ref=e105]
+            - text: User Management
+          - link "Message Templates" [ref=e117] [cursor=pointer]:
+            - /url: /admin/message-templates
+            - img [ref=e119]
+            - text: Message Templates
+          - link "Vendors" [ref=e121] [cursor=pointer]:
+            - /url: /admin/vendors
+            - img [ref=e123]
+            - text: Vendors
+          - link "Audit Log" [ref=e127] [cursor=pointer]:
+            - /url: /admin/audit-log
+            - img [ref=e129]
+            - text: Audit Log
+      - img "Al-Hiraa" [ref=e134]
+    - main [ref=e135]:
+      - generic [ref=e136]:
+        - generic [ref=e137]:
+          - generic [ref=e138]:
+            - heading "Process Management" [level=1] [ref=e139]
+            - paragraph [ref=e140]: Selection → Documents → Medical → Payment → Visa & MOFA → Flight
+          - generic [ref=e141]:
+            - generic [ref=e142]:
+              - img [ref=e143]
+              - textbox "Search passport, name…" [ref=e146]
+            - button "Export" [ref=e147]:
+              - img [ref=e148]
+              - text: Export
+            - button "Add to Process" [ref=e151]:
+              - img [ref=e152]
+              - text: Add to Process
+        - generic [ref=e153]:
+          - button "0 Selection Offer" [ref=e154]:
+            - generic [ref=e155]: "0"
+            - generic [ref=e156]: Selection Offer
+          - button "0 Documents" [ref=e157]:
+            - generic [ref=e158]: "0"
+            - generic [ref=e159]: Documents
+          - button "0 Medical" [ref=e160]:
+            - generic [ref=e161]: "0"
+            - generic [ref=e162]: Medical
+          - button "0 Payment" [ref=e163]:
+            - generic [ref=e164]: "0"
+            - generic [ref=e165]: Payment
+          - button "0 Visa & MOFA" [ref=e166]:
+            - generic [ref=e167]: "0"
+            - generic [ref=e168]: Visa & MOFA
+          - button "0 Flight" [ref=e169]:
+            - generic [ref=e170]: "0"
+            - generic [ref=e171]: Flight

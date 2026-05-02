@@ -4,11 +4,15 @@ import { PrismaService } from '../prisma/prisma.service';
 const CANDIDATE_INCLUDE = {
   candidate: {
     select: {
-      id: true, full_name: true, passport_no: true, whatsapp_no: true,
+      id: true, full_name: true, passport_no: true, passport_expiry_date: true, whatsapp_no: true,
+      alternate_contact: true, email: true,
       ecr_type: true, state_id: true, city_id: true, gender: true,
       dob: true, education: true,
-      state: { select: { name: true } },
-      city:  { select: { name: true } },
+      indian_experience: true, abroad_experience: true,
+      state:      { select: { name: true } },
+      city:       { select: { name: true } },
+      source:     { select: { id: true, name: true } },
+      position_1: { select: { id: true, name: true } },
     },
   },
   job: {
