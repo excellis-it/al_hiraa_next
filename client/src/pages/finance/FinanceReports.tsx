@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FileSpreadsheet, FileText, Calendar, Search, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { FileSpreadsheet, FileText, Calendar, Search, ChevronDown, ChevronRight, CheckCircle2, Filter } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import { useGetFinanceReportQuery } from '../../store/api/financeApi';
 import * as XLSX from 'xlsx';
@@ -46,11 +46,12 @@ function getDateRange(preset: string): { from_date?: string; to_date?: string } 
 }
 
 export default function FinanceReports() {
-  const [preset,     setPreset]     = useState('this_month');
-  const [customFrom, setCustomFrom] = useState('');
-  const [customTo,   setCustomTo]   = useState('');
-  const [search,     setSearch]     = useState('');
-  const [expanded,   setExpanded]   = useState<Set<number>>(new Set());
+  const [preset,       setPreset]       = useState('this_month');
+  const [customFrom,   setCustomFrom]   = useState('');
+  const [customTo,     setCustomTo]     = useState('');
+  const [search,       setSearch]       = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
+  const [expanded,     setExpanded]     = useState<Set<number>>(new Set());
   const toggleExpand = (id: number) => setExpanded(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const dateRange = useMemo(() => {
@@ -62,8 +63,15 @@ export default function FinanceReports() {
   const queryParams = { ...dateRange, ...(search ? { search } : {}) };
   const { data, isLoading } = useGetFinanceReportQuery(queryParams, { refetchOnMountOrArgChange: true });
 
-  const payments: any[] = (data as any)?.payments ?? [];
-  const summary:  any   = (data as any)?.summary  ?? {};
+  const allPayments: any[] = (data as any)?.payments ?? [];
+  const summary:    any   = (data as any)?.summary  ?? {};
+
+  // Client-side status filter applied on top of date-range results
+  const payments = useMemo(() => {
+    if (statusFilter === 'all') return allPayments;
+    if (statusFilter === 'paid')   return allPayments.filter((p: any) => p.status === 'paid');
+    return allPayments.filter((p: any) => p.status !== 'paid' && p.status !== 'waived');
+  }, [allPayments, statusFilter]);
 
   // Group payments by candidate_job for the Payment Details table
   const groupedPayments = useMemo(() => {
@@ -102,7 +110,8 @@ export default function FinanceReports() {
     // Track seen candidate_jobs per month to avoid double-counting disc_allot
     const seenByMonth = new Map<string, Set<number>>();
     for (const p of payments) {
-      const raw = p.paid_date || p.due_date || p.created_at;
+      // Use paid_date for paid records, created_at for pending — no due_date dependency
+      const raw = p.status === 'paid' ? p.paid_date : p.created_at;
       if (!raw) continue;
       const key = new Date(raw).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
       if (!map.has(key)) { map.set(key, { month: key, count: 0, subTotal: 0, discount: 0, netTotal: 0, collected: 0, pending: 0 }); seenByMonth.set(key, new Set()); }
@@ -239,9 +248,9 @@ export default function FinanceReports() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="card p-4">
-        <div className="relative max-w-sm">
+      {/* Search + Status filter */}
+      <div className="card p-4 flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[220px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -251,17 +260,25 @@ export default function FinanceReports() {
             className="form-input pl-9 text-sm"
           />
         </div>
+        <div className="flex items-center gap-2">
+          <Filter size={14} className="text-gray-400" />
+          <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)}>
+            <option value="all">All Statuses</option>
+            <option value="paid">Paid Only</option>
+            <option value="unpaid">Unpaid Only</option>
+          </Select>
+        </div>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Records',       value: summary.total_count  || 0, fmt: (v: number) => String(v),  cls: 'text-gray-700' },
-          { label: 'Sub Total',     value: summary.sub_total    || 0, fmt: formatINR,                  cls: 'text-gray-800' },
-          { label: 'Discount',      value: summary.total_discount||0, fmt: (v: number) => v > 0 ? `−${formatINR(v)}` : '₹0', cls: 'text-red-600' },
-          { label: 'Net Payable',   value: summary.net_total    || 0, fmt: formatINR,                  cls: 'text-gray-900 font-extrabold' },
-          { label: 'Collected',     value: summary.total_collected||0,fmt: formatINR,                  cls: 'text-emerald-600' },
-          { label: 'Pending / Due', value: summary.total_pending|| 0, fmt: formatINR,                  cls: 'text-amber-600' },
+          { label: 'Records',          value: summary.total_count     || 0, fmt: (v: number) => String(v),  cls: 'text-gray-700' },
+          { label: 'Sub Total',        value: summary.sub_total       || 0, fmt: formatINR,                  cls: 'text-gray-800' },
+          { label: 'Discount',         value: summary.total_discount  || 0, fmt: (v: number) => v > 0 ? `−${formatINR(v)}` : '₹0', cls: 'text-red-600' },
+          { label: 'Net Payable',      value: summary.net_total       || 0, fmt: formatINR,                  cls: 'text-gray-900 font-extrabold' },
+          { label: 'Collected (Paid)', value: summary.total_collected || 0, fmt: formatINR,                  cls: 'text-emerald-600' },
+          { label: 'Pending (Unpaid)', value: summary.total_pending   || 0, fmt: formatINR,                  cls: 'text-amber-600' },
         ].map(({ label, value, fmt, cls }) => (
           <div key={label} className="stat-card">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
@@ -269,6 +286,16 @@ export default function FinanceReports() {
           </div>
         ))}
       </div>
+      {/* Collection rate strip */}
+      {(summary.net_total ?? 0) > 0 && (
+        <div className="card px-5 py-3 flex items-center gap-4">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider shrink-0">Collection Rate</span>
+          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${summary.collection_rate ?? 0}%` }} />
+          </div>
+          <span className="text-sm font-bold text-emerald-600 shrink-0">{summary.collection_rate ?? 0}%</span>
+        </div>
+      )}
 
       {/* Export buttons */}
       <div className="flex gap-3">
@@ -384,7 +411,7 @@ export default function FinanceReports() {
                         </td>
                         <td className="table-td">
                           <span className={g.status === 'paid' ? 'badge-green' : g.status === 'partial' ? 'badge-blue' : 'badge-orange'}>
-                            {g.status === 'partial' ? 'Partial' : g.status}
+                            {g.status === 'paid' ? 'Paid' : g.status === 'partial' ? 'Partial' : 'Unpaid'}
                           </span>
                         </td>
                       </tr>
@@ -405,7 +432,7 @@ export default function FinanceReports() {
                           <td className="px-4 py-2 text-xs font-semibold">
                             {p.balance > 0 ? <span className="text-amber-600">{formatINR(p.balance)}</span> : <span className="text-emerald-600">0</span>}
                           </td>
-                          <td className="px-4 py-2"><span className={p.status === 'paid' ? 'badge-green' : 'badge-orange'}>{p.status}</span></td>
+                          <td className="px-4 py-2"><span className={p.status === 'paid' ? 'badge-green' : p.status === 'waived' ? 'badge-gray' : 'badge-orange'}>{p.status === 'paid' ? 'Paid' : p.status === 'waived' ? 'Waived' : 'Unpaid'}</span></td>
                         </tr>
                       ))}
                     </>

@@ -48,7 +48,6 @@ export class FinanceController {
     @Query('status') status?: string,
     @Query('candidate_name') candidate_name?: string,
     @Query('search') search?: string,
-    @Query('overdue_only') overdue_only?: string,
     @Query('from_date') from_date?: string,
     @Query('to_date') to_date?: string,
   ) {
@@ -57,7 +56,6 @@ export class FinanceController {
       limit: limit ? +limit : (per_page ? +per_page : 20),
       status,
       search: search || candidate_name,
-      overdue_only: overdue_only === 'true',
       from_date,
       to_date,
     });

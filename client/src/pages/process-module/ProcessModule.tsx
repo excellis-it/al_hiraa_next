@@ -369,7 +369,7 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
           )}
 
           {/* Payment */}
-          <StageBtn stageKey="payment" label="Payment" subtitle="Up to 3 installments" num={4} Icon={DollarSign} />
+          <StageBtn stageKey="payment" label="Payment" subtitle="Up to 4 installments" num={4} Icon={DollarSign} />
           {open.has('payment') && (
             <div className="px-5 py-3 bg-white border-b border-gray-100">
               {payments.length > 0 && (
@@ -508,7 +508,7 @@ function MoneyInp({ label, value, onChange }: { label: string; value: string; on
 
 // ── Edit Drawer ────────────────────────────────────────────────────────────────
 
-type PayRow = { id: number | null; date: string; method: string; amount: string };
+type PayRow = { id: number | null; date: string; method: string; amount: string; status: 'paid' | 'unpaid' };
 
 function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => void }) {
   const [updateDetails, { isLoading }] = useUpdateProcessDetailsMutation();
@@ -572,30 +572,33 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
   const existingPayments: any[] = cj?.payments || [];
   const [numInstallments, setNumInstallments] = useState<number>(() => {
     const count = existingPayments.filter((p: any) => Number(p?.amount_due || 0) > 0).length;
-    return count > 0 ? Math.min(3, count) : 3;
+    return count > 0 ? Math.min(4, count) : 1;
   });
   const [payRows, setPayRows] = useState<PayRow[]>(() => {
     const existingCount = existingPayments.filter((p: any) => Number(p?.amount_due || 0) > 0).length;
-    const instCount = existingCount > 0 ? Math.min(3, existingCount) : 3;
+    const instCount = existingCount > 0 ? Math.min(4, existingCount) : 1;
     const sc   = parseFloat(String(record.vendor_service_charge ?? record.candidate_job?.job?.service_fee ?? 0)) || 0;
     const disc = parseFloat(String(record.disc_allot ?? 0)) || 0;
     const net  = Math.max(0, sc - disc);
     const base = instCount > 0 ? Math.floor(net / instCount) : 0;
-    const dbAmounts = [1, 2, 3].map(n => {
+    const dbAmounts = [1, 2, 3, 4].map(n => {
       const p = existingPayments.find((x: any) => x.installment_number === n);
       return n <= instCount && p?.amount_due ? Number(p.amount_due) : null;
     });
     const dbSum = dbAmounts.every(a => a !== null) ? dbAmounts.reduce((s, a) => s + (a ?? 0), 0) : null;
     const useDb = dbSum !== null && dbSum === net;
-    return [1, 2, 3].map(n => {
+    return [1, 2, 3, 4].map(n => {
       const p = existingPayments.find((x: any) => x.installment_number === n);
       const dbAmt = p?.amount_due ? Number(p.amount_due) : null;
       const autoAmt = net > 0 && n <= instCount ? (n === instCount ? net - base * (instCount - 1) : base) : 0;
+      // Show paid_date if paid, otherwise fall back to due_date — the UI's single "Date" field
+      const displayDate = p?.paid_date?.substring(0, 10) || p?.due_date?.substring(0, 10) || '';
       return {
         id:     p?.id ?? null,
-        date:   p?.paid_date?.substring(0, 10) || '',
+        date:   displayDate,
         method: p?.payment_method || '',
         amount: useDb && dbAmt !== null ? String(dbAmt) : (autoAmt > 0 ? String(autoAmt) : ''),
+        status: (p?.status === 'paid' ? 'paid' : 'unpaid') as 'paid' | 'unpaid',
       };
     });
   });
@@ -606,13 +609,29 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
     const sc   = parseFloat(String(form.vendor_service_charge)) || 0;
     const disc = parseFloat(String(form.disc_allot)) || 0;
     const net  = Math.max(0, sc - disc);
-    const perInst = numInstallments > 0 ? Math.round(net / numInstallments) : 0;
-    if (perInst > 0) {
-      setPayRows(prev => prev.map((r, i) => ({
-        ...r,
-        amount: i < numInstallments ? String(perInst) : r.amount,
-      })));
-    }
+
+    // Preserve amounts on already-paid installments; only redistribute the remaining
+    // amount across the unpaid installments within the active range.
+    setPayRows(prev => {
+      const next = [...prev];
+      const activeIdxs    = next.map((_, i) => i).filter(i => i < numInstallments);
+      const paidActive    = activeIdxs.filter(i => next[i].status === 'paid');
+      const unpaidActive  = activeIdxs.filter(i => next[i].status !== 'paid');
+      const paidSum       = paidActive.reduce((s, i) => s + (parseFloat(next[i].amount) || 0), 0);
+      const remaining     = Math.max(0, net - paidSum);
+
+      if (unpaidActive.length === 0) return next;
+
+      const perUnpaid = Math.floor(remaining / unpaidActive.length);
+      let given = 0;
+      unpaidActive.forEach((idx, k) => {
+        const isLast = k === unpaidActive.length - 1;
+        const amt    = isLast ? remaining - given : perUnpaid;
+        next[idx]    = { ...next[idx], amount: String(Math.max(0, amt)) };
+        given += amt;
+      });
+      return next;
+    });
   }, [numInstallments, form.vendor_service_charge, form.disc_allot]);
 
   const set = (k: string, v: string) => setForm(f => {
@@ -686,6 +705,8 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
       const amount = parseFloat(row.amount) || fallback;
       if (amount <= 0) continue;
       const installmentNum = i + 1;
+      // Explicit status sent to backend — no longer inferred from date
+      const explicitStatus: 'paid' | 'pending' = row.status === 'paid' ? 'paid' : 'pending';
       try {
         let payId = row.id;
         if (!payId) {
@@ -695,8 +716,9 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
             total_fee:          amount,
             amount_due:         amount,
             fee_waiver_amount:  0,
-            due_date:           row.date || new Date().toISOString().substring(0, 10),
-            ...(row.date   ? { paid_date: row.date, payment_method: row.method } : {}),
+            status:             explicitStatus,
+            ...(row.date   ? { paid_date: row.date } : {}),
+            ...(row.method ? { payment_method: row.method } : {}),
           }).unwrap();
           payId = res.id;
         }
@@ -704,8 +726,8 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
           await recordPayment({
             id:                payId,
             amount_due:        amount,
-            amount_paid:       row.date ? amount : 0,
             fee_waiver_amount: 0,
+            status:            explicitStatus,
             ...(row.date   ? { paid_date:      row.date   } : {}),
             ...(row.method ? { payment_method: row.method } : {}),
           }).unwrap();
@@ -829,14 +851,15 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
             const netTotal       = Math.max(0, serviceCharge - discount);
             const perInstallment = numInstallments > 0 ? Math.floor(netTotal / numInstallments) : 0;
             const visibleRows    = payRows.slice(0, numInstallments);
+            // Total paid uses explicit status field (not date) — status is the source of truth
             const totalPaid      = visibleRows.reduce((s, r, i) => {
-              if (!r.date) return s;
+              if (r.status !== 'paid') return s;
               const isLast = i === numInstallments - 1;
               const fallback = isLast ? netTotal - perInstallment * (numInstallments - 1) : perInstallment;
               return s + (parseFloat(r.amount) || fallback);
             }, 0);
             const balance        = Math.max(0, netTotal - totalPaid);
-            const INST_COLORS    = ['bg-amber-100 text-amber-700','bg-blue-100 text-blue-700','bg-violet-100 text-violet-700'];
+            const INST_COLORS    = ['bg-amber-100 text-amber-700','bg-blue-100 text-blue-700','bg-violet-100 text-violet-700','bg-teal-100 text-teal-700'];
 
             return (
               <EditSec title="Payment" icon={DollarSign} color="amber"
@@ -860,6 +883,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                       <option value="1">1</option>
                       <option value="2">2</option>
                       <option value="3">3</option>
+                      <option value="4">4</option>
                     </Select>
                   </div>
                 </div>
@@ -879,9 +903,9 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                 </div>
 
                 {/* Header labels */}
-                <div className="grid grid-cols-[28px_1.2fr_1fr_1fr] gap-2 mb-1">
+                <div className="grid grid-cols-[28px_1.1fr_0.95fr_0.9fr_90px] gap-2 mb-1">
                   <div />
-                  {['Amount','Date Paid','Method'].map(h => (
+                  {['Amount','Date Paid','Method','Status'].map(h => (
                     <div key={h} className="text-[9px] font-bold text-gray-400 uppercase">{h}</div>
                   ))}
                 </div>
@@ -889,9 +913,9 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                 {/* Installment rows — only as many as numInstallments */}
                 <div className="space-y-2">
                   {visibleRows.map((row, i) => {
-                    const paid = !!row.date;
+                    const paid = row.status === 'paid';
                     return (
-                      <div key={i} className={`grid grid-cols-[28px_1.2fr_1fr_1fr] gap-2 items-center p-2 rounded-xl ${paid ? 'bg-emerald-50/60' : 'bg-gray-50'}`}>
+                      <div key={i} className={`grid grid-cols-[28px_1.1fr_0.95fr_0.9fr_90px] gap-2 items-center p-2 rounded-xl ${paid ? 'bg-emerald-50/60' : 'bg-gray-50'}`}>
                         <div className={`text-[10px] font-bold px-1.5 py-1 rounded-lg text-center ${INST_COLORS[i]}`}>#{i+1}</div>
                         <div className="relative">
                           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 pointer-events-none select-none">&#8377;</span>
@@ -899,29 +923,40 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                             type="text" inputMode="decimal"
                             value={row.amount}
                             placeholder={perInstallment > 0 ? String(perInstallment) : '0'}
+                            disabled={row.status === 'paid'}
                             onChange={e => {
                               const raw = e.target.value.replace(/[^0-9.]/g, '');
-                              // Clamp to [0, netTotal]
                               const val = raw === '' ? '' : String(Math.min(parseFloat(raw) || 0, netTotal));
-                              const afterCount = numInstallments - i - 1;
                               setPayRows(prev => {
                                 const next = [...prev];
                                 next[i] = { ...next[i], amount: val };
-                                if (afterCount > 0 && val !== '') {
-                                  const entered = parseFloat(val) || 0;
-                                  const remaining = Math.max(0, netTotal - entered);
+                                // Redistribute only across UNPAID rows after the current one — paid rows are locked
+                                const laterUnpaidIdxs = next
+                                  .map((r, idx) => (idx > i && idx < numInstallments && r.status !== 'paid' ? idx : -1))
+                                  .filter(x => x !== -1);
+                                if (laterUnpaidIdxs.length > 0 && val !== '') {
+                                  const earlierPaidSum = next
+                                    .slice(0, i)
+                                    .filter(r => r.status === 'paid')
+                                    .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+                                  const laterPaidSum = next
+                                    .filter((r, idx) => idx > i && idx < numInstallments && r.status === 'paid')
+                                    .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+                                  const entered  = parseFloat(val) || 0;
+                                  const remaining = Math.max(0, netTotal - earlierPaidSum - entered - laterPaidSum);
+                                  const perUnpaid = Math.floor(remaining / laterUnpaidIdxs.length);
                                   let given = 0;
-                                  for (let j = i + 1; j < numInstallments; j++) {
-                                    const isLast = j === numInstallments - 1;
-                                    const amt = isLast ? remaining - given : Math.round(remaining / afterCount);
-                                    next[j] = { ...next[j], amount: String(Math.max(0, amt)) };
+                                  laterUnpaidIdxs.forEach((idx, k) => {
+                                    const isLast = k === laterUnpaidIdxs.length - 1;
+                                    const amt    = isLast ? remaining - given : perUnpaid;
+                                    next[idx]    = { ...next[idx], amount: String(Math.max(0, amt)) };
                                     given += amt;
-                                  }
+                                  });
                                 }
                                 return next;
                               });
                             }}
-                            className={`${MONEY_CLS} pl-6 pr-2 py-1.5 text-sm font-bold ${row.amount !== '' && (parseFloat(row.amount) <= 0 || parseFloat(row.amount) > netTotal) ? 'border-red-400 bg-red-50' : ''}`}
+                            className={`${MONEY_CLS} pl-6 pr-2 py-1.5 text-sm font-bold ${row.status === 'paid' ? 'opacity-70 cursor-not-allowed' : ''} ${row.amount !== '' && (parseFloat(row.amount) <= 0 || parseFloat(row.amount) > netTotal) ? 'border-red-400 bg-red-50' : ''}`}
                           />
                         </div>
                         <input
@@ -941,6 +976,29 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                           <option value="upi">UPI</option>
                           <option value="cheque">Cheque</option>
                         </select>
+                        {/* Explicit Paid / Unpaid toggle — single source of truth for status */}
+                        <button
+                          type="button"
+                          onClick={() => setPayRows(prev => prev.map((r, idx) => {
+                            if (idx !== i) return r;
+                            const next: 'paid' | 'unpaid' = r.status === 'paid' ? 'unpaid' : 'paid';
+                            return {
+                              ...r,
+                              status: next,
+                              // Auto-fill today's date only if empty; preserve existing date when toggling either way
+                              date:   r.date || (next === 'paid' ? new Date().toISOString().substring(0, 10) : ''),
+                              method: next === 'paid' ? (r.method || 'cash') : r.method,
+                            };
+                          }))}
+                          className={`text-[10px] font-bold rounded-lg px-2 py-1.5 transition-all border ${
+                            paid
+                              ? 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600'
+                              : 'bg-white text-gray-500 border-gray-200 hover:border-amber-400 hover:text-amber-700'
+                          }`}
+                          title={paid ? 'Click to mark as Unpaid' : 'Click to mark as Paid'}
+                        >
+                          {paid ? '✓ PAID' : 'UNPAID'}
+                        </button>
                       </div>
                     );
                   })}
@@ -1312,7 +1370,7 @@ function AddToProcessModal({
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
-function fmtDate(val: any) {
+function fmtDateISO(val: any) {
   if (!val) return '';
   return String(val).substring(0, 10);
 }
@@ -1325,8 +1383,8 @@ function buildPaymentCols(payments: any[], num: number) {
     [`P${num} Amount Paid`]: p?.amount_paid       ?? '',
     [`P${num} Waiver`]:      p?.fee_waiver_amount ?? '',
     [`P${num} Status`]:      p?.status            || '',
-    [`P${num} Due Date`]:    fmtDate(p?.due_date),
-    [`P${num} Paid Date`]:   fmtDate(p?.paid_date),
+    [`P${num} Due Date`]:    fmtDateISO(p?.due_date),
+    [`P${num} Paid Date`]:   fmtDateISO(p?.paid_date),
     [`P${num} Receipt No`]:  p?.receipt_number    || '',
     [`P${num} Method`]:      p?.payment_method    || '',
   };
@@ -1347,7 +1405,7 @@ function buildExportRows(records: any[]) {
       'Passport No':             cand?.passport_no    || '',
       'WhatsApp No':             cand?.whatsapp_no    || '',
       'Gender':                  cand?.gender         || '',
-      'Date of Birth':           fmtDate(cand?.dob),
+      'Date of Birth':           fmtDateISO(cand?.dob),
       'Education':               cand?.education      || '',
       'ECR Type':                cand?.ecr_type       || '',
       'State':                   cand?.state?.name    || '',
@@ -1362,8 +1420,8 @@ function buildExportRows(records: any[]) {
       // Selection
       'Stage':                   computeStage(r),
       'Year of Selection':       r.year_of_selection  || '',
-      'Date of Interview':       fmtDate(r.date_of_interview),
-      'Date of Selection':       fmtDate(r.date_of_selection),
+      'Date of Interview':       fmtDateISO(r.date_of_interview),
+      'Date of Selection':       fmtDateISO(r.date_of_selection),
       'Selection Month':         r.selection_month    || '',
       'Mode of Selection':       r.mode_of_selection  || '',
       'Interview Location':      r.interview_location || '',
@@ -1373,31 +1431,31 @@ function buildExportRows(records: any[]) {
       'Sponsor':                 r.sponsor            || '',
       // Medical
       'Medical Status':          r.medical_status             || '',
-      'Medical App Date':        fmtDate(r.medical_app_date),
-      'Medical Completion Date': fmtDate(r.medical_completion_date),
-      'Medical Approval Date':   fmtDate(r.medical_approval_date),
-      'Medical Expiry Date':     fmtDate(r.medical_expiry_date),
-      'Medical Repeat Date':     fmtDate(r.medical_repeat_date),
+      'Medical App Date':        fmtDateISO(r.medical_app_date),
+      'Medical Completion Date': fmtDateISO(r.medical_completion_date),
+      'Medical Approval Date':   fmtDateISO(r.medical_approval_date),
+      'Medical Expiry Date':     fmtDateISO(r.medical_expiry_date),
+      'Medical Repeat Date':     fmtDateISO(r.medical_repeat_date),
       // Documents
       'Documents Submitted':     dc.submitted,
       'Documents Total':         dc.total,
-      'Courier Sent Date':       fmtDate(r.courier_sent_date),
-      'Courier Received Date':   fmtDate(r.courier_received_date),
+      'Courier Sent Date':       fmtDateISO(r.courier_sent_date),
+      'Courier Received Date':   fmtDateISO(r.courier_received_date),
       // MOFA & Visa
       'MOFA Number':             r.mofa_number        || '',
-      'MOFA Date':               fmtDate(r.mofa_date),
-      'MOFA Received Date':      fmtDate(r.mofa_received_date),
-      'Visa Issue Date':         fmtDate(r.visa_issue_date),
-      'Visa Expiry Date':        fmtDate(r.visa_expiry_date),
-      'Visa Receiving Date':     fmtDate(r.visa_receiving_date),
-      'VFS Applied Date':        fmtDate(r.vfs_applied_date),
-      'VFS Received Date':       fmtDate(r.vfs_received_date),
+      'MOFA Date':               fmtDateISO(r.mofa_date),
+      'MOFA Received Date':      fmtDateISO(r.mofa_received_date),
+      'Visa Issue Date':         fmtDateISO(r.visa_issue_date),
+      'Visa Expiry Date':        fmtDateISO(r.visa_expiry_date),
+      'Visa Receiving Date':     fmtDateISO(r.visa_receiving_date),
+      'VFS Applied Date':        fmtDateISO(r.vfs_applied_date),
+      'VFS Received Date':       fmtDateISO(r.vfs_received_date),
       // Flight
-      'Ticket Booking Date':     fmtDate(r.ticket_booking_date),
-      'Ticket Confirm Date':     fmtDate(r.ticket_confirm_date),
+      'Ticket Booking Date':     fmtDateISO(r.ticket_booking_date),
+      'Ticket Confirm Date':     fmtDateISO(r.ticket_confirm_date),
       'Onboarding City':         r.onboarding_city    || '',
-      'Exit Paper Date':         fmtDate(r.exit_paper_date),
-      'Deployment Date':         fmtDate(r.deployment_date),
+      'Exit Paper Date':         fmtDateISO(r.exit_paper_date),
+      'Deployment Date':         fmtDateISO(r.deployment_date),
       'Deployment Month':        r.deployment_month   || '',
       // Logistics
       'Accommodation':           r.accommodation === true ? 'Yes (Provided)' : r.accommodation === false ? 'No (Candidate Pays)' : '',
@@ -1413,7 +1471,7 @@ function buildExportRows(records: any[]) {
       'Total Receivable':        r.total_receivable_amount ?? '',
       'Disc Allot':              r.disc_allot              ?? '',
       'Refund Amount':           r.refund_amount           ?? '',
-      'Refund Date':             fmtDate(r.refund_date),
+      'Refund Date':             fmtDateISO(r.refund_date),
       // Payment installments
       ...buildPaymentCols(pays, 1),
       ...buildPaymentCols(pays, 2),

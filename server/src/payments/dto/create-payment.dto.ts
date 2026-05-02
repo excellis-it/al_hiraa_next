@@ -1,4 +1,4 @@
-import { IsDateString, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsDateString, IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreatePaymentDto {
   @IsNumber()
@@ -16,8 +16,9 @@ export class CreatePaymentDto {
   @Min(0)
   amount_due: number;
 
+  @IsOptional()
   @IsDateString()
-  due_date: string;
+  due_date?: string;
 
   @IsOptional()
   @IsNumber()
@@ -27,6 +28,11 @@ export class CreatePaymentDto {
   @IsOptional()
   @IsDateString()
   paid_date?: string;
+
+  // Explicit payment status — when provided, takes priority over date-based inference
+  @IsOptional()
+  @IsIn(['paid', 'pending'])
+  status?: 'paid' | 'pending';
 
   @IsOptional()
   @IsString()

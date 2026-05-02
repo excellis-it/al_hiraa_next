@@ -1,4 +1,4 @@
-import { IsDateString, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsDateString, IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class RecordPaymentDto {
   @IsOptional()
@@ -27,6 +27,11 @@ export class RecordPaymentDto {
   @IsOptional()
   @IsDateString()
   paid_date?: string;
+
+  // Explicit payment status — when provided, takes priority over date-based inference
+  @IsOptional()
+  @IsIn(['paid', 'pending'])
+  status?: 'paid' | 'pending';
 
   @IsOptional()
   @IsString()

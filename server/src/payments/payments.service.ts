@@ -43,23 +43,31 @@ export class PaymentsService {
 
   async create(dto: CreatePaymentDto, _userId: string) {
     const waiver    = dto.fee_waiver_amount ?? 0;
-    const paidDate  = dto.paid_date ? new Date(dto.paid_date) : null;
     const netAmount = Math.max(0, dto.amount_due - waiver);
-    const status    = paidDate ? 'paid' : 'pending';
+
+    // Explicit status takes priority — fall back to date-based inference for backward compat
+    const status: 'paid' | 'pending' = (dto as any).status
+      ? (dto as any).status
+      : (dto.paid_date ? 'paid' : 'pending');
+
+    // The single date input from UI: if paid → it's the paid_date; if unpaid → it's the due/installment date
+    const userDate = dto.paid_date ? new Date(dto.paid_date) : null;
+    const paidDate = status === 'paid' ? (userDate ?? new Date()) : null;
+    const dueDate  = userDate ?? (dto.due_date ? new Date(dto.due_date) : new Date());
 
     return this.prisma.payment.create({
       data: {
-        candidate_job_id:  dto.candidate_job_id,
-        total_fee:         dto.total_fee ?? dto.amount_due,
+        candidate_job_id:   dto.candidate_job_id,
+        total_fee:          dto.total_fee ?? dto.amount_due,
         installment_number: dto.installment_number,
-        amount_due:        dto.amount_due,
-        amount_paid:       paidDate ? netAmount : 0,
-        fee_waiver_amount: waiver,
-        due_date:          paidDate ?? new Date(dto.due_date),
-        paid_date:         paidDate,
-        payment_method:    dto.payment_method,
+        amount_due:         dto.amount_due,
+        amount_paid:        status === 'paid' ? netAmount : 0,
+        fee_waiver_amount:  waiver,
+        due_date:           dueDate,
+        paid_date:          paidDate,
+        payment_method:     dto.payment_method,
         status,
-        notes:             dto.notes,
+        notes:              dto.notes,
       },
     });
   }
@@ -69,21 +77,33 @@ export class PaymentsService {
       const payment = await tx.payment.findUnique({ where: { id } });
       if (!payment) throw new NotFoundException('Payment not found');
 
-      const paidDate = dto.paid_date ? new Date(dto.paid_date) : payment.paid_date;
-      const waiver   = dto.fee_waiver_amount !== undefined
+      const waiver    = dto.fee_waiver_amount !== undefined
         ? dto.fee_waiver_amount
         : Number(payment.fee_waiver_amount ?? 0);
       const amountDue = dto.amount_due !== undefined ? dto.amount_due : Number(payment.amount_due);
       const netAmount = Math.max(0, amountDue - waiver);
 
-      // Payment is confirmed when a paid_date exists
-      const status = paidDate ? 'paid' : 'pending';
+      // Explicit status from DTO takes priority — fall back to date-based inference for backward compat
+      const status: 'paid' | 'pending' = (dto as any).status
+        ? (dto as any).status
+        : (dto.paid_date
+            ? 'paid'
+            : (payment.paid_date ? 'paid' : 'pending'));
+
+      // The single date input from UI represents either paid_date (if paid) or installment due_date (if unpaid)
+      // Persist it on the appropriate column so the user always sees their date back on reload.
+      const userDate = dto.paid_date ? new Date(dto.paid_date) : null;
+      const paidDate = status === 'paid'
+        ? (userDate ?? payment.paid_date ?? new Date())
+        : null;
+      const dueDate  = userDate ?? payment.due_date ?? new Date();
 
       const data: any = {
         amount_due:        amountDue,
-        amount_paid:       paidDate ? netAmount : 0,
+        amount_paid:       status === 'paid' ? netAmount : 0,
         fee_waiver_amount: waiver,
         paid_date:         paidDate,
+        due_date:          dueDate,
         status,
         collected_by:      userId,
       };
