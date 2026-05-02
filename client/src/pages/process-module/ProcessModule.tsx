@@ -1617,10 +1617,22 @@ function buildPaymentCols(payments: any[], num: number) {
     [`P${num} Paid Date`]:   fmtDateISO(p?.paid_date),
     [`P${num} Receipt No`]:  p?.receipt_number    || '',
     [`P${num} Method`]:      p?.payment_method    || '',
+    [`P${num} Notes`]:       p?.notes             || '',
   };
 }
 
+function maxInstallmentCount(records: any[]) {
+  let max = 0;
+  for (const r of records) {
+    for (const p of r?.candidate_job?.payments || []) {
+      if (p.installment_number > max) max = p.installment_number;
+    }
+  }
+  return Math.max(max, 3); // always emit at least 3 columns for layout consistency
+}
+
 function buildExportRows(records: any[]) {
+  const installmentCount = maxInstallmentCount(records);
   return records.map((r, i) => {
     const cj   = r.candidate_job;
     const cand = cj?.candidate;
@@ -1628,18 +1640,34 @@ function buildExportRows(records: any[]) {
     const dc   = docsCount(r);
     const pays = cj?.payments || [];
 
+    const paymentCols: Record<string, any> = {};
+    for (let n = 1; n <= installmentCount; n++) {
+      Object.assign(paymentCols, buildPaymentCols(pays, n));
+    }
+
     return {
       'S.No':                    i + 1,
+      // Candidate
       'Candidate ID':            cand?.id            || '',
       'Full Name':               cand?.full_name      || '',
       'Passport No':             cand?.passport_no    || '',
+      'Passport Expiry Date':    fmtDateISO(cand?.passport_expiry_date),
       'WhatsApp No':             cand?.whatsapp_no    || '',
+      'Alternate Contact':       cand?.alternate_contact || '',
+      'Email':                   cand?.email          || '',
       'Gender':                  cand?.gender         || '',
       'Date of Birth':           fmtDateISO(cand?.dob),
       'Education':               cand?.education      || '',
       'ECR Type':                cand?.ecr_type       || '',
       'State':                   cand?.state?.name    || '',
       'City':                    cand?.city?.name     || '',
+      'Indian Experience':       cand?.indian_experience || '',
+      'Abroad Experience':       cand?.abroad_experience || '',
+      // Source
+      'Source':                  cand?.source?.name   || '',
+      'Position 1':              cand?.position_1?.name || '',
+      'Associate':               cand?.associate?.full_name || '',
+      'Associate Phone':         cand?.associate?.phone || '',
       // Job / Company
       'Company':                 job?.company?.name   || '',
       'Trade / Job':             job?.title           || '',
@@ -1647,6 +1675,7 @@ function buildExportRows(records: any[]) {
       'Salary Min':              job?.salary_min      ?? '',
       'Salary Max':              job?.salary_max      ?? '',
       'Currency':                job?.salary_currency || '',
+      'Service Fee':             job?.service_fee     ?? '',
       // Selection
       'Stage':                   computeStage(r),
       'Year of Selection':       r.year_of_selection  || '',
@@ -1659,6 +1688,9 @@ function buildExportRows(records: any[]) {
       'Client Remark':           r.client_remark      || '',
       'Vendor':                  r.vendor             || '',
       'Sponsor':                 r.sponsor            || '',
+      'Medical Approval Email Date & Time': r.medical_approval_email_at
+        ? String(r.medical_approval_email_at).substring(0, 16).replace('T', ' ')
+        : '',
       // Medical
       'Medical Status':          r.medical_status             || '',
       'Medical App Date':        fmtDateISO(r.medical_app_date),
@@ -1666,11 +1698,14 @@ function buildExportRows(records: any[]) {
       'Medical Approval Date':   fmtDateISO(r.medical_approval_date),
       'Medical Expiry Date':     fmtDateISO(r.medical_expiry_date),
       'Medical Repeat Date':     fmtDateISO(r.medical_repeat_date),
+      'GAMCA Slip Date':         fmtDateISO(r.gamca_slip_date),
+      'GAMCA Slip Place':        r.gamca_slip_place   || '',
       // Documents
       'Documents Submitted':     dc.submitted,
       'Documents Total':         dc.total,
       'Courier Sent Date':       fmtDateISO(r.courier_sent_date),
       'Courier Received Date':   fmtDateISO(r.courier_received_date),
+      'Courier Consignment No':  r.courier_consignment_no || '',
       // MOFA & Visa
       'MOFA Number':             r.mofa_number        || '',
       'MOFA Date':               fmtDateISO(r.mofa_date),
@@ -1680,13 +1715,22 @@ function buildExportRows(records: any[]) {
       'Visa Receiving Date':     fmtDateISO(r.visa_receiving_date),
       'VFS Applied Date':        fmtDateISO(r.vfs_applied_date),
       'VFS Received Date':       fmtDateISO(r.vfs_received_date),
-      // Flight
+      'SVP Apply Date':          fmtDateISO(r.svp_apply_date),
+      'SVP Appointment Date':    fmtDateISO(r.svp_appointment_date),
+      'SVP Received Date':       fmtDateISO(r.svp_received_date),
+      'MOL/QVC Apply Date':      fmtDateISO(r.mol_qvc_apply_date),
+      'MOL/QVC Status Date':     fmtDateISO(r.mol_qvc_status_date),
+      // Flight & Deployment
       'Ticket Booking Date':     fmtDateISO(r.ticket_booking_date),
       'Ticket Confirm Date':     fmtDateISO(r.ticket_confirm_date),
+      'Proposed Flight Date':    fmtDateISO(r.proposed_flight_date),
+      'Deployment From':         r.deployment_from    || '',
       'Onboarding City':         r.onboarding_city    || '',
       'Exit Paper Date':         fmtDateISO(r.exit_paper_date),
       'Deployment Date':         fmtDateISO(r.deployment_date),
       'Deployment Month':        r.deployment_month   || '',
+      'Joining Date':            fmtDateISO(r.joining_date),
+      'Contract Expiry Date':    fmtDateISO(r.contract_expiry_date),
       // Logistics
       'Accommodation':           r.accommodation === true ? 'Yes (Provided)' : r.accommodation === false ? 'No (Candidate Pays)' : '',
       'Accommodation Cost':      r.accommodation_cost ?? '',
@@ -1702,10 +1746,8 @@ function buildExportRows(records: any[]) {
       'Disc Allot':              r.disc_allot              ?? '',
       'Refund Amount':           r.refund_amount           ?? '',
       'Refund Date':             fmtDateISO(r.refund_date),
-      // Payment installments
-      ...buildPaymentCols(pays, 1),
-      ...buildPaymentCols(pays, 2),
-      ...buildPaymentCols(pays, 3),
+      // Payment installments (dynamic — covers as many installments as exist)
+      ...paymentCols,
       // Contact & Remarks
       'Family Contact Name':  r.family_contact_name  || '',
       'Family Contact Phone': r.family_contact_phone || '',
