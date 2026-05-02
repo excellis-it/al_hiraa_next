@@ -308,24 +308,46 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
             <Row label="Source"               value={cand?.source?.name} />
             <Row label="Name"                 value={cand?.full_name} />
             <Row label="Applied for Position" value={cand?.position_1?.name || job?.title} />
+            <Row label="ECR Type"             value={cand?.ecr_type ? cand.ecr_type.replace(/_/g, ' ').toUpperCase() : null} />
             <Row label="Work Experience"      value={[cand?.indian_experience, cand?.abroad_experience].filter(Boolean).join(' · ') || null} />
             <Row label="Contact No"           value={cand?.whatsapp_no} mono />
             <Row label="Email Id"             value={cand?.email} />
             <Row label="Passport No"          value={cand?.passport_no} mono />
             <Row label="Passport Expiry"      value={cand?.passport_expiry_date ? fmtDate(cand.passport_expiry_date, true) : null} />
+            <Row label="Associate"            value={cand?.associate?.full_name || null} />
+            <Row label="Associate Phone"      value={cand?.associate?.phone || null} mono />
           </div>
 
-          {/* Selection */}
-          <StageBtn stageKey="selection" label="Interview Detials" subtitle="Interview → Selection → Offer" num={1} Icon={BadgeCheck} />
+          {/* Interview Details */}
+          <StageBtn stageKey="selection" label="Interview Details" subtitle="Interview → Selection → Offer" num={1} Icon={BadgeCheck} />
           {open.has('selection') && (
             <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
-              <Row label="Interview date"  value={fmtDate(record.date_of_interview, true)} />
-              <Row label="Selection date"  value={fmtDate(record.date_of_selection, true)} />
-              <Row label="Mode"            value={record.mode_of_selection?.replace(/_/g, ' ')} />
-              <Row label="Location"        value={record.interview_location} />
-              <Row label="Salary"          value={job?.salary_min ? `${fmtCurrency(job.salary_min)} ${job.salary_currency || ''}`.trim() : null} />
-              <Row label="Service charge"  value={record.vendor_service_charge ? fmtCurrency(record.vendor_service_charge) : null} highlight />
-              <Row label="Sponsor"         value={record.sponsor} />
+              <Row label="Interview date"   value={fmtDate(record.date_of_interview, true)} />
+              <Row label="Selection date"   value={fmtDate(record.date_of_selection, true)} />
+              <Row label="Mode"             value={record.mode_of_selection?.replace(/_/g, ' ')} />
+              <Row label="Location"         value={record.interview_location} />
+              <Row label="Sponsor"          value={record.sponsor} />
+              <Row label="Company"          value={job?.company?.name} />
+              <Row label="Employment Country" value={job?.country} />
+              <Row label="Salary"           value={job?.salary_min ? `${fmtCurrency(job.salary_min)} ${job.salary_currency || ''}`.trim() : null} />
+              <Row label="Service charge"   value={record.vendor_service_charge ? fmtCurrency(record.vendor_service_charge) : null} highlight />
+              <Row
+                label="Accommodation"
+                value={
+                  record.accommodation === true  ? 'Provided' :
+                  record.accommodation === false ? `Candidate pays${record.accommodation_cost ? ` · ${fmtCurrency(record.accommodation_cost)}` : ''}` :
+                  null
+                }
+              />
+              <Row
+                label="Transportation"
+                value={
+                  record.transportation === true  ? 'Provided' :
+                  record.transportation === false ? `Candidate pays${record.transportation_cost ? ` · ${fmtCurrency(record.transportation_cost)}` : ''}` :
+                  null
+                }
+              />
+              <Row label="Medical Approval Email" value={record.medical_approval_email_at ? new Date(record.medical_approval_email_at).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : null} />
               {record.candidate_status && (
                 <div className="flex items-center justify-between py-2">
                   <span className="text-sm text-gray-400">Status</span>
@@ -380,11 +402,13 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
                   </span>
                 </div>
               )}
-              <Row label="Applied"    value={fmtDate(record.medical_app_date, true)} />
-              <Row label="Completion" value={fmtDate(record.medical_completion_date, true)} />
-              <Row label="Approval"   value={fmtDate(record.medical_approval_date, true)} />
-              <Row label="Expiry"     value={fmtDate(record.medical_expiry_date, true)} highlight={!!(medExpiring !== null && medExpiring <= 30)} />
+              <Row label="Applied"          value={fmtDate(record.medical_app_date, true)} />
+              <Row label="Completion"       value={fmtDate(record.medical_completion_date, true)} />
+              <Row label="Approval"         value={fmtDate(record.medical_approval_date, true)} />
+              <Row label="Expiry"           value={fmtDate(record.medical_expiry_date, true)} highlight={!!(medExpiring !== null && medExpiring <= 30)} />
               {record.medical_repeat_date && <Row label="Repeat" value={fmtDate(record.medical_repeat_date, true)} />}
+              <Row label="GAMCA Slip Date"  value={fmtDate(record.gamca_slip_date, true)} />
+              <Row label="GAMCA Slip Place" value={record.gamca_slip_place} />
             </div>
           )}
 
@@ -427,30 +451,51 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
           )}
 
           {/* Visa & MOFA */}
-          <StageBtn stageKey="visa" label="Visa & MOFA" subtitle="Courier → Visa → MOFA → VFS" num={5} Icon={Globe} />
+          <StageBtn stageKey="visa" label="Visa & MOFA" subtitle="Courier → Visa → MOFA → SVP → MOL/QVC" num={5} Icon={Globe} />
           {open.has('visa') && (
             <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
-              <Row label="Visa issued"    value={fmtDate(record.visa_issue_date, true)} />
-              <Row label="Visa expiry"    value={fmtDate(record.visa_expiry_date, true)} highlight={!!(visaExpiring !== null && visaExpiring <= 30)} />
-              <Row label="Visa receiving" value={fmtDate(record.visa_receiving_date, true)} />
-              <Row label="MOFA No."       value={record.mofa_number} mono />
-              <Row label="MOFA date"      value={fmtDate(record.mofa_date, true)} />
-              <Row label="MOFA received"  value={fmtDate(record.mofa_received_date, true)} />
-              <Row label="VFS applied"    value={fmtDate(record.vfs_applied_date, true)} />
-              <Row label="VFS received"   value={fmtDate(record.vfs_received_date, true)} />
+              <Row label="Visa issued"        value={fmtDate(record.visa_issue_date, true)} />
+              <Row label="Visa expiry"        value={fmtDate(record.visa_expiry_date, true)} highlight={!!(visaExpiring !== null && visaExpiring <= 30)} />
+              <Row label="Visa receiving"     value={fmtDate(record.visa_receiving_date, true)} />
+              <Row label="MOFA No."           value={record.mofa_number} mono />
+              <Row label="MOFA date"          value={fmtDate(record.mofa_date, true)} />
+              <Row label="MOFA received"      value={fmtDate(record.mofa_received_date, true)} />
+              <Row label="VFS applied"        value={fmtDate(record.vfs_applied_date, true)} />
+              <Row label="VFS received"       value={fmtDate(record.vfs_received_date, true)} />
+              <Row label="SVP - Apply Date"   value={fmtDate(record.svp_apply_date, true)} />
+              <Row label="SVP - Appointment"  value={fmtDate(record.svp_appointment_date, true)} />
+              <Row label="SVP - Received"     value={fmtDate(record.svp_received_date, true)} />
+              <Row label="MOL/QVC - Apply"    value={fmtDate(record.mol_qvc_apply_date, true)} />
+              <Row label="MOL/QVC - Status Receipt" value={fmtDate(record.mol_qvc_status_date, true)} />
+              <Row label="Courier Consignment No" value={record.courier_consignment_no} mono />
+              <Row label="Others"             value={record.other_remarks} />
             </div>
           )}
 
-          {/* Flight */}
-          <StageBtn stageKey="flight" label="Flight" subtitle="Booking → Confirmation → Departure" num={6} Icon={Plane} />
+          {/* Flight & Deployment */}
+          <StageBtn stageKey="flight" label="Flight & Deployment" subtitle="Booking → Confirmation → Departure" num={6} Icon={Plane} />
           {open.has('flight') && (
             <div className="px-5 py-3 bg-white border-b border-gray-100 space-y-0">
-              <Row label="Booking date"    value={fmtDate(record.ticket_booking_date, true)} />
-              <Row label="Confirmed date"  value={fmtDate(record.ticket_confirm_date, true)} />
-              <Row label="Onboarding city" value={record.onboarding_city} />
-              <Row label="Deployment date" value={fmtDate(record.deployment_date, true)} highlight={!!record.deployment_date} />
+              <Row label="Booking date"           value={fmtDate(record.ticket_booking_date, true)} />
+              <Row label="Confirmed date"         value={fmtDate(record.ticket_confirm_date, true)} />
+              <Row label="Proposed Flight Date"   value={fmtDate(record.proposed_flight_date, true)} />
+              <Row label="Onboarding city"        value={record.onboarding_city} />
+              <Row label="Deployment From"        value={record.deployment_from} />
+              <Row label="Deployment date"        value={fmtDate(record.deployment_date, true)} highlight={!!record.deployment_date} />
             </div>
           )}
+
+          {/* Joining & Contract — separate informational card */}
+          <div className="px-5 py-4 bg-white border-b border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                <CalendarDays size={13} className="text-blue-600" />
+              </div>
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Joining & Contract</span>
+            </div>
+            <Row label="Date of Joining"          value={fmtDate(record.joining_date, true)} />
+            <Row label="Date of Contract Expiry" value={fmtDate(record.contract_expiry_date, true)} />
+          </div>
         </div>
       </div>
     </>
@@ -462,13 +507,13 @@ function ViewDetailsDrawer({ record, onClose, onEdit }: { record: any; onClose: 
 // causing React to unmount/remount the input and lose cursor position every keystroke.
 
 const EDIT_SEC_COLORS: Record<string, { border: string; icon: string; label: string }> = {
-  blue:    { border: 'border-l-blue-500',    icon: 'text-blue-500',    label: 'text-blue-700'    },
-  emerald: { border: 'border-l-emerald-500', icon: 'text-emerald-500', label: 'text-emerald-700' },
-  violet:  { border: 'border-l-violet-500',  icon: 'text-violet-500',  label: 'text-violet-700'  },
-  amber:   { border: 'border-l-amber-500',   icon: 'text-amber-500',   label: 'text-amber-700'   },
-  indigo:  { border: 'border-l-indigo-500',  icon: 'text-indigo-500',  label: 'text-indigo-700'  },
-  sky:     { border: 'border-l-sky-500',     icon: 'text-sky-500',     label: 'text-sky-700'     },
-  gray:    { border: 'border-l-gray-400',    icon: 'text-gray-400',    label: 'text-gray-600'    },
+  blue:    { border: '',    icon: 'text-blue-500',    label: 'text-blue-700'    },
+  emerald: { border: '', icon: 'text-emerald-500', label: 'text-emerald-700' },
+  violet:  { border: '',  icon: 'text-violet-500',  label: 'text-violet-700'  },
+  amber:   { border: '',   icon: 'text-amber-500',   label: 'text-amber-700'   },
+  indigo:  { border: '',  icon: 'text-indigo-500',  label: 'text-indigo-700'  },
+  sky:     { border: '',     icon: 'text-sky-500',     label: 'text-sky-700'     },
+  gray:    { border: '',    icon: 'text-gray-400',    label: 'text-gray-600'    },
 };
 
 function EditSec({ title, icon: Icon, color = 'blue', children, locked, lockReason }: {
@@ -585,6 +630,25 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
     family_contact_phone:     record.family_contact_phone || '',
     candidate_address:        record.candidate_address    || '',
     remarks:                  record.remarks              || '',
+    other_remarks:            record.other_remarks        || '',
+    // New fields
+    medical_approval_email_at: record.medical_approval_email_at?.substring(0, 16) || '',
+    gamca_slip_date:          record.gamca_slip_date?.substring(0, 10)          || '',
+    gamca_slip_place:         record.gamca_slip_place    || '',
+    courier_consignment_no:   record.courier_consignment_no || '',
+    svp_apply_date:           record.svp_apply_date?.substring(0, 10)           || '',
+    svp_appointment_date:     record.svp_appointment_date?.substring(0, 10)     || '',
+    svp_received_date:        record.svp_received_date?.substring(0, 10)        || '',
+    mol_qvc_apply_date:       record.mol_qvc_apply_date?.substring(0, 10)       || '',
+    mol_qvc_status_date:      record.mol_qvc_status_date?.substring(0, 10)      || '',
+    proposed_flight_date:     record.proposed_flight_date?.substring(0, 10)     || '',
+    deployment_from:          record.deployment_from     || '',
+    joining_date:             record.joining_date?.substring(0, 10)             || '',
+    contract_expiry_date:     record.contract_expiry_date?.substring(0, 10)     || '',
+    accommodation:            record.accommodation === true ? 'yes' : record.accommodation === false ? 'no' : '',
+    accommodation_cost:       record.accommodation_cost  ?? '',
+    transportation:           record.transportation === true ? 'yes' : record.transportation === false ? 'no' : '',
+    transportation_cost:      record.transportation_cost ?? '',
   });
 
   const [docs, setDocs] = useState<Record<string, any>>(
@@ -727,6 +791,11 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
       documents_checklist: docs,
       total_receivable_amount: netTotal || form.total_receivable_amount,
     };
+    // Convert accommodation/transportation string toggles back to booleans
+    payload.accommodation = form.accommodation === 'yes' ? true : form.accommodation === 'no' ? false : null;
+    payload.transportation = form.transportation === 'yes' ? true : form.transportation === 'no' ? false : null;
+    if (payload.accommodation !== false) payload.accommodation_cost = null;
+    if (payload.transportation !== false) payload.transportation_cost = null;
     if (payload.deployment_date) payload.candidate_status = 'deployed';
     const result = await updateDetails({ candidateJobId: record.candidate_job_id, ...payload });
     if ('error' in result) {
@@ -864,14 +933,47 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
 
 
           {/* Interview Detials */}
-          <EditSec title="Interview Detials" icon={BadgeCheck} color="blue">
+          <EditSec title="Interview Details" icon={BadgeCheck} color="blue">
             <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Interview Date</label><input type="date" value={form.date_of_interview} onChange={e=>set('date_of_interview',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Selection Date</label><input type="date" value={form.date_of_selection} onChange={e=>set('date_of_selection',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Mode</label><Select value={form.mode_of_selection} onChange={e=>set('mode_of_selection',e.target.value)}><option value="">Select</option>{MODE_OPTIONS.map(m=><option key={m.value} value={m.value}>{m.label}</option>)}</Select></div>
               <div><label className={lbl}>Status</label><Select value={form.candidate_status} onChange={e=>set('candidate_status',e.target.value)}>{CANDIDATE_STATUS_OPTIONS.map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}</Select></div>
+              <div><label className={lbl}>Sponsor</label><input type="text" value={form.sponsor} onChange={e=>set('sponsor',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Vendor / Sub-agent</label><select value={form.vendor} onChange={e=>set('vendor',e.target.value)} className={inp}><option value="">— Select vendor —</option>{vendors.map((v:any) => <option key={v.id} value={v.name}>{v.name} ({v.vendor_id})</option>)}</select></div>
               <MoneyInp label="Service Charge" value={String(form.vendor_service_charge)} onChange={v=>set('vendor_service_charge',v)} />
+              <div className={`${inp} bg-gray-100 text-gray-700 cursor-not-allowed select-text col-span-3`}>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-0.5">Company · Country · Salary (from job)</span>
+                {[job?.company?.name, job?.country, job?.salary_min ? `${job.salary_min}–${job.salary_max} ${job.salary_currency || ''}` : null].filter(Boolean).join(' · ') || <span className="text-gray-300">—</span>}
+              </div>
+              {/* Accommodation toggle + cost */}
+              <div>
+                <label className={lbl}>Accommodation</label>
+                <Select value={form.accommodation} onChange={e=>set('accommodation',e.target.value)}>
+                  <option value="">— Select —</option>
+                  <option value="yes">Yes (Provided)</option>
+                  <option value="no">No (Candidate Pays)</option>
+                </Select>
+              </div>
+              {form.accommodation === 'no' && (
+                <MoneyInp label="Accommodation Cost" value={String(form.accommodation_cost)} onChange={v=>set('accommodation_cost',v)} />
+              )}
+              {/* Transportation toggle + cost */}
+              <div>
+                <label className={lbl}>Transportation</label>
+                <Select value={form.transportation} onChange={e=>set('transportation',e.target.value)}>
+                  <option value="">— Select —</option>
+                  <option value="yes">Yes (Provided)</option>
+                  <option value="no">No (Candidate Pays)</option>
+                </Select>
+              </div>
+              {form.transportation === 'no' && (
+                <MoneyInp label="Transportation Cost" value={String(form.transportation_cost)} onChange={v=>set('transportation_cost',v)} />
+              )}
+              <div className="col-span-3">
+                <label className={lbl}>Medical Approval Email Date & Time (from Client)</label>
+                <input type="datetime-local" value={form.medical_approval_email_at} onChange={e=>set('medical_approval_email_at',e.target.value)} className={inp} />
+              </div>
             </div>
           </EditSec>
 
@@ -934,6 +1036,8 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
               <div><label className={lbl}>Approval</label><input type="date" value={form.medical_approval_date} onChange={e=>set('medical_approval_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Expiry</label><input type="date" value={form.medical_expiry_date} onChange={e=>set('medical_expiry_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Repeat</label><input type="date" value={form.medical_repeat_date} onChange={e=>set('medical_repeat_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>GAMCA / Medical Slip Date</label><input type="date" value={form.gamca_slip_date} onChange={e=>set('gamca_slip_date',e.target.value)} className={inp} /></div>
+              <div className="col-span-2"><label className={lbl}>GAMCA / Medical Slip Place</label><input type="text" value={form.gamca_slip_place} onChange={e=>set('gamca_slip_place',e.target.value)} className={inp} /></div>
             </div>
             {form.medical_approval_date && (
               <p className="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl flex items-center gap-1.5">
@@ -1126,7 +1230,7 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
                     Balance Due
                   </span>
                   <span className={`text-sm font-bold ${balance > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
-                    {balance > 0 ? `₹${balance.toLocaleString('en-IN')}` : 'Nil — Fully Paid'}
+                    {balance > 0 ? `₹${balance.toLocaleString('en-IN')}` : '0 — Fully Paid'}
                   </span>
                 </div>
               </EditSec>
@@ -1145,6 +1249,13 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
               <div><label className={lbl}>MOFA Received</label><input type="date" value={form.mofa_received_date} onChange={e=>set('mofa_received_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>VFS Applied</label><input type="date" value={form.vfs_applied_date} onChange={e=>set('vfs_applied_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>VFS Received</label><input type="date" value={form.vfs_received_date} onChange={e=>set('vfs_received_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>SVP - Apply Date</label><input type="date" value={form.svp_apply_date} onChange={e=>set('svp_apply_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>SVP - Appointment</label><input type="date" value={form.svp_appointment_date} onChange={e=>set('svp_appointment_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>SVP - Received</label><input type="date" value={form.svp_received_date} onChange={e=>set('svp_received_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>MOL/QVC - Apply</label><input type="date" value={form.mol_qvc_apply_date} onChange={e=>set('mol_qvc_apply_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>MOL/QVC - Status Receipt</label><input type="date" value={form.mol_qvc_status_date} onChange={e=>set('mol_qvc_status_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>Courier Consignment No</label><input type="text" value={form.courier_consignment_no} onChange={e=>set('courier_consignment_no',e.target.value)} className={inp} /></div>
+              <div className="col-span-3"><label className={lbl}>Others (notes)</label><input type="text" value={form.other_remarks} onChange={e=>set('other_remarks',e.target.value)} className={inp} placeholder="Other documents / notes" /></div>
             </div>
           </EditSec>
 
@@ -1154,15 +1265,33 @@ function ProcessEditDrawer({ record, onClose }: { record: any; onClose: () => vo
             <div className="grid grid-cols-3 gap-3">
               <div><label className={lbl}>Booking Date</label><input type="date" value={form.ticket_booking_date} onChange={e=>set('ticket_booking_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Confirm Date</label><input type="date" value={form.ticket_confirm_date} onChange={e=>set('ticket_confirm_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>Proposed Flight Date</label><input type="date" value={form.proposed_flight_date} onChange={e=>set('proposed_flight_date',e.target.value)} className={inp} /></div>
               <div><label className={lbl}>Onboarding City</label><Select value={form.onboarding_city} onChange={e=>set('onboarding_city',e.target.value)}><option value="">Select</option>{ONBOARDING_CITIES.map(c=><option key={c} value={c}>{c}</option>)}</Select></div>
+              <div>
+                <label className={lbl}>Deployment From</label>
+                <Select value={form.deployment_from} onChange={e=>set('deployment_from',e.target.value)}>
+                  <option value="">Select</option>
+                  <option value="BOM">BOM (Mumbai)</option>
+                  <option value="DEL">DEL (Delhi)</option>
+                  <option value="OTHERS">Others</option>
+                </Select>
+              </div>
               <div><label className={lbl}>Deployment Date</label><input type="date" value={form.deployment_date} onChange={e=>set('deployment_date',e.target.value)} className={inp} /></div>
-              <div className="col-span-2"><label className={lbl}>Deployment Month</label><input value={form.deployment_month} onChange={e=>set('deployment_month',e.target.value)} placeholder="e.g. April 2026" className={inp} /></div>
+              <div className="col-span-3"><label className={lbl}>Deployment Month</label><input value={form.deployment_month} onChange={e=>set('deployment_month',e.target.value)} placeholder="e.g. April 2026" className={inp} /></div>
             </div>
             {form.deployment_date && (
               <p className="mt-2 text-xs text-sky-700 bg-sky-50 border border-sky-100 px-3 py-2 rounded-xl flex items-center gap-1.5">
                 <Zap size={12} /> Status will auto-set to <strong>Deployed</strong> on save.
               </p>
             )}
+          </EditSec>
+
+          {/* Joining & Contract — separate section */}
+          <EditSec title="Joining & Contract" icon={CalendarDays} color="blue">
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className={lbl}>Date of Joining</label><input type="date" value={form.joining_date} onChange={e=>set('joining_date',e.target.value)} className={inp} /></div>
+              <div><label className={lbl}>Date of Contract Expiry</label><input type="date" value={form.contract_expiry_date} onChange={e=>set('contract_expiry_date',e.target.value)} className={inp} /></div>
+            </div>
           </EditSec>
 
           {/* Remarks & Contact */}

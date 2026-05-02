@@ -121,7 +121,7 @@ export default function JobPostingPrint({
           name: pos.trade?.name?.toUpperCase() || job.title.toUpperCase(),
           qty: pos.quantity,
           salary: pos.salary ? `${Number(pos.salary).toLocaleString()} ${currency}` : 'As Per Company Norms',
-          fee: job.service_fee ? `₹${Number(job.service_fee).toLocaleString('en-IN')}` : 'NIL',
+          fee: job.service_fee ? `₹${Number(job.service_fee).toLocaleString('en-IN')}` : '0',
           accom: pos.accommodation ? 'PROVIDED' : 'NOT PROVIDED',
           transport: pos.transportation ? 'PROVIDED' : 'NOT PROVIDED',
           contract: pos.contract_period ? `${pos.contract_period} YEAR${+pos.contract_period > 1 ? 'S' : ''}` : '—',
@@ -133,7 +133,7 @@ export default function JobPostingPrint({
         name: job.title.toUpperCase(),
         qty: job.positions_required,
         salary: job.salary_min ? `${job.salary_min}–${job.salary_max || job.salary_min} ${currency}` : 'As Per Company Norms',
-        fee: job.service_fee ? `₹${Number(job.service_fee).toLocaleString('en-IN')}` : 'NIL',
+        fee: job.service_fee ? `₹${Number(job.service_fee).toLocaleString('en-IN')}` : '0',
         accom: '—',
         transport: '—',
         contract: '—',
@@ -143,7 +143,7 @@ export default function JobPostingPrint({
   }
 
   const totalVacancies = rows.reduce((s, r) => s + r.qty, 0);
-  const serviceFeeText = rows[0]?.fee && rows[0].fee !== 'NIL' ? rows[0].fee : '';
+  const serviceFeeText = rows[0]?.fee && rows[0].fee !== '0' ? rows[0].fee : '';
 
   const notesList = (firstJob.notes || '').split('\n').map(l => l.trim()).filter(Boolean);
   const defaultNotes = [

@@ -479,7 +479,7 @@ export default function CandidateProcess() {
                       Balance Due
                     </span>
                     <span className={`text-sm font-bold ${summary.balance_due > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
-                      {summary.balance_due > 0 ? formatCurrency(summary.balance_due) : 'Nil — Fully Paid'}
+                      {summary.balance_due > 0 ? formatCurrency(summary.balance_due) : '0 — Fully Paid'}
                     </span>
                   </div>
                 </div>

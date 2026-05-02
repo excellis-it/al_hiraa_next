@@ -13,6 +13,7 @@ const CANDIDATE_INCLUDE = {
       city:       { select: { name: true } },
       source:     { select: { id: true, name: true } },
       position_1: { select: { id: true, name: true } },
+      associate:  { select: { id: true, full_name: true, phone: true } },
     },
   },
   job: {
@@ -46,13 +47,21 @@ const DATE_FIELDS = [
   'date_of_interview', 'date_of_selection',
   'medical_app_date', 'medical_completion_date', 'medical_approval_date',
   'medical_expiry_date', 'medical_repeat_date',
+  'gamca_slip_date',
   'courier_sent_date', 'courier_received_date',
   'mofa_date', 'mofa_received_date',
   'visa_receiving_date', 'visa_issue_date', 'visa_expiry_date',
   'vfs_applied_date', 'vfs_received_date',
+  'svp_apply_date', 'svp_appointment_date', 'svp_received_date',
+  'mol_qvc_apply_date', 'mol_qvc_status_date',
   'ticket_booking_date', 'ticket_confirm_date', 'exit_paper_date',
+  'proposed_flight_date',
   'deployment_date', 'refund_date',
+  'joining_date', 'contract_expiry_date',
 ];
+
+// Datetime field that includes time component, not just date
+const DATETIME_FIELDS = ['medical_approval_email_at'];
 
 @Injectable()
 export class ProcessDetailsService {
@@ -74,7 +83,7 @@ export class ProcessDetailsService {
     const data: any = {};
     for (const [k, v] of Object.entries(dto)) {
       if (v === undefined || v === null || v === '') continue;
-      data[k] = DATE_FIELDS.includes(k) ? new Date(v as string) : v;
+      data[k] = (DATE_FIELDS.includes(k) || DATETIME_FIELDS.includes(k)) ? new Date(v as string) : v;
     }
     return this.prisma.processDetails.upsert({
       where: { candidate_job_id: candidateJobId },
@@ -93,7 +102,7 @@ export class ProcessDetailsService {
       if (initialData) {
         for (const [k, v] of Object.entries(initialData)) {
           if (!v) continue;
-          data[k] = DATE_FIELDS.includes(k) ? new Date(v as string) : v;
+          data[k] = (DATE_FIELDS.includes(k) || DATETIME_FIELDS.includes(k)) ? new Date(v as string) : v;
         }
       }
       results.push(await this.prisma.processDetails.create({

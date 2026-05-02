@@ -249,7 +249,7 @@ function GroupPayModal({ group, onClose, onSuccess }: { group: any; onClose: () 
 
           <div className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold ${balance === 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
             <span>Balance Due</span>
-            <span>{balance === 0 ? 'Nil — Fully Paid' : `₹${balance.toLocaleString('en-IN')}`}</span>
+            <span>{balance === 0 ? '0 — Fully Paid' : `₹${balance.toLocaleString('en-IN')}`}</span>
           </div>
 
           {saveError && <p className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{saveError}</p>}
@@ -395,7 +395,7 @@ function printPayments(groups: any[]) {
       <td>${g.job_title} / ${g.company_name}</td><td>${g.installments.length}</td>
       <td>${fmt(g.subTotal)}</td><td style="color:#ef4444">${g.totalDiscount > 0 ? '−' + fmt(g.totalDiscount) : '—'}</td>
       <td style="font-weight:700">${fmt(g.netTotal)}</td><td style="color:#059669">${fmt(g.totalPaid)}</td>
-      <td style="color:${g.balance > 0 ? '#d97706' : '#059669'}">${g.balance > 0 ? fmt(g.balance) : 'Nil'}</td>
+      <td style="color:${g.balance > 0 ? '#d97706' : '#059669'}">${g.balance > 0 ? fmt(g.balance) : '0'}</td>
       <td>${g.groupStatus.toUpperCase()}</td>
     </tr>
     ${g.installments.map((p: any, i: number) => {

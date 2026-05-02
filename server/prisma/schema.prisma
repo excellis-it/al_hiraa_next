@@ -458,6 +458,9 @@ model ProcessDetails {
   sponsor                  String?   @db.VarChar(200)
   candidate_status         String?   @db.VarChar(100)
 
+  // Interview / Selection extras
+  medical_approval_email_at DateTime? @db.Timestamp(6)  // Date & time of approval email from client
+
   // Medical
   medical_status           String?   @db.VarChar(50)    // fit / unfit / pending / awaited
   medical_app_date         DateTime? @db.Date
@@ -465,10 +468,13 @@ model ProcessDetails {
   medical_approval_date    DateTime? @db.Date
   medical_expiry_date      DateTime? @db.Date
   medical_repeat_date      DateTime? @db.Date
+  gamca_slip_date          DateTime? @db.Date
+  gamca_slip_place         String?   @db.VarChar(200)
 
   // Visa & MOFA
   courier_sent_date        DateTime? @db.Date
   courier_received_date    DateTime? @db.Date
+  courier_consignment_no   String?   @db.VarChar(100)
   documents_checklist      Json?
   mofa_number              String?   @db.VarChar(100)
   mofa_date                DateTime? @db.Date
@@ -478,14 +484,23 @@ model ProcessDetails {
   visa_expiry_date         DateTime? @db.Date
   vfs_applied_date         DateTime? @db.Date
   vfs_received_date        DateTime? @db.Date
+  svp_apply_date           DateTime? @db.Date
+  svp_appointment_date     DateTime? @db.Date
+  svp_received_date        DateTime? @db.Date
+  mol_qvc_apply_date       DateTime? @db.Date
+  mol_qvc_status_date      DateTime? @db.Date
 
   // Ticket & Travel
   ticket_booking_date      DateTime? @db.Date
   ticket_confirm_date      DateTime? @db.Date
+  proposed_flight_date     DateTime? @db.Date          // Confirmation by candidate
+  deployment_from          String?   @db.VarChar(50)   // BOM / DEL / OTHERS
   onboarding_city          String?   @db.VarChar(100)
   exit_paper_date          DateTime? @db.Date
   deployment_date          DateTime? @db.Date
   deployment_month         String?   @db.VarChar(50)
+  joining_date             DateTime? @db.Date
+  contract_expiry_date     DateTime? @db.Date
 
   // Financial
   vendor_service_charge    Decimal?  @db.Decimal(10, 2)
