@@ -177,7 +177,8 @@ export class CandidatesService {
     const conditions: any[] = [];
 
     // Data Entry users only see candidates they registered themselves.
-    // Other roles (recruiter / process_manager / manager / admin) see all.
+    // Other roles (recruiter / process_manager / manager / admin) see all
+    // — recruiters specifically need the full list to add candidates to their pipeline.
     if (currentUser?.role === 'data_entry') {
       conditions.push({ registered_by: currentUser.id });
     }

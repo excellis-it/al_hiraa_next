@@ -383,6 +383,7 @@ export class JobsService {
     // Job counts (and "Top 5 open jobs") aren't restricted by recruiter — those are global.
     const recruiterScope =
       currentUser?.role === 'recruiter' ? { assigned_to: currentUser.id } : {};
+    const isRecruiter = currentUser?.role === 'recruiter';
 
     const [
       openJobsCount,
@@ -392,7 +393,22 @@ export class JobsService {
       pipelineByStatus,
     ] = await Promise.all([
       this.prisma.job.count({ where: { status: 'open' } }),
-      this.prisma.candidateJob.count({ where: { ...recruiterScope, status: 'lined_up' } }),
+      // For a recruiter the "Lined Up" card means "everything in MY lineup with an
+      // upcoming interview" so it matches the Lineup page's default-filtered count.
+      // For admin/manager, keep the system-wide status='lined_up' meaning.
+      this.prisma.candidateJob.count({
+        where: isRecruiter
+          ? {
+              ...recruiterScope,
+              job: {
+                OR: [
+                  { interview_date_end:   { gte: today } },
+                  { interview_date_start: { gte: today } },
+                ],
+              },
+            }
+          : { status: 'lined_up' },
+      }),
       this.prisma.candidateJob.count({
         where: {
           ...recruiterScope,

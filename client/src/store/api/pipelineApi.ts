@@ -28,7 +28,9 @@ export const pipelineApi = apiSlice.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Pipeline', 'Jobs'],
+      // Also invalidate Candidates so the candidate-detail drawer's "active job" updates
+      // after assignment.
+      invalidatesTags: ['Pipeline', 'Jobs', 'Candidates'],
     }),
     updatePipelineStatus: builder.mutation({
       query: ({ id, ...body }) => ({

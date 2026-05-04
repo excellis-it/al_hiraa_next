@@ -277,7 +277,7 @@ export default function MasterDashboard() {
               value={recStats?.lined_up_total ?? 0}
               icon={<Users size={18} className="text-violet-600" />}
               iconBg="bg-violet-50"
-              to="/recruitment/pipeline?status=lined_up"
+              to="/recruitment/pipeline"
             />
             <StatCard
               label="Interviews This Week"

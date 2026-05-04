@@ -103,7 +103,10 @@ export default function CandidateDetailDrawer({
   const requiresCallUpdate = hasJob && !callSaved;
 
   const selectedOutcomeObj = CALL_OUTCOMES.find((o) => o.value === selectedOutcome);
-  const shouldShowJobAssign = selectedOutcomeObj?.assignJob && !hasJob;
+  // Allow assigning to another job even if the candidate is already in one — schema
+  // permits multiple candidate_jobs per candidate (one row per job). Only same
+  // (candidate, job) pair is blocked by @@unique([candidate_id, job_id]).
+  const shouldShowJobAssign = !!selectedOutcomeObj?.assignJob;
   // Only show jobs with a today/future interview date — assigning to past-only jobs has no purpose.
   const { data: jobsData } = useGetJobsQuery({ status: 'open', limit: 100, upcoming: 'true' }, { skip: !shouldShowJobAssign });
   const openJobs: any[] = jobsData?.data || [];
