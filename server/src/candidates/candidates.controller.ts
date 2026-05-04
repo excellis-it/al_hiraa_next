@@ -122,8 +122,8 @@ export class CandidatesController {
   @Get('dashboard')
   @UseGuards(RolesGuard)
   @Roles(UserRole.data_entry)
-  getDashboardStats(@CurrentUser('id') userId: string) {
-    return this.candidatesService.getDashboardStats(userId);
+  getDashboardStats(@CurrentUser() user: any) {
+    return this.candidatesService.getDashboardStats(user);
   }
 
   @Get(':id')

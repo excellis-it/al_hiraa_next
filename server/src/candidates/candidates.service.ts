@@ -819,7 +819,7 @@ export class CandidatesService {
     return { added, duplicates, errors };
   }
 
-  async getDashboardStats(userId: string) {
+  async getDashboardStats(currentUser: { id: string; role: string }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -828,8 +828,9 @@ export class CandidatesService {
 
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Data Entry dashboard scoped to candidates this user registered.
-    const ownedBy = { registered_by: userId };
+    // Data Entry dashboard scoped to their own registrations; admin/manager see system-wide.
+    const ownedBy =
+      currentUser.role === 'data_entry' ? { registered_by: currentUser.id } : {};
 
     const [todayCount, weekCount, monthCount, incompleteCount, totalCount] =
       await Promise.all([
@@ -848,20 +849,27 @@ export class CandidatesService {
         this.prisma.candidate.count({ where: ownedBy }),
       ]);
 
-    // 30-day trend data — scoped to this user's registrations.
+    // 30-day trend data — scoped to this user when data_entry, else system-wide.
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const dailyCounts = await this.prisma.$queryRaw<
-      { date: Date; count: bigint }[]
-    >`
-      SELECT DATE(created_at) as date, COUNT(*)::bigint as count
-      FROM candidates
-      WHERE created_at >= ${thirtyDaysAgo}
-        AND registered_by = ${userId}
-      GROUP BY DATE(created_at)
-      ORDER BY date ASC
-    `;
+    const dailyCounts =
+      currentUser.role === 'data_entry'
+        ? await this.prisma.$queryRaw<{ date: Date; count: bigint }[]>`
+            SELECT DATE(created_at) as date, COUNT(*)::bigint as count
+            FROM candidates
+            WHERE created_at >= ${thirtyDaysAgo}
+              AND registered_by = ${currentUser.id}
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+          `
+        : await this.prisma.$queryRaw<{ date: Date; count: bigint }[]>`
+            SELECT DATE(created_at) as date, COUNT(*)::bigint as count
+            FROM candidates
+            WHERE created_at >= ${thirtyDaysAgo}
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+          `;
 
     return {
       today: todayCount,

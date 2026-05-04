@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
 import {
-  Users, Briefcase, AlertCircle, CalendarCheck,
+  Users, Briefcase, AlertCircle, CalendarCheck, CalendarDays,
   ArrowUpRight, ArrowDownRight, TrendingUp, ExternalLink,
   MoreHorizontal, FileCheck, Stethoscope, CreditCard, Plane,
   ChevronLeft, ChevronRight,
@@ -246,6 +246,14 @@ export default function MasterDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {canSeeDataEntry && (
           <>
+            <StatCard
+              label="Today"
+              value={deStats?.today ?? 0}
+              icon={<CalendarDays size={18} className="text-emerald-600" />}
+              iconBg="bg-emerald-50"
+              sub="registered today"
+              to="/data-entry/candidates"
+            />
             <StatCard
               label="Total Candidates"
               value={deStats?.total ?? 0}
