@@ -41,6 +41,7 @@ export default function Pipeline() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
   const [followUpToday, setFollowUpToday] = useState(false);
+  const [showUpcoming, setShowUpcoming] = useState(true);
 
   // Keep URL in sync with the status filter so links are shareable & back-button works
   useEffect(() => {
@@ -68,8 +69,9 @@ export default function Pipeline() {
     limit: LIMIT,
     status: statusFilter || undefined,
     follow_up_today: followUpToday || undefined,
+    upcoming: showUpcoming || undefined,
     search: debouncedSearch || undefined,
-  });
+  } as any);
 
   const [updatePipelineStatus, { isLoading: updatingStatus }] = useUpdatePipelineStatusMutation();
   const [createCallLog, { isLoading: loggingCall }] = useCreateCallLogMutation();
@@ -177,6 +179,21 @@ export default function Pipeline() {
             <Phone size={13} />
             Due Today
             {followUpToday && (
+              <span className="ml-1 bg-white/30 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✓</span>
+            )}
+          </button>
+
+          <button
+            onClick={() => { setShowUpcoming((v) => !v); setPage(1); }}
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
+              showUpcoming
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'border-gray-200 text-gray-500 bg-gray-50 hover:border-blue-300 hover:text-blue-600'
+            }`}
+            title="Show only candidates whose job has a today/future interview date"
+          >
+            Upcoming Only
+            {showUpcoming && (
               <span className="ml-1 bg-white/30 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✓</span>
             )}
           </button>

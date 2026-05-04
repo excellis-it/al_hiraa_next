@@ -880,13 +880,25 @@ function AssignToJobModal({
   const [result, setResult] = useState<{ success: number; errors: number } | null>(null);
 
   const { data: companiesData } = useGetCompaniesQuery({ limit: 200 } as any);
+  // All upcoming-interview jobs (no company filter) — used to compute which companies
+  // even have upcoming jobs, so Step 1 hides companies with nothing to assign to.
+  const { data: upcomingJobsData } = useGetJobsQuery({
+    status: 'open,interviews_scheduled,in_process',
+    limit: 500,
+    upcoming: 'true',
+  });
+  // Only show jobs with a today/future interview date — assigning to past-only jobs has no purpose.
   const { data: jobsData } = useGetJobsQuery(
-    { company_id: Number(companyId), status: 'open,interviews_scheduled,in_process', limit: 100 },
+    { company_id: Number(companyId), status: 'open,interviews_scheduled,in_process', limit: 100, upcoming: 'true' },
     { skip: !companyId }
   );
   const [addToPipeline] = useAddToPipelineMutation();
 
-  const companies: any[] = companiesData?.data || [];
+  const allCompanies: any[] = companiesData?.data || [];
+  const upcomingJobs: any[] = upcomingJobsData?.data || [];
+  // Set of company IDs that have at least one upcoming-interview job.
+  const companyIdsWithUpcoming = new Set(upcomingJobs.map((j: any) => j.company_id));
+  const companies = allCompanies.filter((c: any) => companyIdsWithUpcoming.has(c.id));
   const jobs: any[] = jobsData?.data || [];
 
   const selectedJob = jobs.find(j => j.id === Number(jobId));

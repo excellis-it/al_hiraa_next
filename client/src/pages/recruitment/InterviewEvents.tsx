@@ -561,8 +561,13 @@ export default function InterviewEvents() {
   const [printJobs, setPrintJobs] = useState<any[] | null>(null);
   const [editJob, setEditJob] = useState<any | null>(null);
 
-  // Primary data: jobs with positions
-  const { data, refetch } = useGetJobsQuery({ limit: 200, status: 'open,interviews_scheduled,in_process' });
+  // Primary data: jobs with positions. Server-side filter to today/future interview
+  // dates when "upcoming" is on so we don't truncate past-only rows out of view.
+  const { data, refetch } = useGetJobsQuery({
+    limit: 200,
+    status: 'open,interviews_scheduled,in_process',
+    upcoming: showUpcoming ? 'true' : undefined,
+  } as any);
   const jobs: any[] = data?.data || [];
 
   // Also fetch interview events to map job → event IDs for "View" links

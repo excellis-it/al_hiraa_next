@@ -80,6 +80,12 @@ const MENU: MenuSection[] = [
         roles: ['recruiter', 'process_manager', 'manager', 'admin'],
       },
       {
+        label: 'Lineup',
+        path: '/recruitment/pipeline',
+        icon: <ClipboardList size={16} />,
+        roles: ['recruiter', 'process_manager', 'manager', 'admin'],
+      },
+      {
         label: 'Process Management',
         path: '/process-module',
         icon: <FileCheck size={16} />,

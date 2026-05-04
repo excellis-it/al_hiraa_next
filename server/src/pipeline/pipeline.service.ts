@@ -27,7 +27,9 @@ export class PipelineService {
     status?: string;
     assigned_to?: string;
     follow_up_today?: boolean;
+    upcoming?: boolean;
     search?: string;
+    currentUser?: { id: string; role: string };
   }) {
     const {
       page = 1,
@@ -36,7 +38,9 @@ export class PipelineService {
       status,
       assigned_to,
       follow_up_today,
+      upcoming,
       search,
+      currentUser,
     } = params;
     const skip = (page - 1) * limit;
 
@@ -45,6 +49,12 @@ export class PipelineService {
     if (job_id) where.job_id = job_id;
     if (status) where.status = status;
     if (assigned_to) where.assigned_to = assigned_to;
+
+    // Recruiters only see candidates assigned to them. Other roles see everything
+    // unless they pass an explicit assigned_to filter.
+    if (!assigned_to && currentUser?.role === 'recruiter') {
+      where.assigned_to = currentUser.id;
+    }
 
     if (search) {
       where.candidate = {
@@ -62,6 +72,19 @@ export class PipelineService {
       const todayEnd = new Date();
       todayEnd.setHours(23, 59, 59, 999);
       where.follow_up_date = { gte: todayStart, lte: todayEnd };
+    }
+
+    if (upcoming) {
+      // Restrict to candidates whose linked Job still has a future-or-today interview window.
+      // Matches the same logic used by /jobs?upcoming=true.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      where.job = {
+        OR: [
+          { interview_date_end:   { gte: today } },
+          { interview_date_start: { gte: today } },
+        ],
+      };
     }
 
     const [records, total] = await Promise.all([

@@ -11,6 +11,7 @@ export const jobsApi = apiSlice.injectEndpoints({
         company_id?: number;
         trade_id?: number;
         priority?: string;
+        upcoming?: string | boolean;
       }) => ({
         url: '/jobs',
         params,

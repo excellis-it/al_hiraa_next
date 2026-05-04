@@ -16,6 +16,7 @@ export class JobsService {
     company_id?: number;
     trade_id?: number;
     priority?: string;
+    upcoming?: boolean;
   }) {
     const {
       page = 1,
@@ -25,6 +26,7 @@ export class JobsService {
       company_id,
       trade_id,
       priority,
+      upcoming,
     } = params;
     const skip = (page - 1) * limit;
 
@@ -43,6 +45,18 @@ export class JobsService {
     if (company_id) where.company_id = company_id;
     if (trade_id) where.trade_id = trade_id;
     if (priority) where.priority = priority;
+    if (upcoming) {
+      // "Active": at least one interview scheduled today or in the future.
+      // A job qualifies if interview_date_end >= today (covers single-day and ranges),
+      // OR interview_date_start >= today (covers cases where end isn't set).
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      where.OR = [
+        ...(where.OR || []),
+        { interview_date_end:   { gte: today } },
+        { interview_date_start: { gte: today } },
+      ];
+    }
 
     const [jobs, total] = await Promise.all([
       this.prisma.job.findMany({
@@ -350,7 +364,7 @@ export class JobsService {
     return this.findOne(id);
   }
 
-  async getDashboard() {
+  async getDashboard(currentUser?: { id: string; role: string }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -365,6 +379,11 @@ export class JobsService {
       InterestStatus.interview_rejected,
     ];
 
+    // Recruiter sees only their own assigned candidate-jobs across every count below.
+    // Job counts (and "Top 5 open jobs") aren't restricted by recruiter — those are global.
+    const recruiterScope =
+      currentUser?.role === 'recruiter' ? { assigned_to: currentUser.id } : {};
+
     const [
       openJobsCount,
       linedUpTotal,
@@ -373,21 +392,24 @@ export class JobsService {
       pipelineByStatus,
     ] = await Promise.all([
       this.prisma.job.count({ where: { status: 'open' } }),
-      this.prisma.candidateJob.count({ where: { status: 'lined_up' } }),
+      this.prisma.candidateJob.count({ where: { ...recruiterScope, status: 'lined_up' } }),
       this.prisma.candidateJob.count({
         where: {
+          ...recruiterScope,
           follow_up_date: { lte: todayEnd },
           status: { notIn: notFinalStatuses },
         },
       }),
       this.prisma.candidateJob.count({
         where: {
+          ...recruiterScope,
           status: InterestStatus.interview_selected,
           updated_at: { gte: weekAgo },
         },
       }),
       this.prisma.candidateJob.groupBy({
         by: ['status'],
+        where: recruiterScope,
         _count: { id: true },
       }),
     ]);
@@ -408,6 +430,7 @@ export class JobsService {
     const linedUpForTopJobs = await this.prisma.candidateJob.groupBy({
       by: ['job_id'],
       where: {
+        ...recruiterScope,
         job_id: { in: topJobIds },
         status: InterestStatus.lined_up,
       },

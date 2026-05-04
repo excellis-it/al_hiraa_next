@@ -32,7 +32,9 @@ export class PipelineController {
     @Query('status') status?: string,
     @Query('assigned_to') assigned_to?: string,
     @Query('follow_up_today') follow_up_today?: string,
+    @Query('upcoming') upcoming?: string,
     @Query('search') search?: string,
+    @CurrentUser() user?: any,
   ) {
     return this.pipelineService.findAll({
       page: +page,
@@ -41,7 +43,9 @@ export class PipelineController {
       status,
       assigned_to,
       follow_up_today: follow_up_today === 'true',
+      upcoming: upcoming === 'true',
       search,
+      currentUser: user,
     });
   }
 

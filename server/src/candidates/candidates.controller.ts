@@ -56,6 +56,7 @@ export class CandidatesController {
     @Query('gulf_return') gulf_return?: string,
     @Query('ecr_type') ecr_type?: string,
     @Query('include_external') include_external?: string,
+    @CurrentUser() user?: any,
   ) {
     const positionIdsArr = position_ids
       ? position_ids.split(',').map(Number).filter(Boolean)
@@ -76,6 +77,7 @@ export class CandidatesController {
       gulf_return: gulf_return === 'true' ? true : gulf_return === 'false' ? false : undefined,
       ecr_type: ecr_type || undefined,
       include_external: include_external === 'true',
+      currentUser: user,
     });
   }
 
@@ -89,7 +91,7 @@ export class CandidatesController {
 
   @Get('incomplete/queue')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.data_entry)
+  @Roles(UserRole.data_entry, UserRole.manager, UserRole.admin)
   getIncompleteQueue(
     @Query('page') page = '1',
     @Query('limit') limit = '50',
@@ -97,6 +99,7 @@ export class CandidatesController {
     @Query('date_from') date_from?: string,
     @Query('date_to') date_to?: string,
     @Query('sort_order') sort_order?: string,
+    @CurrentUser() user?: any,
   ) {
     return this.candidatesService.getIncompleteQueue({
       page: +page,
@@ -105,6 +108,7 @@ export class CandidatesController {
       date_from,
       date_to,
       sort_order: (sort_order as 'asc' | 'desc') || 'asc',
+      currentUser: user,
     });
   }
 

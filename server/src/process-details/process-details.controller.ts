@@ -12,7 +12,9 @@ import { UserRole } from '../generated/prisma';
 
 @Controller('process-details')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.process_manager)
+// Recruiters can read process records for candidates they're assigned to (service-side scope).
+// Process managers / managers / admins see everything; the service applies the role-aware filter.
+@Roles(UserRole.recruiter, UserRole.process_manager, UserRole.manager, UserRole.admin)
 export class ProcessDetailsController {
   constructor(private readonly service: ProcessDetailsService) {}
 
@@ -28,6 +30,7 @@ export class ProcessDetailsController {
     @Query('candidate_status') candidate_status?: string,
     @Query('year')             year?: string,
     @Query('job_id')           job_id?: string,
+    @CurrentUser()             user?: any,
   ) {
     return this.service.exportAll({
       search,
@@ -35,6 +38,7 @@ export class ProcessDetailsController {
       candidate_status,
       year:   year   ? +year   : undefined,
       job_id: job_id ? +job_id : undefined,
+      currentUser: user,
     });
   }
 
@@ -47,6 +51,7 @@ export class ProcessDetailsController {
     @Query('candidate_status') candidate_status?: string,
     @Query('year')             year?: string,
     @Query('job_id')           job_id?: string,
+    @CurrentUser()             user?: any,
   ) {
     return this.service.findAll({
       page:   page   ? +page   : undefined,
@@ -56,6 +61,7 @@ export class ProcessDetailsController {
       candidate_status,
       year:   year   ? +year   : undefined,
       job_id: job_id ? +job_id : undefined,
+      currentUser: user,
     });
   }
 

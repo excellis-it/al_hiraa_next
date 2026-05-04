@@ -26,8 +26,8 @@ export class JobsController {
 
   // Must be defined BEFORE /:id to avoid route collision
   @Get('dashboard')
-  getDashboard() {
-    return this.jobsService.getDashboard();
+  getDashboard(@CurrentUser() user: any) {
+    return this.jobsService.getDashboard(user);
   }
 
   @Get()
@@ -39,6 +39,7 @@ export class JobsController {
     @Query('company_id') company_id?: string,
     @Query('trade_id') trade_id?: string,
     @Query('priority') priority?: string,
+    @Query('upcoming') upcoming?: string,
   ) {
     return this.jobsService.findAll({
       page: +page,
@@ -48,6 +49,7 @@ export class JobsController {
       company_id: company_id ? +company_id : undefined,
       trade_id: trade_id ? +trade_id : undefined,
       priority,
+      upcoming: upcoming === 'true',
     });
   }
 

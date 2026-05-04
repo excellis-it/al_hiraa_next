@@ -95,7 +95,6 @@ export default function CandidateDetailDrawer({
   const [selectedOutcome, setSelectedOutcome] = useState<string>('');
   const [callNotes, setCallNotes] = useState('');
   const [callSaved, setCallSaved] = useState(false);
-  const [showCloseWarning, setShowCloseWarning] = useState(false);
   const [showJobAssign, setShowJobAssign] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState('');
   const [jobAssigned, setJobAssigned] = useState(false);
@@ -105,13 +104,11 @@ export default function CandidateDetailDrawer({
 
   const selectedOutcomeObj = CALL_OUTCOMES.find((o) => o.value === selectedOutcome);
   const shouldShowJobAssign = selectedOutcomeObj?.assignJob && !hasJob;
-  const { data: jobsData } = useGetJobsQuery({ status: 'open', limit: 100 }, { skip: !shouldShowJobAssign });
+  // Only show jobs with a today/future interview date — assigning to past-only jobs has no purpose.
+  const { data: jobsData } = useGetJobsQuery({ status: 'open', limit: 100, upcoming: 'true' }, { skip: !shouldShowJobAssign });
   const openJobs: any[] = jobsData?.data || [];
 
-  const handleClose = () => {
-    if (requiresCallUpdate) { setShowCloseWarning(true); return; }
-    onClose();
-  };
+  const handleClose = () => onClose();
 
   const handleSaveCall = async () => {
     if (!selectedOutcome) return;
@@ -134,7 +131,6 @@ export default function CandidateDetailDrawer({
         notes: callNotes || undefined,
       }).unwrap();
       setCallSaved(true);
-      setShowCloseWarning(false);
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to save call log');
     }
@@ -144,31 +140,6 @@ export default function CandidateDetailDrawer({
     <>
       {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={handleClose} />
-
-      {/* Close warning */}
-      {showCloseWarning && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <AlertCircle size={18} className="text-amber-600" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-800 text-sm">Log call before closing</p>
-                <p className="text-xs text-gray-500 mt-1">Please record the outcome of your call before closing this profile.</p>
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => { setShowCloseWarning(false); onClose(); }} className="text-xs text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg border border-gray-200">
-                Skip & Close
-              </button>
-              <button onClick={() => setShowCloseWarning(false)} className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
-                Log Call Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Drawer */}
       <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-white shadow-2xl flex flex-col">

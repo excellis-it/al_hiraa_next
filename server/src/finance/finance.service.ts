@@ -13,7 +13,11 @@ export class FinanceService {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
     const endOfLastMonth   = new Date(now.getFullYear(), now.getMonth(),     0, 23, 59, 59, 999);
 
-    // Date filter for collected payments (uses paid_date)
+    // Date filter applies to due_date for ALL cards. This makes paid and unpaid comparable
+    // within the same date window: "what's due this period, how much has been collected,
+    // how much is still outstanding". Filtering paid by paid_date and unpaid by created_at
+    // gave incompatible answers (paid_date is null for unpaid; created_at is install-creation
+    // time, not the relevant business date).
     const dateFilter: any = {};
     if (dateRange?.from_date) dateFilter.gte = new Date(dateRange.from_date);
     if (dateRange?.to_date) {
@@ -23,19 +27,14 @@ export class FinanceService {
     }
     const hasDates = Object.keys(dateFilter).length > 0;
 
-    // Where-clauses respect the date range: paid records by paid_date, unpaid by created_at
-    // This way the card totals always match the drawer counts.
     const paidWhere   = hasDates
-      ? { status: 'paid' as const, paid_date: dateFilter }
+      ? { status: 'paid' as const, due_date: dateFilter }
       : { status: 'paid' as const };
     const unpaidWhere = hasDates
-      ? { status: { notIn: ['paid', 'waived'] as any[] }, created_at: dateFilter }
+      ? { status: { notIn: ['paid', 'waived'] as any[] }, due_date: dateFilter }
       : { status: { notIn: ['paid', 'waived'] as any[] } };
     const allInRangeWhere: any = hasDates
-      ? { OR: [
-          { status: 'paid',    paid_date:  dateFilter },
-          { status: 'pending', created_at: dateFilter },
-        ]}
+      ? { due_date: dateFilter }
       : {};
 
     const paymentInclude = {
@@ -78,22 +77,23 @@ export class FinanceService {
         _sum: { amount_due: true, fee_waiver_amount: true },
         where: unpaidWhere,
       }),
+      // This/last-month aggregates use due_date too — cards read as
+      // "amounts due this calendar month, paid vs outstanding".
       this.prisma.payment.aggregate({
         _sum: { amount_paid: true },
-        where: { status: 'paid', paid_date: { gte: startOfMonth, lte: endOfMonth } },
+        where: { status: 'paid', due_date: { gte: startOfMonth, lte: endOfMonth } },
       }),
       this.prisma.payment.aggregate({
         _sum: { amount_paid: true },
-        where: { status: 'paid', paid_date: { gte: startOfLastMonth, lte: endOfLastMonth } },
-      }),
-      // Unpaid amounts whose installment was created in this/last month
-      this.prisma.payment.aggregate({
-        _sum: { amount_due: true, fee_waiver_amount: true },
-        where: { status: { notIn: ['paid', 'waived'] }, created_at: { gte: startOfMonth, lte: endOfMonth } },
+        where: { status: 'paid', due_date: { gte: startOfLastMonth, lte: endOfLastMonth } },
       }),
       this.prisma.payment.aggregate({
         _sum: { amount_due: true, fee_waiver_amount: true },
-        where: { status: { notIn: ['paid', 'waived'] }, created_at: { gte: startOfLastMonth, lte: endOfLastMonth } },
+        where: { status: { notIn: ['paid', 'waived'] }, due_date: { gte: startOfMonth, lte: endOfMonth } },
+      }),
+      this.prisma.payment.aggregate({
+        _sum: { amount_due: true, fee_waiver_amount: true },
+        where: { status: { notIn: ['paid', 'waived'] }, due_date: { gte: startOfLastMonth, lte: endOfLastMonth } },
       }),
       this.prisma.payment.findMany({
         take: 500,
@@ -102,28 +102,18 @@ export class FinanceService {
         include: paymentInclude,
       }),
       // Always-fresh lists for the This Month / Last Month cards' drawers
-      // (independent of the page's date filter — they show the full calendar month)
-      // Includes BOTH paid + unpaid for that month so cards can show full breakdown
+      // (independent of the page's date filter — they show the full calendar month
+      // by due_date so the row count matches the aggregate above).
       this.prisma.payment.findMany({
         take: 500,
-        orderBy: [{ paid_date: 'desc' }, { created_at: 'desc' }],
-        where: {
-          OR: [
-            { status: 'paid',    paid_date:  { gte: startOfMonth, lte: endOfMonth } },
-            { status: 'pending', created_at: { gte: startOfMonth, lte: endOfMonth } },
-          ],
-        },
+        orderBy: [{ due_date: 'desc' }, { created_at: 'desc' }],
+        where: { due_date: { gte: startOfMonth, lte: endOfMonth } },
         include: paymentInclude,
       }),
       this.prisma.payment.findMany({
         take: 500,
-        orderBy: [{ paid_date: 'desc' }, { created_at: 'desc' }],
-        where: {
-          OR: [
-            { status: 'paid',    paid_date:  { gte: startOfLastMonth, lte: endOfLastMonth } },
-            { status: 'pending', created_at: { gte: startOfLastMonth, lte: endOfLastMonth } },
-          ],
-        },
+        orderBy: [{ due_date: 'desc' }, { created_at: 'desc' }],
+        where: { due_date: { gte: startOfLastMonth, lte: endOfLastMonth } },
         include: paymentInclude,
       }),
     ]);
@@ -212,38 +202,17 @@ export class FinanceService {
       where.status = { in: ['pending'] };
     }
 
-    // Optional date range filter: paid records by paid_date, unpaid by created_at
+    // Optional date range filter: applied uniformly to due_date so paid + unpaid
+    // are filterable on a single comparable axis (matches the Overview cards).
     if (from_date || to_date) {
       const from = from_date ? new Date(from_date) : null;
       const to   = to_date
         ? (() => { const d = new Date(to_date); d.setHours(23, 59, 59, 999); return d; })()
         : null;
-      const paidDateFilter: any   = {};
-      const createdAtFilter: any  = {};
-      if (from) { paidDateFilter.gte = from; createdAtFilter.gte = from; }
-      if (to)   { paidDateFilter.lte = to;   createdAtFilter.lte = to;   }
-
-      const dateConditions = [
-        { status: 'paid',    paid_date:  paidDateFilter },
-        { status: 'pending', created_at: createdAtFilter },
-        { status: 'waived',  created_at: createdAtFilter },
-      ];
-
-      // Merge with existing status filter if any
-      if (where.status) {
-        const existingStatus = where.status;
-        delete where.status;
-        const matchingCondition = dateConditions.find(c => {
-          if (typeof existingStatus === 'string') return c.status === existingStatus;
-          return (existingStatus.in as string[]).includes(c.status);
-        });
-        where.AND = [
-          { status: existingStatus },
-          matchingCondition ? { OR: [matchingCondition] } : { OR: dateConditions },
-        ];
-      } else {
-        where.OR = dateConditions;
-      }
+      const dueDateFilter: any = {};
+      if (from) dueDateFilter.gte = from;
+      if (to)   dueDateFilter.lte = to;
+      where.due_date = dueDateFilter;
     }
 
     if (search) {

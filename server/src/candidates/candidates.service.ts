@@ -153,6 +153,7 @@ export class CandidatesService {
     gulf_return?: boolean;
     ecr_type?: string;
     include_external?: boolean;
+    currentUser?: { id: string; role: string };
   }) {
     const {
       page = 1,
@@ -169,10 +170,17 @@ export class CandidatesService {
       gulf_return,
       ecr_type,
       include_external,
+      currentUser,
     } = params;
     const skip = (page - 1) * limit;
 
     const conditions: any[] = [];
+
+    // Data Entry users only see candidates they registered themselves.
+    // Other roles (recruiter / process_manager / manager / admin) see all.
+    if (currentUser?.role === 'data_entry') {
+      conditions.push({ registered_by: currentUser.id });
+    }
 
     if (!include_external) {
       conditions.push({ external_only: false });
@@ -233,7 +241,7 @@ export class CandidatesService {
         },
         skip,
         take: limit,
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: 'asc' },
       }),
       this.prisma.candidate.count({ where }),
     ]);
@@ -431,12 +439,17 @@ export class CandidatesService {
     date_from?: string;
     date_to?: string;
     sort_order?: 'asc' | 'desc';
+    currentUser?: { id: string; role: string };
   }) {
-    const { page = 1, limit = 50, registered_by, date_from, date_to, sort_order = 'asc' } = params;
+    const { page = 1, limit = 50, registered_by, date_from, date_to, sort_order = 'asc', currentUser } = params;
     const skip = (page - 1) * limit;
 
     const conditions: any[] = [{ completion_status: CompletionStatus.incomplete }];
-    if (registered_by) conditions.push({ registered_by });
+    // Data Entry users only see candidates they registered themselves.
+    // Other roles (manager / admin) see all unless they pass an explicit registered_by.
+    const effectiveRegisteredBy =
+      registered_by ?? (currentUser?.role === 'data_entry' ? currentUser.id : undefined);
+    if (effectiveRegisteredBy) conditions.push({ registered_by: effectiveRegisteredBy });
     if (date_from || date_to) {
       const created_at: any = {};
       if (date_from) created_at.gte = new Date(date_from);
@@ -814,24 +827,27 @@ export class CandidatesService {
 
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
+    // Data Entry dashboard scoped to candidates this user registered.
+    const ownedBy = { registered_by: userId };
+
     const [todayCount, weekCount, monthCount, incompleteCount, totalCount] =
       await Promise.all([
         this.prisma.candidate.count({
-          where: { created_at: { gte: today } },
+          where: { ...ownedBy, created_at: { gte: today } },
         }),
         this.prisma.candidate.count({
-          where: { created_at: { gte: weekAgo } },
+          where: { ...ownedBy, created_at: { gte: weekAgo } },
         }),
         this.prisma.candidate.count({
-          where: { created_at: { gte: monthStart } },
+          where: { ...ownedBy, created_at: { gte: monthStart } },
         }),
         this.prisma.candidate.count({
-          where: { completion_status: CompletionStatus.incomplete },
+          where: { ...ownedBy, completion_status: CompletionStatus.incomplete },
         }),
-        this.prisma.candidate.count(),
+        this.prisma.candidate.count({ where: ownedBy }),
       ]);
 
-    // 30-day trend data
+    // 30-day trend data — scoped to this user's registrations.
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -841,6 +857,7 @@ export class CandidatesService {
       SELECT DATE(created_at) as date, COUNT(*)::bigint as count
       FROM candidates
       WHERE created_at >= ${thirtyDaysAgo}
+        AND registered_by = ${userId}
       GROUP BY DATE(created_at)
       ORDER BY date ASC
     `;

@@ -10,6 +10,7 @@ export const pipelineApi = apiSlice.injectEndpoints({
         status?: string;
         assigned_to?: number;
         follow_up_today?: boolean;
+        upcoming?: boolean;
         search?: string;
       }) => ({
         url: '/pipeline',

@@ -293,6 +293,7 @@ export class ProcessDetailsService {
   async exportAll(params: {
     search?: string; medical_status?: string;
     candidate_status?: string; year?: number; job_id?: number;
+    currentUser?: { id: string; role: string };
   }) {
     const where: any = {};
     if (params.medical_status)   where.medical_status   = params.medical_status;
@@ -301,6 +302,10 @@ export class ProcessDetailsService {
 
     const candidateJobWhere: any = {};
     if (params.job_id) candidateJobWhere.job_id = params.job_id;
+    // Recruiters only see process records for candidates they are assigned to.
+    if (params.currentUser?.role === 'recruiter') {
+      candidateJobWhere.assigned_to = params.currentUser.id;
+    }
     if (params.search) {
       candidateJobWhere.OR = [
         { candidate: { full_name:    { contains: params.search, mode: 'insensitive' } } },
@@ -322,6 +327,7 @@ export class ProcessDetailsService {
     page?: number; limit?: number; search?: string; medical_status?: string;
     candidate_status?: string; year?: number; job_id?: number;
     interview_event_id?: number;
+    currentUser?: { id: string; role: string };
   }) {
     const page  = params.page  || 1;
     const limit = Math.min(params.limit || 50, 1000);
@@ -335,6 +341,10 @@ export class ProcessDetailsService {
     // Filter by job (for interview-specific view)
     const candidateJobWhere: any = {};
     if (params.job_id) candidateJobWhere.job_id = params.job_id;
+    // Recruiters only see process records for candidates they are assigned to.
+    if (params.currentUser?.role === 'recruiter') {
+      candidateJobWhere.assigned_to = params.currentUser.id;
+    }
     if (params.search) {
       candidateJobWhere.OR = [
         { candidate: { full_name: { contains: params.search, mode: 'insensitive' } } },
