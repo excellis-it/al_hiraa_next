@@ -364,6 +364,41 @@ export default function CandidateForm() {
     }
   }, [editCandidate, isEdit, trades]);
 
+  // Re-apply select values once their async-loaded options arrive. Without this,
+  // a <select> whose value was set before its options existed silently drops the
+  // value (browser default behavior), so the user sees the placeholder even
+  // though the candidate has a real value stored.
+  useEffect(() => {
+    if (editCandidate && isEdit && (states as any[])?.length) {
+      setValue('state_id', editCandidate.state_id?.toString() || '');
+    }
+  }, [editCandidate, isEdit, states, setValue]);
+
+  useEffect(() => {
+    // Cities query is gated on selectedStateId, so it only loads once state is set.
+    if (editCandidate && isEdit && (cities as any[])?.length) {
+      setValue('city_id', editCandidate.city_id?.toString() || '');
+    }
+  }, [editCandidate, isEdit, cities, setValue]);
+
+  useEffect(() => {
+    if (editCandidate && isEdit && (sources as any[])?.length) {
+      setValue('source_id', editCandidate.source_id?.toString() || '');
+    }
+  }, [editCandidate, isEdit, sources, setValue]);
+
+  useEffect(() => {
+    if (editCandidate && isEdit && associates.length > 0) {
+      setValue('associate_id', editCandidate.associate_id?.toString() || '');
+    }
+  }, [editCandidate, isEdit, associates, setValue]);
+
+  useEffect(() => {
+    if (editCandidate && isEdit && referrers.length > 0) {
+      setValue('referrer_id', (editCandidate as any).referrer_id?.toString() || '');
+    }
+  }, [editCandidate, isEdit, referrers, setValue]);
+
   // Phone verification — live, debounced, triggers on full number length
   const verifyTimer = useRef<number | null>(null);
 

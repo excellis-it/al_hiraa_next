@@ -10,10 +10,13 @@ import toast from 'react-hot-toast';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
+// Only "Interested" requires assigning the candidate to a job pipeline first.
+// Other outcomes (not interested / call back / not reachable / wrong number)
+// just record what happened on the call — no job assignment required.
 const CALL_OUTCOMES = [
-  { value: 'interested',     label: 'Interested',     color: 'bg-emerald-100 text-emerald-700 border-emerald-300', assignJob: true },
-  { value: 'not_interested', label: 'Not Interested', color: 'bg-red-100 text-red-700 border-red-300',             assignJob: true },
-  { value: 'call_back',      label: 'Call Back',      color: 'bg-blue-100 text-blue-700 border-blue-300',          assignJob: true },
+  { value: 'interested',     label: 'Interested',     color: 'bg-emerald-100 text-emerald-700 border-emerald-300', assignJob: true  },
+  { value: 'not_interested', label: 'Not Interested', color: 'bg-red-100 text-red-700 border-red-300',             assignJob: false },
+  { value: 'call_back',      label: 'Call Back',      color: 'bg-blue-100 text-blue-700 border-blue-300',          assignJob: false },
   { value: 'not_reachable',  label: 'Not Reachable',  color: 'bg-gray-100 text-gray-600 border-gray-300',          assignJob: false },
   { value: 'wrong_number',   label: 'Wrong Number',   color: 'bg-orange-100 text-orange-700 border-orange-300',    assignJob: false },
 ];
@@ -115,14 +118,30 @@ export default function CandidateDetailDrawer({
 
   const handleSaveCall = async () => {
     if (!selectedOutcome) return;
-    const candidateJobId = (candidate as any)?.active_candidate_job_id;
-    if (!candidateJobId && hasJob) return;
+    let candidateJobId = (candidate as any)?.active_candidate_job_id as number | undefined;
 
+    // If the outcome requires job assignment and the user has picked one in the
+    // inline assign UI, create the CandidateJob first and use its id below.
     if (shouldShowJobAssign && showJobAssign && selectedJobId && !jobAssigned) {
       try {
-        await addToPipeline({ candidate_id: candidateId, job_id: +selectedJobId }).unwrap();
+        const created = await addToPipeline({
+          candidate_id: candidateId,
+          job_id: +selectedJobId,
+        }).unwrap();
         setJobAssigned(true);
-      } catch { /* continue */ }
+        if ((created as any)?.id) candidateJobId = (created as any).id;
+      } catch { /* fall through; the call-log step below will surface the error */ }
+    }
+
+    // For non-engagement outcomes (Not Interested / Call Back / Not Reachable /
+    // Wrong Number) we skip logging when there's no job in the pipeline. The
+    // backend's CallLog table requires candidate_job_id, so without one we just
+    // record the outcome locally and close — no spurious "must be added to a
+    // job pipeline" error for a perfectly valid outcome.
+    if (!candidateJobId && !shouldShowJobAssign) {
+      setCallSaved(true);
+      toast.success(`Outcome recorded: ${selectedOutcomeObj?.label ?? selectedOutcome}`);
+      return;
     }
 
     try {

@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AddCandidateDto } from './dto/add-candidate.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { InterestStatus } from '../generated/prisma';
+import { ProcessDetailsService } from '../process-details/process-details.service';
 
 function formatCandidateCode(c: { id: number; created_at: Date; year_sequence?: number | null }): string {
   if (c.year_sequence && c.created_at) {
@@ -18,7 +19,10 @@ function formatCandidateCode(c: { id: number; created_at: Date; year_sequence?: 
 
 @Injectable()
 export class PipelineService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private processDetails: ProcessDetailsService,
+  ) {}
 
   async findAll(params: {
     page?: number;
@@ -234,6 +238,10 @@ export class PipelineService {
       },
     });
 
+    // Auto-check the candidate into the job's most recent upcoming interview event
+    // (if any). This makes pipeline assignment also visible on the Interview Event detail.
+    await this.ensureCheckinForUpcomingEvent(record.id, dto.job_id);
+
     return {
       ...record,
       candidate: {
@@ -241,6 +249,34 @@ export class PipelineService {
         candidate_code: formatCandidateCode(record.candidate),
       },
     };
+  }
+
+  /**
+   * Ensures an InterviewCheckin row exists for the given candidate_job, linked to the
+   * job's nearest upcoming InterviewEvent. No-op if the job has no upcoming event,
+   * or if a checkin already exists for that event.
+   */
+  private async ensureCheckinForUpcomingEvent(candidateJobId: number, jobId: number) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const event = await this.prisma.interviewEvent.findFirst({
+      where: { job_id: jobId, event_date: { gte: today } },
+      orderBy: { event_date: 'asc' },
+      select: { id: true },
+    });
+    if (!event) return;
+    const existing = await this.prisma.interviewCheckin.findFirst({
+      where: { interview_event_id: event.id, candidate_job_id: candidateJobId },
+      select: { id: true },
+    });
+    if (existing) return;
+    await this.prisma.interviewCheckin.create({
+      data: {
+        interview_event_id: event.id,
+        candidate_job_id: candidateJobId,
+        checkin_status: 'expected',
+      },
+    });
   }
 
   async updateStatus(id: number, dto: UpdateStatusDto, userId: string) {
@@ -267,7 +303,9 @@ export class PipelineService {
       newStatus === InterestStatus.interview_selected &&
       prevStatus !== InterestStatus.interview_selected
     ) {
-      // Transitioning INTO interview_selected: increment positions_filled
+      // Transitioning INTO interview_selected: increment positions_filled and
+      // auto-create the ProcessDetails record so the candidate appears in the
+      // Process module immediately.
       const [updatedRecord] = await this.prisma.$transaction([
         this.prisma.candidateJob.update({
           where: { id },
@@ -278,6 +316,11 @@ export class PipelineService {
           data: { positions_filled: { increment: 1 } },
         }),
       ]);
+      // Snapshot accommodation/transportation (and create ProcessDetails if missing).
+      // Done outside the transaction since it does its own internal writes.
+      await this.processDetails.batchFromInterview([id]);
+      // Mirror to the InterviewCheckin row(s) so the Interview Event detail UI matches.
+      await this.syncCheckinResultFromStatus(id, newStatus);
       return updatedRecord;
     } else if (
       prevStatus === InterestStatus.interview_selected &&
@@ -295,13 +338,39 @@ export class PipelineService {
           data: { positions_filled: { decrement: 1 } },
         }),
       ]);
+      await this.syncCheckinResultFromStatus(id, newStatus);
       return updatedRecord;
     }
 
     // No counter change needed
-    return this.prisma.candidateJob.update({
+    const updated = await this.prisma.candidateJob.update({
       where: { id },
       data: updateData,
+    });
+    if (newStatus !== undefined) {
+      await this.syncCheckinResultFromStatus(id, newStatus);
+    }
+    return updated;
+  }
+
+  /**
+   * Mirror a CandidateJob status change onto the related InterviewCheckin's `result`,
+   * so the Interview Event detail page reflects the same value the Lineup page shows.
+   * Only updates checkins for the candidate_job at hand. No-op for statuses that don't
+   * map to an InterviewResult value (e.g. not_contacted, contacted_*).
+   */
+  private async syncCheckinResultFromStatus(candidateJobId: number, status: InterestStatus) {
+    const map: Partial<Record<InterestStatus, 'pending' | 'selected' | 'rejected' | 'on_hold'>> = {
+      [InterestStatus.lined_up]:           'pending',
+      [InterestStatus.interview_selected]: 'selected',
+      [InterestStatus.interview_rejected]: 'rejected',
+      [InterestStatus.interview_on_hold]:  'on_hold',
+    };
+    const result = map[status];
+    if (!result) return;
+    await this.prisma.interviewCheckin.updateMany({
+      where: { candidate_job_id: candidateJobId },
+      data: { result },
     });
   }
 }

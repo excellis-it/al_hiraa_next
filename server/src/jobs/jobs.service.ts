@@ -393,21 +393,21 @@ export class JobsService {
       pipelineByStatus,
     ] = await Promise.all([
       this.prisma.job.count({ where: { status: 'open' } }),
-      // For a recruiter the "Lined Up" card means "everything in MY lineup with an
-      // upcoming interview" so it matches the Lineup page's default-filtered count.
-      // For admin/manager, keep the system-wide status='lined_up' meaning.
+      // "Lined Up" card = candidates with status='lined_up' AND whose job has a
+      // today/future interview window — so the count matches the Lineup page when
+      // navigated to with `?status=lined_up` (the page's "Upcoming Only" toggle
+      // defaults to ON). Recruiter scope applies on top.
       this.prisma.candidateJob.count({
-        where: isRecruiter
-          ? {
-              ...recruiterScope,
-              job: {
-                OR: [
-                  { interview_date_end:   { gte: today } },
-                  { interview_date_start: { gte: today } },
-                ],
-              },
-            }
-          : { status: 'lined_up' },
+        where: {
+          ...recruiterScope,
+          status: 'lined_up',
+          job: {
+            OR: [
+              { interview_date_end:   { gte: today } },
+              { interview_date_start: { gte: today } },
+            ],
+          },
+        },
       }),
       this.prisma.candidateJob.count({
         where: {

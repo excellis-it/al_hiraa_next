@@ -171,6 +171,20 @@ export class InterviewCheckinsService {
               data: { positions_filled: { decrement: 1 } },
             });
           }
+        } else if (newResult === 'pending') {
+          // Reverting decision back to Pending — re-park the candidate in the lineup.
+          await tx.candidateJob.update({
+            where: { id: checkin.candidate_job_id },
+            data: { status: 'lined_up' },
+          });
+
+          // If previously selected, decrement positions_filled (decision rolled back)
+          if (prevResult === 'selected' && jobId) {
+            await tx.job.update({
+              where: { id: jobId },
+              data: { positions_filled: { decrement: 1 } },
+            });
+          }
         }
       }
 

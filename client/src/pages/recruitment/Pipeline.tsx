@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { Search, Filter, ChevronLeft, ChevronRight, Edit2, Phone, X, CheckSquare, Square, ClipboardList } from 'lucide-react';
 import Select from '../../components/ui/Select';
 import { useGetPipelineQuery, useUpdatePipelineStatusMutation } from '../../store/api/pipelineApi';
-import { useCreateCallLogMutation } from '../../store/api/callLogsApi';
+import { useCreateCallLogMutation, useGetCallLogsQuery } from '../../store/api/callLogsApi';
 
 const INTEREST_STATUSES = [
   { value: 'not_contacted', label: 'Not Contacted', badge: 'badge-gray' },
@@ -15,6 +15,16 @@ const INTEREST_STATUSES = [
   { value: 'interview_selected', label: 'Selected', badge: 'badge-green' },
   { value: 'interview_rejected', label: 'Rejected', badge: 'badge-red' },
   { value: 'interview_on_hold', label: 'On Hold', badge: 'badge-orange' },
+];
+
+// Update-modal options aligned with the InterviewResult dropdown on the Interview Event
+// Detail page (Selected / Rejected / Pending / On Hold). InterestStatus has no "pending"
+// value — mapped to `lined_up` (still in lineup, no decision yet) so it round-trips.
+const STATUS_UPDATE_OPTIONS = [
+  { value: 'lined_up',          label: 'Pending'  },
+  { value: 'interview_selected', label: 'Selected' },
+  { value: 'interview_rejected', label: 'Rejected' },
+  { value: 'interview_on_hold',  label: 'On Hold'  },
 ];
 
 const CALL_OUTCOMES = [
@@ -31,6 +41,50 @@ const CALL_OUTCOMES = [
 
 function getStatusInfo(value: string) {
   return INTEREST_STATUSES.find((s) => s.value === value) || { label: value, badge: 'badge-gray' };
+}
+
+function getOutcomeLabel(value: string) {
+  return CALL_OUTCOMES.find((o) => o.value === value)?.label ?? value;
+}
+
+function fmtTimestamp(ts: string | Date | null | undefined) {
+  if (!ts) return '';
+  const d = typeof ts === 'string' ? new Date(ts) : ts;
+  return d.toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+// Renders the call_log history (who logged what, when) for the open pipeline entry.
+// Each row is one call log; the latest entry is at the top.
+function NoteHistory({ candidateJobId }: { candidateJobId: number }) {
+  const { data, isLoading } = useGetCallLogsQuery(candidateJobId);
+  const logs: any[] = Array.isArray(data) ? data : (data as any)?.data ?? [];
+  return (
+    <div className="border border-gray-100 rounded-xl p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-gray-700">Notes History</h3>
+      {isLoading ? (
+        <p className="text-xs text-gray-400">Loading…</p>
+      ) : logs.length === 0 ? (
+        <p className="text-xs text-gray-400">No call logs yet.</p>
+      ) : (
+        <ul className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+          {logs.map((log: any) => (
+            <li key={log.id} className="text-xs text-gray-700 border-l-2 border-gray-200 pl-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="badge-gray">{getOutcomeLabel(log.outcome)}</span>
+                <span className="text-gray-500 font-medium">{log.caller?.full_name ?? 'Unknown'}</span>
+                <span className="text-gray-400">·</span>
+                <span className="text-gray-400">{fmtTimestamp(log.call_timestamp || log.created_at)}</span>
+              </div>
+              {log.notes && <p className="mt-1 text-gray-600 whitespace-pre-line">{log.notes}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 const LIMIT = 20;
@@ -75,12 +129,14 @@ export default function Pipeline() {
 
   const [updatePipelineStatus, { isLoading: updatingStatus }] = useUpdatePipelineStatusMutation();
   const [createCallLog, { isLoading: loggingCall }] = useCreateCallLogMutation();
+  // Note history is the call_logs for the open pipeline entry. Skipped until the modal opens.
 
   const [updateEntry, setUpdateEntry] = useState<any>(null);
-  const [updateForm, setUpdateForm] = useState({ status: '', notes: '', follow_up_date: '' });
-  const [callForm, setCallForm] = useState({ outcome: '', notes: '', follow_up_date: '' });
+  // Single combined form for status + outcome + notes + follow-up.
+  const [updateForm, setUpdateForm] = useState({ status: '', outcome: '', notes: '', follow_up_date: '' });
   const [updateError, setUpdateError] = useState('');
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [historyEntry, setHistoryEntry] = useState<any>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -101,32 +157,40 @@ export default function Pipeline() {
 
   function openUpdateEntry(entry: any) {
     setUpdateEntry(entry);
-    setUpdateForm({ status: entry.status || '', notes: '', follow_up_date: entry.follow_up_date ? entry.follow_up_date.split('T')[0] : '' });
-    setCallForm({ outcome: '', notes: '', follow_up_date: '' });
+    setUpdateForm({
+      status: entry.status || '',
+      outcome: '',
+      notes: '',
+      follow_up_date: entry.follow_up_date ? entry.follow_up_date.split('T')[0] : '',
+    });
     setUpdateError('');
   }
 
-  async function handleUpdateStatus(e: React.FormEvent) {
+  // Single Save: writes the status update AND (if an outcome is picked) creates a
+  // call log in the same submission. Notes + follow-up are shared between both.
+  async function handleSaveUpdate(e: React.FormEvent) {
     e.preventDefault();
     if (!updateForm.status) { setUpdateError('Select a status.'); return; }
     try {
-      await updatePipelineStatus({ id: updateEntry.id, ...updateForm }).unwrap();
-      setUpdateEntry(null);
-    } catch (err: any) {
-      setUpdateError(err?.data?.message || 'Something went wrong.');
-    }
-  }
-
-  async function handleLogCall(e: React.FormEvent) {
-    e.preventDefault();
-    if (!callForm.outcome) { setUpdateError('Select a call outcome.'); return; }
-    try {
-      await createCallLog({
-        candidate_job_id: updateEntry.id,
-        outcome: callForm.outcome,
-        notes: callForm.notes || undefined,
-        follow_up_date: callForm.follow_up_date || undefined,
+      const statusChanged = updateForm.status !== updateEntry.status;
+      // Always send the status update (so notes + follow-up persist even when
+      // status is unchanged).
+      await updatePipelineStatus({
+        id: updateEntry.id,
+        status: updateForm.status,
+        notes: updateForm.notes || undefined,
+        follow_up_date: updateForm.follow_up_date || undefined,
       }).unwrap();
+      // If the user also picked a call outcome, log it as a separate audit entry.
+      if (updateForm.outcome) {
+        await createCallLog({
+          candidate_job_id: updateEntry.id,
+          outcome: updateForm.outcome,
+          notes: updateForm.notes || undefined,
+          follow_up_date: updateForm.follow_up_date || undefined,
+        }).unwrap();
+      }
+      void statusChanged;
       setUpdateEntry(null);
     } catch (err: any) {
       setUpdateError(err?.data?.message || 'Something went wrong.');
@@ -163,7 +227,7 @@ export default function Pipeline() {
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           >
             <option value="">All Statuses</option>
-            {INTEREST_STATUSES.map((s) => (
+            {STATUS_UPDATE_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </Select>
@@ -375,25 +439,50 @@ export default function Pipeline() {
             </div>
 
             <div className="px-6 py-5 space-y-5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 font-semibold">Current:</span>
-                <span className={getStatusInfo(updateEntry.status).badge}>
-                  {getStatusInfo(updateEntry.status).label}
-                </span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-semibold">Current:</span>
+                  <span className={getStatusInfo(updateEntry.status).badge}>
+                    {getStatusInfo(updateEntry.status).label}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHistoryEntry(updateEntry)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-blue-700 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <ClipboardList size={13} />
+                  View Notes History
+                </button>
               </div>
 
-              {/* Update Status Form */}
+              {/* Combined Update form: status + outcome + shared notes + follow-up */}
               <div className="border border-gray-100 rounded-xl p-4 space-y-3">
                 <h3 className="text-sm font-semibold text-gray-700">Update Status</h3>
                 <div>
-                  <label className="form-label">New Status</label>
+                  <label className="form-label">New Status <span className="text-red-500">*</span></label>
                   <Select
                     value={updateForm.status}
                     onChange={(e) => setUpdateForm({ ...updateForm, status: e.target.value })}
                   >
                     <option value="">Select status</option>
-                    {INTEREST_STATUSES.map((s) => (
+                    {STATUS_UPDATE_OPTIONS.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <label className="form-label flex items-center gap-1.5">
+                    <Phone size={12} className="text-amber-500" /> Call Outcome
+                    <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <Select
+                    value={updateForm.outcome}
+                    onChange={(e) => setUpdateForm({ ...updateForm, outcome: e.target.value })}
+                  >
+                    <option value="">No call logged</option>
+                    {CALL_OUTCOMES.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </Select>
                 </div>
@@ -404,7 +493,7 @@ export default function Pipeline() {
                     onChange={(e) => setUpdateForm({ ...updateForm, notes: e.target.value })}
                     className="form-input resize-none"
                     rows={2}
-                    placeholder="Optional notes..."
+                    placeholder="Optional notes — applied to status update and call log if outcome is set"
                   />
                 </div>
                 <div>
@@ -417,66 +506,45 @@ export default function Pipeline() {
                   />
                 </div>
                 <button
-                  onClick={handleUpdateStatus}
-                  disabled={updatingStatus}
+                  onClick={handleSaveUpdate}
+                  disabled={updatingStatus || loggingCall}
                   className="btn-primary w-full justify-center"
                 >
-                  {updatingStatus && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                  Update Status
-                </button>
-              </div>
-
-              {/* Log Call Form */}
-              <div className="border border-gray-100 rounded-xl p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Phone size={14} className="text-amber-500" />
-                  Log Call
-                </h3>
-                <div>
-                  <label className="form-label">Outcome <span className="text-red-500">*</span></label>
-                  <Select
-                    value={callForm.outcome}
-                    onChange={(e) => setCallForm({ ...callForm, outcome: e.target.value })}
-                  >
-                    <option value="">Select outcome</option>
-                    {CALL_OUTCOMES.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="form-label">Notes</label>
-                  <textarea
-                    value={callForm.notes}
-                    onChange={(e) => setCallForm({ ...callForm, notes: e.target.value })}
-                    className="form-input resize-none"
-                    rows={2}
-                    placeholder="Call notes..."
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Follow-up Date</label>
-                  <input
-                    type="date"
-                    value={callForm.follow_up_date}
-                    onChange={(e) => setCallForm({ ...callForm, follow_up_date: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
-                <button
-                  onClick={handleLogCall}
-                  disabled={loggingCall}
-                  className="w-full justify-center inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
-                >
-                  {loggingCall && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                  <Phone size={14} />
-                  Log Call
+                  {(updatingStatus || loggingCall) && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  Save
                 </button>
               </div>
 
               {updateError && (
                 <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">{updateError}</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notes History modal */}
+      {historyEntry && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <ClipboardList size={16} className="text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">Notes History</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {historyEntry.candidate?.full_name} · {historyEntry.candidate?.candidate_code}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setHistoryEntry(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              <NoteHistory candidateJobId={historyEntry.id} />
             </div>
           </div>
         </div>

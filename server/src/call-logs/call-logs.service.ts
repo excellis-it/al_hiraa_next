@@ -74,6 +74,20 @@ export class CallLogsService {
       }
     }
 
+    // 5. Touch the candidate's updated_at so the All Candidates list (sorted by
+    // updated_at ASC) bumps this candidate to the bottom — visual signal that
+    // they were just acted on.
+    const cj = await this.prisma.candidateJob.findUnique({
+      where: { id: candidateJobId },
+      select: { candidate_id: true },
+    });
+    if (cj) {
+      await this.prisma.candidate.update({
+        where: { id: cj.candidate_id },
+        data: { updated_by: callerId },
+      });
+    }
+
     return callLog;
   }
 

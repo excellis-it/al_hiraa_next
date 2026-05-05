@@ -242,7 +242,11 @@ export class CandidatesService {
         },
         skip,
         take: limit,
-        orderBy: { created_at: 'asc' },
+        // Sort by updated_at so newly registered AND recently activity-touched
+        // candidates land at the bottom. Activity = candidate edit (auto via
+        // @updatedAt) or a call-log creation (touches candidate explicitly,
+        // see CallLogsService.create).
+        orderBy: { updated_at: 'asc' },
       }),
       this.prisma.candidate.count({ where }),
     ]);
